@@ -1,7 +1,7 @@
 import { Fixture } from 'ethereum-waffle'
-import { constants, Wallet } from 'ethers'
+import { constants, Wallet, Contract } from 'ethers'
 import { ethers, waffle } from 'hardhat'
-import { MockTimeNonfungiblePositionManager, Quoter, TestERC20 } from '../typechain'
+import { Quoter, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
@@ -15,7 +15,7 @@ describe('Quoter', () => {
   let trader: Wallet
 
   const swapRouterFixture: Fixture<{
-    nft: MockTimeNonfungiblePositionManager
+    nft: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
     quoter: Quoter
   }> = async (wallets, provider) => {
@@ -39,7 +39,7 @@ describe('Quoter', () => {
     }
   }
 
-  let nft: MockTimeNonfungiblePositionManager
+  let nft: Contract
   let tokens: [TestERC20, TestERC20, TestERC20]
   let quoter: Quoter
 

@@ -1,7 +1,7 @@
 import { Fixture } from 'ethereum-waffle'
 import { BigNumber, constants, Contract, ContractTransaction, Wallet } from 'ethers'
 import { waffle, ethers } from 'hardhat'
-import { IWETH9, MockTimeNonfungiblePositionManager, MockTimeSwapRouter, TestERC20 } from '../typechain'
+import { IWETH9, MockTimeSwapRouter, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
@@ -20,7 +20,7 @@ describe('SwapRouter', function () {
     weth9: IWETH9
     factory: Contract
     router: MockTimeSwapRouter
-    nft: MockTimeNonfungiblePositionManager
+    nft: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
   }> = async (wallets, provider) => {
     const { weth9, factory, router, tokens, nft } = await completeFixture(wallets, provider)
@@ -45,7 +45,7 @@ describe('SwapRouter', function () {
   let factory: Contract
   let weth9: IWETH9
   let router: MockTimeSwapRouter
-  let nft: MockTimeNonfungiblePositionManager
+  let nft: Contract
   let tokens: [TestERC20, TestERC20, TestERC20]
   let getBalances: (
     who: string
@@ -119,7 +119,7 @@ describe('SwapRouter', function () {
         amount1Desired: 1000000,
         amount0Min: 0,
         amount1Min: 0,
-        deadline: 1,
+        deadline: 2 ** 32,
       }
 
       return nft.mint(liquidityParams)

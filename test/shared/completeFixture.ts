@@ -1,22 +1,19 @@
 import { Fixture } from 'ethereum-waffle'
-import { ethers } from 'hardhat'
+import { ethers, waffle } from 'hardhat'
 import { v3RouterFixture } from './externalFixtures'
-import { constants } from 'ethers'
+import { constants, Contract } from 'ethers'
+import { IWETH9, MockTimeSwapRouter, TestERC20 } from '../../typechain'
+
 import {
-  IWETH9,
-  MockTimeNonfungiblePositionManager,
-  MockTimeSwapRouter,
-  NonfungibleTokenPositionDescriptor,
-  TestERC20,
-  IUniswapV3Factory,
-} from '../../typechain'
+  abi as NFT_POSITION_MANAGER_ABI,
+  bytecode as NFT_POSITION_MANAGER_BYTECODE,
+} from '@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json'
 
 const completeFixture: Fixture<{
   weth9: IWETH9
-  factory: IUniswapV3Factory
+  factory: Contract
   router: MockTimeSwapRouter
-  nft: MockTimeNonfungiblePositionManager
-  nftDescriptor: NonfungibleTokenPositionDescriptor
+  nft: Contract
   tokens: [TestERC20, TestERC20, TestERC20]
 }> = async ([wallet], provider) => {
   const { weth9, factory, router } = await v3RouterFixture([wallet], provider)
@@ -28,23 +25,14 @@ const completeFixture: Fixture<{
     (await tokenFactory.deploy(constants.MaxUint256.div(2))) as TestERC20,
   ]
 
-  const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor')
-  const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
-  const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor', {
-    libraries: {
-      NFTDescriptor: nftDescriptorLibrary.address,
+  const nft = await waffle.deployContract(
+    wallet,
+    {
+      bytecode: NFT_POSITION_MANAGER_BYTECODE,
+      abi: NFT_POSITION_MANAGER_ABI,
     },
-  })
-  const nftDescriptor = (await positionDescriptorFactory.deploy(
-    tokens[0].address
-  )) as NonfungibleTokenPositionDescriptor
-
-  const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager')
-  const nft = (await positionManagerFactory.deploy(
-    factory.address,
-    weth9.address,
-    nftDescriptor.address
-  )) as MockTimeNonfungiblePositionManager
+    [factory.address, weth9.address, constants.AddressZero]
+  )
 
   tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
@@ -54,7 +42,6 @@ const completeFixture: Fixture<{
     router,
     tokens,
     nft,
-    nftDescriptor,
   }
 }
 

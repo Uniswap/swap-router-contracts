@@ -1,15 +1,9 @@
-import { Wallet } from 'ethers'
-import { MockTimeNonfungiblePositionManager } from '../../typechain'
+import { Wallet, Contract } from 'ethers'
 import { FeeAmount, TICK_SPACINGS } from './constants'
 import { encodePriceSqrt } from './encodePriceSqrt'
 import { getMaxTick, getMinTick } from './ticks'
 
-export async function createPool(
-  nft: MockTimeNonfungiblePositionManager,
-  wallet: Wallet,
-  tokenAddressA: string,
-  tokenAddressB: string
-) {
+export async function createPool(nft: Contract, wallet: Wallet, tokenAddressA: string, tokenAddressB: string) {
   if (tokenAddressA.toLowerCase() > tokenAddressB.toLowerCase())
     [tokenAddressA, tokenAddressB] = [tokenAddressB, tokenAddressA]
 
@@ -26,14 +20,14 @@ export async function createPool(
     amount1Desired: 1000000,
     amount0Min: 0,
     amount1Min: 0,
-    deadline: 1,
+    deadline: 2 ** 32,
   }
 
   return nft.mint(liquidityParams)
 }
 
 export async function createPoolWithMultiplePositions(
-  nft: MockTimeNonfungiblePositionManager,
+  nft: Contract,
   wallet: Wallet,
   tokenAddressA: string,
   tokenAddressB: string
@@ -54,7 +48,7 @@ export async function createPoolWithMultiplePositions(
     amount1Desired: 1000000,
     amount0Min: 0,
     amount1Min: 0,
-    deadline: 1,
+    deadline: 2 ** 32,
   }
 
   await nft.mint(liquidityParams)
@@ -70,7 +64,7 @@ export async function createPoolWithMultiplePositions(
     amount1Desired: 100,
     amount0Min: 0,
     amount1Min: 0,
-    deadline: 1,
+    deadline: 2 ** 32,
   }
 
   await nft.mint(liquidityParams2)
@@ -86,14 +80,14 @@ export async function createPoolWithMultiplePositions(
     amount1Desired: 100,
     amount0Min: 0,
     amount1Min: 0,
-    deadline: 1,
+    deadline: 2 ** 32,
   }
 
   return nft.mint(liquidityParams3)
 }
 
 export async function createPoolWithZeroTickInitialized(
-  nft: MockTimeNonfungiblePositionManager,
+  nft: Contract,
   wallet: Wallet,
   tokenAddressA: string,
   tokenAddressB: string
@@ -114,7 +108,7 @@ export async function createPoolWithZeroTickInitialized(
     amount1Desired: 1000000,
     amount0Min: 0,
     amount1Min: 0,
-    deadline: 1,
+    deadline: 2 ** 32,
   }
 
   await nft.mint(liquidityParams)
@@ -130,7 +124,7 @@ export async function createPoolWithZeroTickInitialized(
     amount1Desired: 100,
     amount0Min: 0,
     amount1Min: 0,
-    deadline: 1,
+    deadline: 2 ** 32,
   }
 
   await nft.mint(liquidityParams2)
@@ -146,7 +140,7 @@ export async function createPoolWithZeroTickInitialized(
     amount1Desired: 100,
     amount0Min: 0,
     amount1Min: 0,
-    deadline: 1,
+    deadline: 2 ** 32,
   }
 
   return nft.mint(liquidityParams3)

@@ -1,11 +1,9 @@
-# Uniswap V3 Periphery
+# Uniswap Swap Router
 
-[![Tests](https://github.com/Uniswap/uniswap-v3-periphery/workflows/Tests/badge.svg)](https://github.com/Uniswap/uniswap-v3-periphery/actions?query=workflow%3ATests)
-[![Lint](https://github.com/Uniswap/uniswap-v3-periphery/workflows/Lint/badge.svg)](https://github.com/Uniswap/uniswap-v3-periphery/actions?query=workflow%3ALint)
+[![Tests](https://github.com/Uniswap/swap-router-contracts/workflows/Tests/badge.svg)](https://github.com/Uniswap/swap-router-contracts/actions?query=workflow%3ATests)
+[![Lint](https://github.com/Uniswap/swap-router-contracts/workflows/Lint/badge.svg)](https://github.com/Uniswap/swap-router-contracts/actions?query=workflow%3ALint)
 
-This repository contains the periphery smart contracts for the Uniswap V3 Protocol.
-For the lower level core contracts, see the [uniswap-v3-core](https://github.com/Uniswap/uniswap-v3-core)
-repository.
+This repository contains smart contracts for swapping on the Uniswap V2 and V3 protocols.
 
 ## Bug bounty
 
@@ -15,16 +13,16 @@ per the terms defined [here](./bug-bounty.md).
 ## Local deployment
 
 In order to deploy this code to a local testnet, you should install the npm package
-`@uniswap/v3-periphery`
+`@uniswap/swap-router-contracts`
 and import bytecode imported from artifacts located at
-`@uniswap/v3-periphery/artifacts/contracts/*/*.json`.
+`@uniswap/swap-router-contracts/artifacts/contracts/*/*.json`.
 For example:
 
 ```typescript
 import {
   abi as SWAP_ROUTER_ABI,
   bytecode as SWAP_ROUTER_BYTECODE,
-} from '@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json'
+} from '@uniswap/swap-router-contracts/artifacts/contracts/SwapRouter.sol/SwapRouter.json'
 
 // deploy the bytecode
 ```
@@ -35,11 +33,11 @@ your local deployment.
 
 ## Using solidity interfaces
 
-The Uniswap v3 periphery interfaces are available for import into solidity smart contracts
-via the npm artifact `@uniswap/v3-periphery`, e.g.:
+The swap router contract interfaces are available for import into solidity smart contracts
+via the npm artifact `@uniswap/swap-router-contracts`, e.g.:
 
 ```solidity
-import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
+import '@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter.sol';
 
 contract MyContract {
   ISwapRouter router;

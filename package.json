@@ -1,20 +1,20 @@
 {
-  "name": "@uniswap/v3-periphery",
-  "description": "🎚 Peripheral smart contracts for interacting with Uniswap V3",
+  "name": "@uniswap/swap-router-contracts",
+  "description": "Smart contracts for swapping on Uniswap V2 and V3",
   "license": "GPL-2.0-or-later",
   "publishConfig": {
     "access": "public"
   },
-  "version": "1.2.0",
+  "version": "1.0.0",
   "homepage": "https://uniswap.org",
   "keywords": [
     "uniswap",
-    "periphery",
+    "v2",
     "v3"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Uniswap/uniswap-v3-periphery"
+    "url": "https://github.com/Uniswap/swap-router-contracts"
   },
   "files": [
     "contracts/base",
@@ -30,10 +30,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "3.4.1-solc-0.7-2",
-    "@uniswap/lib": "^4.0.1-alpha",
     "@uniswap/v2-core": "1.0.1",
     "@uniswap/v3-core": "1.0.0",
-    "base64-sol": "1.0.1",
     "hardhat-watcher": "^2.1.1"
   },
   "devDependencies": {
@@ -43,6 +41,7 @@
     "@typechain/ethers-v5": "^4.0.0",
     "@types/chai": "^4.2.6",
     "@types/mocha": "^5.2.7",
+    "@uniswap/v3-periphery": "^1.2.0",
     "chai": "^4.2.0",
     "decimal.js": "^10.2.1",
     "ethereum-waffle": "^3.0.2",

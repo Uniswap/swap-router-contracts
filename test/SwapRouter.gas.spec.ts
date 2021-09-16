@@ -57,7 +57,7 @@ describe('SwapRouter gas tests', function () {
         amount1Desired: 1000000,
         amount0Min: 0,
         amount1Min: 0,
-        deadline: 1,
+        deadline: 2 ** 32,
       }
 
       return nft.mint(liquidityParams)
