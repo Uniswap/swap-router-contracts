@@ -14,6 +14,11 @@ abstract contract PeripheryPaymentsWithFee is PeripheryPayments, IPeripheryPayme
     using LowGasSafeMath for uint256;
 
     /// @inheritdoc IPeripheryPaymentsWithFee
+    function unwrapWETH9WithFee(uint256 amountMinimum, uint256 feeBips, address feeRecipient) external payable override {
+        unwrapWETH9WithFee(amountMinimum, msg.sender, feeBips, feeRecipient);
+    }
+
+    /// @inheritdoc IPeripheryPaymentsWithFee
     function unwrapWETH9WithFee(
         uint256 amountMinimum,
         address recipient,
@@ -31,6 +36,16 @@ abstract contract PeripheryPaymentsWithFee is PeripheryPayments, IPeripheryPayme
             if (feeAmount > 0) TransferHelper.safeTransferETH(feeRecipient, feeAmount);
             TransferHelper.safeTransferETH(recipient, balanceWETH9 - feeAmount);
         }
+    }
+
+    /// @inheritdoc IPeripheryPaymentsWithFee
+    function sweepTokenWithFee(
+        address token,
+        uint256 amountMinimum,
+        uint256 feeBips,
+        address feeRecipient
+    ) external payable override {
+        sweepTokenWithFee(token, amountMinimum, msg.sender, feeBips, feeRecipient);
     }
 
     /// @inheritdoc IPeripheryPaymentsWithFee

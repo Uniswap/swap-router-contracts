@@ -4,6 +4,11 @@ pragma solidity >=0.7.5;
 /// @title Periphery Payments
 /// @notice Functions to ease deposits and withdrawals of ETH
 interface IPeripheryPayments {
+    /// @notice Unwraps the contract's WETH9 balance and sends it to msg.sender as ETH.
+    /// @dev The amountMinimum parameter prevents malicious contracts from stealing WETH9 from users.
+    /// @param amountMinimum The minimum amount of WETH9 to unwrap
+    function unwrapWETH9(uint256 amountMinimum) external payable;
+
     /// @notice Unwraps the contract's WETH9 balance and sends it to recipient as ETH.
     /// @dev The amountMinimum parameter prevents malicious contracts from stealing WETH9 from users.
     /// @param amountMinimum The minimum amount of WETH9 to unwrap
@@ -15,9 +20,18 @@ interface IPeripheryPayments {
     /// that use ether for the input amount
     function refundETH() external payable;
 
+    /// @notice Transfers the full amount of a token held by this contract to msg.sender
+    /// @dev The amountMinimum parameter prevents malicious contracts from stealing the token from users
+    /// @param token The contract address of the token which will be transferred to msg.sender
+    /// @param amountMinimum The minimum amount of token required for a transfer
+    function sweepToken(
+        address token,
+        uint256 amountMinimum
+    ) external payable;
+
     /// @notice Transfers the full amount of a token held by this contract to recipient
     /// @dev The amountMinimum parameter prevents malicious contracts from stealing the token from users
-    /// @param token The contract address of the token which will be transferred to `recipient`
+    /// @param token The contract address of the token which will be transferred to recipient
     /// @param amountMinimum The minimum amount of token required for a transfer
     /// @param recipient The destination address of the token
     function sweepToken(
