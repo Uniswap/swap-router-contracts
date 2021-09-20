@@ -24,10 +24,7 @@ interface IPeripheryPayments {
     /// @dev The amountMinimum parameter prevents malicious contracts from stealing the token from users
     /// @param token The contract address of the token which will be transferred to msg.sender
     /// @param amountMinimum The minimum amount of token required for a transfer
-    function sweepToken(
-        address token,
-        uint256 amountMinimum
-    ) external payable;
+    function sweepToken(address token, uint256 amountMinimum) external payable;
 
     /// @notice Transfers the full amount of a token held by this contract to recipient
     /// @dev The amountMinimum parameter prevents malicious contracts from stealing the token from users

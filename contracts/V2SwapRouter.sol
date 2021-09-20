@@ -6,4 +6,6 @@ import './interfaces/IV2SwapRouter.sol';
 
 /// @title Uniswap V2 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V2
-abstract contract V2SwapRouter is IV2SwapRouter {}
+abstract contract V2SwapRouter is IV2SwapRouter {
+
+}
