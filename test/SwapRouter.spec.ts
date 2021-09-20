@@ -1,7 +1,7 @@
 import { Fixture } from 'ethereum-waffle'
 import { BigNumber, constants, Contract, ContractTransaction, Wallet } from 'ethers'
 import { waffle, ethers } from 'hardhat'
-import { IWETH9, MockTimeSwapRouter, TestERC20 } from '../typechain'
+import { IWETH9, MockTimeSwapRouter02, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
@@ -19,7 +19,7 @@ describe('SwapRouter', function () {
   const swapRouterFixture: Fixture<{
     weth9: IWETH9
     factory: Contract
-    router: MockTimeSwapRouter
+    router: MockTimeSwapRouter02
     nft: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
   }> = async (wallets, provider) => {
@@ -44,7 +44,7 @@ describe('SwapRouter', function () {
 
   let factory: Contract
   let weth9: IWETH9
-  let router: MockTimeSwapRouter
+  let router: MockTimeSwapRouter02
   let nft: Contract
   let tokens: [TestERC20, TestERC20, TestERC20]
   let getBalances: (
@@ -150,7 +150,6 @@ describe('SwapRouter', function () {
         const params = {
           path: encodePath(tokens, new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
           recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
-          deadline: 1,
           amountIn,
           amountOutMinimum,
         }
@@ -383,7 +382,6 @@ describe('SwapRouter', function () {
               ? BigNumber.from('4295128740')
               : BigNumber.from('1461446703485210103287273052203988822378723970341'),
           recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
-          deadline: 1,
           amountIn,
           amountOutMinimum,
         }
@@ -515,7 +513,6 @@ describe('SwapRouter', function () {
         const params = {
           path: encodePath(tokens.slice().reverse(), new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
           recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
-          deadline: 1,
           amountOut,
           amountInMaximum,
         }
@@ -735,7 +732,6 @@ describe('SwapRouter', function () {
           tokenOut,
           fee: FeeAmount.MEDIUM,
           recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
-          deadline: 1,
           amountOut,
           amountInMaximum,
           sqrtPriceLimitX96:
@@ -862,7 +858,6 @@ describe('SwapRouter', function () {
         const params = {
           path: encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
           recipient: router.address,
-          deadline: 1,
           amountIn: 102,
           amountOutMinimum,
         }
@@ -892,7 +887,6 @@ describe('SwapRouter', function () {
         const params = {
           path: encodePath([tokens[0].address, weth9.address], [FeeAmount.MEDIUM]),
           recipient: router.address,
-          deadline: 1,
           amountIn: 102,
           amountOutMinimum,
         }

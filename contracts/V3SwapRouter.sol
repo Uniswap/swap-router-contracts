@@ -6,12 +6,8 @@ import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
 import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
-import './interfaces/ISwapRouter.sol';
-import './base/PeripheryImmutableState.sol';
-import './base/PeripheryValidation.sol';
+import './interfaces/IV3SwapRouter.sol';
 import './base/PeripheryPaymentsWithFee.sol';
-import './base/Multicall.sol';
-import './base/SelfPermit.sol';
 import './libraries/Path.sol';
 import './libraries/PoolAddress.sol';
 import './libraries/CallbackValidation.sol';
@@ -19,13 +15,9 @@ import './interfaces/external/IWETH9.sol';
 
 /// @title Uniswap V3 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V3
-contract SwapRouter is
-    ISwapRouter,
-    PeripheryImmutableState,
-    PeripheryValidation,
-    PeripheryPaymentsWithFee,
-    Multicall,
-    SelfPermit
+abstract contract V3SwapRouter is
+    IV3SwapRouter,
+    PeripheryPaymentsWithFee
 {
     using Path for bytes;
     using SafeCast for uint256;
@@ -36,8 +28,6 @@ contract SwapRouter is
 
     /// @dev Transient storage variable used for returning the computed amount in for an exact output swap.
     uint256 private amountInCached = DEFAULT_AMOUNT_IN_CACHED;
-
-    constructor(address _factory, address _WETH9) PeripheryImmutableState(_factory, _WETH9) {}
 
     /// @dev Returns the pool for the given token pair and fee. The pool contract may or may not exist.
     function getPool(
@@ -111,12 +101,11 @@ contract SwapRouter is
         return uint256(-(zeroForOne ? amount1 : amount0));
     }
 
-    /// @inheritdoc ISwapRouter
+    /// @inheritdoc IV3SwapRouter
     function exactInputSingle(ExactInputSingleParams calldata params)
         external
         payable
         override
-        checkDeadline(params.deadline)
         returns (uint256 amountOut)
     {
         amountOut = exactInputInternal(
@@ -128,12 +117,11 @@ contract SwapRouter is
         require(amountOut >= params.amountOutMinimum, 'Too little received');
     }
 
-    /// @inheritdoc ISwapRouter
+    /// @inheritdoc IV3SwapRouter
     function exactInput(ExactInputParams memory params)
         external
         payable
         override
-        checkDeadline(params.deadline)
         returns (uint256 amountOut)
     {
         address payer = msg.sender; // msg.sender pays for the first hop
@@ -199,12 +187,11 @@ contract SwapRouter is
         if (sqrtPriceLimitX96 == 0) require(amountOutReceived == amountOut);
     }
 
-    /// @inheritdoc ISwapRouter
+    /// @inheritdoc IV3SwapRouter
     function exactOutputSingle(ExactOutputSingleParams calldata params)
         external
         payable
         override
-        checkDeadline(params.deadline)
         returns (uint256 amountIn)
     {
         // avoid an SLOAD by using the swap return data
@@ -220,12 +207,11 @@ contract SwapRouter is
         amountInCached = DEFAULT_AMOUNT_IN_CACHED;
     }
 
-    /// @inheritdoc ISwapRouter
+    /// @inheritdoc IV3SwapRouter
     function exactOutput(ExactOutputParams calldata params)
         external
         payable
         override
-        checkDeadline(params.deadline)
         returns (uint256 amountIn)
     {
         // it's okay that the payer is fixed to msg.sender here, as they're only paying for the "final" exact output

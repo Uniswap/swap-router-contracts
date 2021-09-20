@@ -5,7 +5,7 @@ import {
 import { abi as FACTORY_V2_ABI, bytecode as FACTORY_V2_BYTECODE } from '@uniswap/v2-core/build/UniswapV2Factory.json'
 import { Fixture } from 'ethereum-waffle'
 import { ethers, waffle } from 'hardhat'
-import { IWETH9, MockTimeSwapRouter } from '../../typechain'
+import { IWETH9, MockTimeSwapRouter02 } from '../../typechain'
 
 import WETH9 from '../contracts/WETH9.json'
 import { Contract } from '@ethersproject/contracts'
@@ -43,15 +43,15 @@ const v3CoreFactoryFixture: Fixture<Contract> = async ([wallet]) => {
 export const v3RouterFixture: Fixture<{
   weth9: IWETH9
   factory: Contract
-  router: MockTimeSwapRouter
+  router: MockTimeSwapRouter02
 }> = async ([wallet], provider) => {
   const { weth9 } = await wethFixture([wallet], provider)
   const factory = await v3CoreFactoryFixture([wallet], provider)
 
-  const router = (await (await ethers.getContractFactory('MockTimeSwapRouter')).deploy(
+  const router = (await (await ethers.getContractFactory('MockTimeSwapRouter02')).deploy(
     factory.address,
     weth9.address
-  )) as MockTimeSwapRouter
+  )) as MockTimeSwapRouter02
 
   return { factory, weth9, router }
 }

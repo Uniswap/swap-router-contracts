@@ -1,7 +1,7 @@
 import { Fixture } from 'ethereum-waffle'
 import { BigNumber, constants, ContractTransaction, Wallet } from 'ethers'
 import { ethers, waffle } from 'hardhat'
-import { IUniswapV3Pool, IWETH9, MockTimeSwapRouter, TestERC20 } from '../typechain'
+import { IUniswapV3Pool, IWETH9, MockTimeSwapRouter02, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
@@ -20,7 +20,7 @@ describe('SwapRouter gas tests', function () {
 
   const swapRouterFixture: Fixture<{
     weth9: IWETH9
-    router: MockTimeSwapRouter
+    router: MockTimeSwapRouter02
     tokens: [TestERC20, TestERC20, TestERC20]
     pools: [IUniswapV3Pool, IUniswapV3Pool, IUniswapV3Pool]
   }> = async (wallets, provider) => {
@@ -95,7 +95,7 @@ describe('SwapRouter gas tests', function () {
   }
 
   let weth9: IWETH9
-  let router: MockTimeSwapRouter
+  let router: MockTimeSwapRouter02
   let tokens: [TestERC20, TestERC20, TestERC20]
   let pools: [IUniswapV3Pool, IUniswapV3Pool, IUniswapV3Pool]
 
@@ -125,7 +125,6 @@ describe('SwapRouter gas tests', function () {
     const params = {
       path: encodePath(tokens, new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
       recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
-      deadline: 1,
       amountIn,
       amountOutMinimum,
     }
@@ -160,7 +159,6 @@ describe('SwapRouter gas tests', function () {
           ? BigNumber.from('4295128740')
           : BigNumber.from('1461446703485210103287273052203988822378723970341'),
       recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
-      deadline: 1,
       amountIn,
       amountOutMinimum,
     }
@@ -186,7 +184,6 @@ describe('SwapRouter gas tests', function () {
     const params = {
       path: encodePath(tokens.slice().reverse(), new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
       recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
-      deadline: 1,
       amountOut,
       amountInMaximum,
     }
@@ -215,7 +212,6 @@ describe('SwapRouter gas tests', function () {
       tokenOut,
       fee: FeeAmount.MEDIUM,
       recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
-      deadline: 1,
       amountOut,
       amountInMaximum,
       sqrtPriceLimitX96:

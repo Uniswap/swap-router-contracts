@@ -4,8 +4,7 @@ pragma solidity =0.7.6;
 import './BlockTimestamp.sol';
 
 abstract contract PeripheryValidation is BlockTimestamp {
-    modifier checkDeadline(uint256 deadline) {
+    function checkDeadline(uint256 deadline) external view {
         require(_blockTimestamp() <= deadline, 'Transaction too old');
-        _;
     }
 }
