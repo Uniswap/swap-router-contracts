@@ -124,9 +124,7 @@ describe('SwapRouter gas tests', function () {
 
     const params = {
       path: encodePath(tokens, new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
-      recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
       amountIn,
-      amountOutMinimum,
     }
 
     const data = [router.interface.encodeFunctionData('exactInput', [params])]
@@ -158,9 +156,7 @@ describe('SwapRouter gas tests', function () {
         sqrtPriceLimitX96 ?? tokenIn.toLowerCase() < tokenOut.toLowerCase()
           ? BigNumber.from('4295128740')
           : BigNumber.from('1461446703485210103287273052203988822378723970341'),
-      recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
       amountIn,
-      amountOutMinimum,
     }
 
     const data = [router.interface.encodeFunctionData('exactInputSingle', [params])]
@@ -183,9 +179,7 @@ describe('SwapRouter gas tests', function () {
 
     const params = {
       path: encodePath(tokens.slice().reverse(), new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
-      recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
       amountOut,
-      amountInMaximum,
     }
 
     const data = [router.interface.encodeFunctionData('exactOutput', [params])]

@@ -73,20 +73,16 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
     /// @dev Performs a single exact input swap
     function exactInputInternal(
         uint256 amountIn,
-        address recipient,
         uint160 sqrtPriceLimitX96,
         SwapCallbackData memory data
     ) private returns (uint256 amountOut) {
-        // allow swapping to the router address with address 0
-        if (recipient == address(0)) recipient = address(this);
-
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
 
         bool zeroForOne = tokenIn < tokenOut;
 
         (int256 amount0, int256 amount1) =
             getPool(tokenIn, tokenOut, fee).swap(
-                recipient,
+                address(this),
                 zeroForOne,
                 amountIn.toInt256(),
                 sqrtPriceLimitX96 == 0
@@ -105,13 +101,11 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
         override
         returns (uint256 amountOut)
     {
-        amountOut = exactInputInternal(
+        return exactInputInternal(
             params.amountIn,
-            params.recipient,
             params.sqrtPriceLimitX96,
             SwapCallbackData({path: abi.encodePacked(params.tokenIn, params.fee, params.tokenOut), payer: msg.sender})
         );
-        require(amountOut >= params.amountOutMinimum, 'Too little received');
     }
 
     /// @inheritdoc IV3SwapRouter
@@ -124,7 +118,6 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
             // the outputs of prior swaps become the inputs to subsequent ones
             params.amountIn = exactInputInternal(
                 params.amountIn,
-                hasMultiplePools ? address(this) : params.recipient, // for intermediate swaps, this contract custodies
                 0,
                 SwapCallbackData({
                     path: params.path.getFirstPool(), // only the first pool in the path is necessary
@@ -137,12 +130,9 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
                 payer = address(this); // at this point, the caller has paid
                 params.path = params.path.skipToken();
             } else {
-                amountOut = params.amountIn;
-                break;
+                return params.amountIn;
             }
         }
-
-        require(amountOut >= params.amountOutMinimum, 'Too little received');
     }
 
     /// @dev Performs a single exact output swap
@@ -152,9 +142,6 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
         uint160 sqrtPriceLimitX96,
         SwapCallbackData memory data
     ) private returns (uint256 amountIn) {
-        // allow swapping to the router address with address 0
-        if (recipient == address(0)) recipient = address(this);
-
         (address tokenOut, address tokenIn, uint24 fee) = data.path.decodeFirstPool();
 
         bool zeroForOne = tokenIn < tokenOut;
@@ -189,12 +176,11 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
         // avoid an SLOAD by using the swap return data
         amountIn = exactOutputInternal(
             params.amountOut,
-            params.recipient,
+            address(this),
             params.sqrtPriceLimitX96,
             SwapCallbackData({path: abi.encodePacked(params.tokenOut, params.fee, params.tokenIn), payer: msg.sender})
         );
 
-        require(amountIn <= params.amountInMaximum, 'Too much requested');
         // has to be reset even though we don't use it in the single hop case
         amountInCached = DEFAULT_AMOUNT_IN_CACHED;
     }
@@ -205,13 +191,12 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
         // swap, which happens first, and subsequent swaps are paid for within nested callback frames
         exactOutputInternal(
             params.amountOut,
-            params.recipient,
+            address(this),
             0,
             SwapCallbackData({path: params.path, payer: msg.sender})
         );
 
         amountIn = amountInCached;
-        require(amountIn <= params.amountInMaximum, 'Too much requested');
         amountInCached = DEFAULT_AMOUNT_IN_CACHED;
     }
 }
