@@ -15,10 +15,7 @@ import './interfaces/external/IWETH9.sol';
 
 /// @title Uniswap V3 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V3
-abstract contract V3SwapRouter is
-    IV3SwapRouter,
-    PeripheryPaymentsWithFee
-{
+abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
     using Path for bytes;
     using SafeCast for uint256;
 
@@ -118,12 +115,7 @@ abstract contract V3SwapRouter is
     }
 
     /// @inheritdoc IV3SwapRouter
-    function exactInput(ExactInputParams memory params)
-        external
-        payable
-        override
-        returns (uint256 amountOut)
-    {
+    function exactInput(ExactInputParams memory params) external payable override returns (uint256 amountOut) {
         address payer = msg.sender; // msg.sender pays for the first hop
 
         while (true) {
@@ -208,12 +200,7 @@ abstract contract V3SwapRouter is
     }
 
     /// @inheritdoc IV3SwapRouter
-    function exactOutput(ExactOutputParams calldata params)
-        external
-        payable
-        override
-        returns (uint256 amountIn)
-    {
+    function exactOutput(ExactOutputParams calldata params) external payable override returns (uint256 amountIn) {
         // it's okay that the payer is fixed to msg.sender here, as they're only paying for the "final" exact output
         // swap, which happens first, and subsequent swaps are paid for within nested callback frames
         exactOutputInternal(
