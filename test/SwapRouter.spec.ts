@@ -13,7 +13,7 @@ import { computePoolAddress } from './shared/computePoolAddress'
 import { defaultAbiCoder } from '@ethersproject/abi'
 import { solidityPack } from 'ethers/lib/utils'
 
-describe.only('SwapRouter', function () {
+describe('SwapRouter', function () {
   this.timeout(40000)
   let wallet: Wallet
   let trader: Wallet
@@ -881,47 +881,60 @@ describe.only('SwapRouter', function () {
     describe('*WithFee', () => {
       const feeRecipient = '0xfEE0000000000000000000000000000000000000'
 
-      it.skip('#sweepTokenWithFee', async () => {
-        // const amountOutMinimum = 100
-        // const params = {
-        //   path: encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
-        //   amountIn: 102,
-        // }
-        // const data = [
-        //   router.interface.encodeFunctionData('exactInput', [params]),
-        //   router.interface.encodeFunctionData('sweepTokenWithFee(address,uint256,address,uint256,address)', [
-        //     tokens[1].address,
-        //     amountOutMinimum,
-        //     trader.address,
-        //     100,
-        //     feeRecipient,
-        //   ]),
-        // ]
-        // await router.connect(trader).multicall(data)
-        // const balance = await tokens[1].balanceOf(feeRecipient)
-        // expect(balance.eq(1)).to.be.eq(true)
+      it('#sweepTokenWithFee', async () => {
+        const amountOutMinimum = 100
+        const params = {
+          path: encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
+          amountIn: 102,
+        }
+
+        const functionSignature = 'sweepTokenWithFee(address,uint256,address,uint256,address)'
+
+        const data = [
+          router.interface.encodeFunctionData('exactInput', [params]),
+          solidityPack(
+            ['bytes4', 'bytes'],
+            [
+              router.interface.getSighash(functionSignature),
+              defaultAbiCoder.encode(
+                ['address', 'uint256', 'address', 'uint256', 'address'],
+                [tokens[1].address, amountOutMinimum, trader.address, 100, feeRecipient]
+              ),
+            ]
+          ),
+        ]
+        await router.connect(trader).multicall(data)
+        const balance = await tokens[1].balanceOf(feeRecipient)
+        expect(balance.eq(1)).to.be.eq(true)
       })
 
-      it.skip('#unwrapWETH9WithFee', async () => {
-        // const startBalance = await waffle.provider.getBalance(feeRecipient)
-        // await createPoolWETH9(tokens[0].address)
-        // const amountOutMinimum = 100
-        // const params = {
-        //   path: encodePath([tokens[0].address, weth9.address], [FeeAmount.MEDIUM]),
-        //   amountIn: 102,
-        // }
-        // const data = [
-        //   router.interface.encodeFunctionData('exactInput', [params]),
-        //   router.interface.encodeFunctionData('unwrapWETH9WithFee', [
-        //     amountOutMinimum,
-        //     trader.address,
-        //     100,
-        //     feeRecipient,
-        //   ]),
-        // ]
-        // await router.connect(trader).multicall(data)
-        // const endBalance = await waffle.provider.getBalance(feeRecipient)
-        // expect(endBalance.sub(startBalance).eq(1)).to.be.eq(true)
+      it('#unwrapWETH9WithFee', async () => {
+        const startBalance = await waffle.provider.getBalance(feeRecipient)
+        await createPoolWETH9(tokens[0].address)
+        const amountOutMinimum = 100
+        const params = {
+          path: encodePath([tokens[0].address, weth9.address], [FeeAmount.MEDIUM]),
+          amountIn: 102,
+        }
+
+        const functionSignature = 'unwrapWETH9WithFee(uint256,address,uint256,address)'
+
+        const data = [
+          router.interface.encodeFunctionData('exactInput', [params]),
+          solidityPack(
+            ['bytes4', 'bytes'],
+            [
+              router.interface.getSighash(functionSignature),
+              defaultAbiCoder.encode(
+                ['uint256', 'address', 'uint256', 'address'],
+                [amountOutMinimum, trader.address, 100, feeRecipient]
+              ),
+            ]
+          ),
+        ]
+        await router.connect(trader).multicall(data)
+        const endBalance = await waffle.provider.getBalance(feeRecipient)
+        expect(endBalance.sub(startBalance).eq(1)).to.be.eq(true)
       })
     })
   })
