@@ -10,6 +10,8 @@ import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import { computePoolAddress } from './shared/computePoolAddress'
+import { defaultAbiCoder } from '@ethersproject/abi'
+import { solidityPack } from 'ethers/lib/utils'
 
 describe('SwapRouter', function () {
   this.timeout(40000)
@@ -57,6 +59,28 @@ describe('SwapRouter', function () {
   }>
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
+
+  function encodeUnwrapWETH9(amount: number) {
+    const functionSignature = 'unwrapWETH9(uint256,address)'
+    return solidityPack(
+      ['bytes4', 'bytes'],
+      [
+        router.interface.getSighash(functionSignature),
+        defaultAbiCoder.encode(router.interface.functions[functionSignature].inputs, [amount, trader.address]),
+      ]
+    )
+  }
+
+  function encodeSweepToken(token: string, amount: number) {
+    const functionSignature = 'sweepToken(address,uint256,address)'
+    return solidityPack(
+      ['bytes4', 'bytes'],
+      [
+        router.interface.getSighash(functionSignature),
+        defaultAbiCoder.encode(router.interface.functions[functionSignature].inputs, [token, amount, trader.address]),
+      ]
+    )
+  }
 
   before('create fixture loader', async () => {
     ;[wallet, trader] = await (ethers as any).getSigners()
@@ -149,24 +173,21 @@ describe('SwapRouter', function () {
 
         const params = {
           path: encodePath(tokens, new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
-          recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
           amountIn,
-          amountOutMinimum,
         }
 
         const data = [router.interface.encodeFunctionData('exactInput', [params])]
-        if (outputIsWETH9)
-          data.push(router.interface.encodeFunctionData('unwrapWETH9', [amountOutMinimum, trader.address]))
+        if (outputIsWETH9) {
+          data.push(encodeUnwrapWETH9(amountOutMinimum))
+        } else {
+          data.push(encodeSweepToken(tokens[tokens.length - 1], amountOutMinimum))
+        }
 
         // ensure that the swap fails if the limit is any tighter
-        params.amountOutMinimum += 1
-        await expect(router.connect(trader).exactInput(params, { value })).to.be.revertedWith('Too little received')
-        params.amountOutMinimum -= 1
+        const amountOut = await router.connect(trader).callStatic.exactInput(params, { value })
+        expect(amountOut.toNumber()).to.be.eq(amountOutMinimum)
 
-        // optimized for the gas test
-        return data.length === 1
-          ? router.connect(trader).exactInput(params, { value })
-          : router.connect(trader).multicall(data, { value })
+        return router.connect(trader).multicall(data, { value })
       }
 
       describe('single-pool', () => {
@@ -270,9 +291,11 @@ describe('SwapRouter', function () {
             .to.emit(tokens[2], 'Transfer')
             .withArgs(
               computePoolAddress(factory.address, [tokens[1].address, tokens[2].address], FeeAmount.MEDIUM),
-              trader.address,
+              router.address,
               1
             )
+            .to.emit(tokens[2], 'Transfer')
+            .withArgs(router.address, trader.address, 1)
         })
       })
 
@@ -381,21 +404,19 @@ describe('SwapRouter', function () {
             sqrtPriceLimitX96 ?? tokenIn.toLowerCase() < tokenOut.toLowerCase()
               ? BigNumber.from('4295128740')
               : BigNumber.from('1461446703485210103287273052203988822378723970341'),
-          recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
           amountIn,
-          amountOutMinimum,
         }
 
         const data = [router.interface.encodeFunctionData('exactInputSingle', [params])]
-        if (outputIsWETH9)
-          data.push(router.interface.encodeFunctionData('unwrapWETH9', [amountOutMinimum, trader.address]))
+        if (outputIsWETH9) {
+          data.push(encodeUnwrapWETH9(amountOutMinimum))
+        } else {
+          data.push(encodeSweepToken(tokenOut, amountOutMinimum))
+        }
 
         // ensure that the swap fails if the limit is any tighter
-        params.amountOutMinimum += 1
-        await expect(router.connect(trader).exactInputSingle(params, { value })).to.be.revertedWith(
-          'Too little received'
-        )
-        params.amountOutMinimum -= 1
+        const amountOut = await router.connect(trader).callStatic.exactInputSingle(params, { value })
+        expect(amountOut.toNumber()).to.be.eq(amountOutMinimum)
 
         // optimized for the gas test
         return data.length === 1
@@ -512,19 +533,23 @@ describe('SwapRouter', function () {
 
         const params = {
           path: encodePath(tokens.slice().reverse(), new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
-          recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
           amountOut,
-          amountInMaximum,
         }
 
         const data = [router.interface.encodeFunctionData('exactOutput', [params])]
-        if (inputIsWETH9) data.push(router.interface.encodeFunctionData('unwrapWETH9', [0, trader.address]))
-        if (outputIsWETH9) data.push(router.interface.encodeFunctionData('unwrapWETH9', [amountOut, trader.address]))
+        if (inputIsWETH9) {
+          data.push(router.interface.encodeFunctionData('refundETH'))
+        }
+
+        if (outputIsWETH9) {
+          data.push(encodeUnwrapWETH9(amountOut))
+        } else {
+          data.push(encodeSweepToken(tokens[tokens.length - 1], amountOut))
+        }
 
         // ensure that the swap fails if the limit is any tighter
-        params.amountInMaximum -= 1
-        await expect(router.connect(trader).exactOutput(params, { value })).to.be.revertedWith('Too much requested')
-        params.amountInMaximum += 1
+        const amountIn = await router.connect(trader).callStatic.exactOutput(params, { value })
+        expect(amountIn.toNumber()).to.be.eq(amountInMaximum)
 
         return router.connect(trader).multicall(data, { value })
       }
@@ -612,7 +637,7 @@ describe('SwapRouter', function () {
             .to.emit(tokens[2], 'Transfer')
             .withArgs(
               computePoolAddress(factory.address, [tokens[2].address, tokens[1].address], FeeAmount.MEDIUM),
-              trader.address,
+              router.address,
               1
             )
             .to.emit(tokens[1], 'Transfer')
@@ -627,6 +652,8 @@ describe('SwapRouter', function () {
               computePoolAddress(factory.address, [tokens[1].address, tokens[0].address], FeeAmount.MEDIUM),
               5
             )
+            .to.emit(tokens[2], 'Transfer')
+            .withArgs(router.address, trader.address, 1)
         })
       })
 
@@ -731,9 +758,7 @@ describe('SwapRouter', function () {
           tokenIn,
           tokenOut,
           fee: FeeAmount.MEDIUM,
-          recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
           amountOut,
-          amountInMaximum,
           sqrtPriceLimitX96:
             sqrtPriceLimitX96 ?? tokenIn.toLowerCase() < tokenOut.toLowerCase()
               ? BigNumber.from('4295128740')
@@ -741,15 +766,18 @@ describe('SwapRouter', function () {
         }
 
         const data = [router.interface.encodeFunctionData('exactOutputSingle', [params])]
-        if (inputIsWETH9) data.push(router.interface.encodeFunctionData('refundETH'))
-        if (outputIsWETH9) data.push(router.interface.encodeFunctionData('unwrapWETH9', [amountOut, trader.address]))
+        if (inputIsWETH9) {
+          data.push(router.interface.encodeFunctionData('refundETH'))
+        }
+        if (outputIsWETH9) {
+          data.push(encodeUnwrapWETH9(amountOut))
+        } else {
+          data.push(encodeSweepToken(tokenOut, amountOut))
+        }
 
         // ensure that the swap fails if the limit is any tighter
-        params.amountInMaximum -= 1
-        await expect(router.connect(trader).exactOutputSingle(params, { value })).to.be.revertedWith(
-          'Too much requested'
-        )
-        params.amountInMaximum += 1
+        const amountIn = await router.connect(trader).callStatic.exactOutputSingle(params, { value })
+        expect(amountIn.toNumber()).to.be.eq(amountInMaximum)
 
         return router.connect(trader).multicall(data, { value })
       }
@@ -857,24 +885,25 @@ describe('SwapRouter', function () {
         const amountOutMinimum = 100
         const params = {
           path: encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
-          recipient: router.address,
           amountIn: 102,
-          amountOutMinimum,
         }
+
+        const functionSignature = 'sweepTokenWithFee(address,uint256,address,uint256,address)'
 
         const data = [
           router.interface.encodeFunctionData('exactInput', [params]),
-          router.interface.encodeFunctionData('sweepTokenWithFee', [
-            tokens[1].address,
-            amountOutMinimum,
-            trader.address,
-            100,
-            feeRecipient,
-          ]),
+          solidityPack(
+            ['bytes4', 'bytes'],
+            [
+              router.interface.getSighash(functionSignature),
+              defaultAbiCoder.encode(
+                ['address', 'uint256', 'address', 'uint256', 'address'],
+                [tokens[1].address, amountOutMinimum, trader.address, 100, feeRecipient]
+              ),
+            ]
+          ),
         ]
-
         await router.connect(trader).multicall(data)
-
         const balance = await tokens[1].balanceOf(feeRecipient)
         expect(balance.eq(1)).to.be.eq(true)
       })
@@ -882,25 +911,27 @@ describe('SwapRouter', function () {
       it('#unwrapWETH9WithFee', async () => {
         const startBalance = await waffle.provider.getBalance(feeRecipient)
         await createPoolWETH9(tokens[0].address)
-
         const amountOutMinimum = 100
         const params = {
           path: encodePath([tokens[0].address, weth9.address], [FeeAmount.MEDIUM]),
-          recipient: router.address,
           amountIn: 102,
-          amountOutMinimum,
         }
+
+        const functionSignature = 'unwrapWETH9WithFee(uint256,address,uint256,address)'
 
         const data = [
           router.interface.encodeFunctionData('exactInput', [params]),
-          router.interface.encodeFunctionData('unwrapWETH9WithFee', [
-            amountOutMinimum,
-            trader.address,
-            100,
-            feeRecipient,
-          ]),
+          solidityPack(
+            ['bytes4', 'bytes'],
+            [
+              router.interface.getSighash(functionSignature),
+              defaultAbiCoder.encode(
+                ['uint256', 'address', 'uint256', 'address'],
+                [amountOutMinimum, trader.address, 100, feeRecipient]
+              ),
+            ]
+          ),
         ]
-
         await router.connect(trader).multicall(data)
         const endBalance = await waffle.provider.getBalance(feeRecipient)
         expect(endBalance.sub(startBalance).eq(1)).to.be.eq(true)
