@@ -4,4 +4,6 @@ pragma abicoder v2;
 
 /// @title Router token swapping functionality
 /// @notice Functions for swapping tokens via Uniswap V2
-interface IV2SwapRouter {}
+interface IV2SwapRouter {
+
+}

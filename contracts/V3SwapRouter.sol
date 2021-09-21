@@ -101,11 +101,15 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
         override
         returns (uint256 amountOut)
     {
-        return exactInputInternal(
-            params.amountIn,
-            params.sqrtPriceLimitX96,
-            SwapCallbackData({path: abi.encodePacked(params.tokenIn, params.fee, params.tokenOut), payer: msg.sender})
-        );
+        return
+            exactInputInternal(
+                params.amountIn,
+                params.sqrtPriceLimitX96,
+                SwapCallbackData({
+                    path: abi.encodePacked(params.tokenIn, params.fee, params.tokenOut),
+                    payer: msg.sender
+                })
+            );
     }
 
     /// @inheritdoc IV3SwapRouter
