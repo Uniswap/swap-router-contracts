@@ -13,7 +13,7 @@ import { getMaxTick, getMinTick } from './shared/ticks'
 
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
-describe('SwapRouter gas tests', function () {
+describe.skip('SwapRouter gas tests', function () {
   this.timeout(40000)
   let wallet: Wallet
   let trader: Wallet
