@@ -15,6 +15,9 @@ import { defaultAbiCoder } from '@ethersproject/abi'
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 import { solidityPack } from 'ethers/lib/utils'
 
+const MSG_SENDER = '0x0000000000000000000000000000000000000000'
+const ADDRESS_THIS = '0x0000000000000000000000000000000000000001'
+
 describe('SwapRouter gas tests', function () {
   this.timeout(40000)
   let wallet: Wallet
@@ -110,16 +113,6 @@ describe('SwapRouter gas tests', function () {
     )
   }
 
-  function encodeSweepToken(token: string, amount: number) {
-    return solidityPack(
-      ['bytes4', 'bytes'],
-      [
-        router.interface.getSighash('sweepToken(address,uint256)'),
-        defaultAbiCoder.encode(['address', 'uint256'], [token, amount]),
-      ]
-    )
-  }
-
   before('create fixture loader', async () => {
     const wallets = await (ethers as any).getSigners()
     ;[wallet, trader] = wallets
@@ -143,14 +136,14 @@ describe('SwapRouter gas tests', function () {
 
     const params = {
       path: encodePath(tokens, new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
+      recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
       amountIn,
+      amountOutMinimum,
     }
 
     const data = [router.interface.encodeFunctionData('exactInput', [params])]
     if (outputIsWETH9) {
       data.push(encodeUnwrapWETH9(amountOutMinimum))
-    } else {
-      data.push(encodeSweepToken(tokens[tokens.length - 1], amountOutMinimum))
     }
 
     // optimized for the gas test
@@ -175,18 +168,15 @@ describe('SwapRouter gas tests', function () {
       tokenIn,
       tokenOut,
       fee: FeeAmount.MEDIUM,
-      sqrtPriceLimitX96:
-        sqrtPriceLimitX96 ?? tokenIn.toLowerCase() < tokenOut.toLowerCase()
-          ? BigNumber.from('4295128740')
-          : BigNumber.from('1461446703485210103287273052203988822378723970341'),
+      recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
       amountIn,
+      amountOutMinimum,
+      sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
     }
 
     const data = [router.interface.encodeFunctionData('exactInputSingle', [params])]
     if (outputIsWETH9) {
       data.push(encodeUnwrapWETH9(amountOutMinimum))
-    } else {
-      data.push(encodeSweepToken(tokenOut, amountOutMinimum))
     }
 
     // optimized for the gas test
@@ -206,7 +196,9 @@ describe('SwapRouter gas tests', function () {
 
     const params = {
       path: encodePath(tokens.slice().reverse(), new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
+      recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
       amountOut,
+      amountInMaximum,
     }
 
     const data = [router.interface.encodeFunctionData('exactOutput', [params])]
@@ -216,11 +208,12 @@ describe('SwapRouter gas tests', function () {
 
     if (outputIsWETH9) {
       data.push(encodeUnwrapWETH9(amountOut))
-    } else {
-      data.push(encodeSweepToken(tokens[tokens.length - 1], amountOut))
     }
 
-    return router.connect(trader).multicall(data, { value })
+    // optimized for the gas test
+    return data.length === 1
+      ? router.connect(trader).exactOutput(params, { value })
+      : router.connect(trader).multicall(data, { value })
   }
 
   async function exactOutputSingle(
@@ -239,13 +232,10 @@ describe('SwapRouter gas tests', function () {
       tokenIn,
       tokenOut,
       fee: FeeAmount.MEDIUM,
-      recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
+      recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
       amountOut,
       amountInMaximum,
-      sqrtPriceLimitX96:
-        sqrtPriceLimitX96 ?? tokenIn.toLowerCase() < tokenOut.toLowerCase()
-          ? BigNumber.from('4295128740')
-          : BigNumber.from('1461446703485210103287273052203988822378723970341'),
+      sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
     }
 
     const data = [router.interface.encodeFunctionData('exactOutputSingle', [params])]
@@ -255,11 +245,12 @@ describe('SwapRouter gas tests', function () {
 
     if (outputIsWETH9) {
       data.push(encodeUnwrapWETH9(amountOut))
-    } else {
-      data.push(encodeSweepToken(tokenOut, amountOut))
     }
 
-    return router.connect(trader).multicall(data, { value })
+    // optimized for the gas test
+    return data.length === 1
+      ? router.connect(trader).exactOutputSingle(params, { value })
+      : router.connect(trader).multicall(data, { value })
   }
 
   // TODO should really throw this in the fixture

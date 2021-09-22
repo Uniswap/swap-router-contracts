@@ -11,7 +11,9 @@ interface IV3SwapRouter is IUniswapV3SwapCallback {
         address tokenIn;
         address tokenOut;
         uint24 fee;
+        address recipient;
         uint256 amountIn;
+        uint256 amountOutMinimum;
         uint160 sqrtPriceLimitX96;
     }
 
@@ -22,7 +24,9 @@ interface IV3SwapRouter is IUniswapV3SwapCallback {
 
     struct ExactInputParams {
         bytes path;
+        address recipient;
         uint256 amountIn;
+        uint256 amountOutMinimum;
     }
 
     /// @notice Swaps `amountIn` of one token for as much as possible of another along the specified path
@@ -34,7 +38,9 @@ interface IV3SwapRouter is IUniswapV3SwapCallback {
         address tokenIn;
         address tokenOut;
         uint24 fee;
+        address recipient;
         uint256 amountOut;
+        uint256 amountInMaximum;
         uint160 sqrtPriceLimitX96;
     }
 
@@ -45,7 +51,9 @@ interface IV3SwapRouter is IUniswapV3SwapCallback {
 
     struct ExactOutputParams {
         bytes path;
+        address recipient;
         uint256 amountOut;
+        uint256 amountInMaximum;
     }
 
     /// @notice Swaps as little as possible of one token for `amountOut` of another along the specified path (reversed)

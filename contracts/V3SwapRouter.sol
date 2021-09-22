@@ -19,6 +19,12 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
     using Path for bytes;
     using SafeCast for uint256;
 
+    /// @dev Used as a flag for identifying msg.sender, saves gas by sending more 0 bytes
+    address private constant MSG_SENDER = address(0);
+    
+    /// @dev Used as a flag for identifying address(this), saves gas by sending more 0 bytes
+    address private constant ADDRESS_THIS = address(1);
+
     /// @dev Used as the placeholder value for amountInCached, because the computed amount in for an exact output swap
     /// can never actually be this value
     uint256 private constant DEFAULT_AMOUNT_IN_CACHED = type(uint256).max;
@@ -55,17 +61,21 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
             amount0Delta > 0
                 ? (tokenIn < tokenOut, uint256(amount0Delta))
                 : (tokenOut < tokenIn, uint256(amount1Delta));
+
         if (isExactInput) {
-            pay(tokenIn, data.payer, msg.sender, amountToPay);
+            // we only find and replace for exact input, because for exact output the payer has to be explicitly passed
+            // furthermore, we only match for address(this) because in this context msg.sender is a pool not a swapper
+            address payer = data.payer == ADDRESS_THIS ? address(this) : data.payer;
+            pay(tokenIn, payer, msg.sender, amountToPay);
         } else {
             // either initiate the next swap or pay
             if (data.path.hasMultiplePools()) {
                 data.path = data.path.skipToken();
-                exactOutputInternal(amountToPay, msg.sender, 0, data);
+                exactOutputInternal(amountToPay, MSG_SENDER, 0, data);
             } else {
                 amountInCached = amountToPay;
-                tokenIn = tokenOut; // swap in/out because exact output swaps are reversed
-                pay(tokenIn, data.payer, msg.sender, amountToPay);
+                // note that because exact output swaps are executed in reverse order, tokenOut is actually tokenIn
+                pay(tokenOut, data.payer, msg.sender, amountToPay);
             }
         }
     }
@@ -73,16 +83,21 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
     /// @dev Performs a single exact input swap
     function exactInputInternal(
         uint256 amountIn,
+        address recipient,
         uint160 sqrtPriceLimitX96,
         SwapCallbackData memory data
     ) private returns (uint256 amountOut) {
+        // find and replace recipient addresses
+        if (recipient == MSG_SENDER) recipient = msg.sender;
+        else if (recipient == ADDRESS_THIS) recipient = address(this);
+
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
 
         bool zeroForOne = tokenIn < tokenOut;
 
         (int256 amount0, int256 amount1) =
             getPool(tokenIn, tokenOut, fee).swap(
-                address(this),
+                recipient,
                 zeroForOne,
                 amountIn.toInt256(),
                 sqrtPriceLimitX96 == 0
@@ -101,15 +116,13 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
         override
         returns (uint256 amountOut)
     {
-        return
-            exactInputInternal(
-                params.amountIn,
-                params.sqrtPriceLimitX96,
-                SwapCallbackData({
-                    path: abi.encodePacked(params.tokenIn, params.fee, params.tokenOut),
-                    payer: msg.sender
-                })
-            );
+        amountOut = exactInputInternal(
+            params.amountIn,
+            params.recipient,
+            params.sqrtPriceLimitX96,
+            SwapCallbackData({path: abi.encodePacked(params.tokenIn, params.fee, params.tokenOut), payer: msg.sender})
+        );
+        require(amountOut >= params.amountOutMinimum, 'Too little received');
     }
 
     /// @inheritdoc IV3SwapRouter
@@ -122,6 +135,7 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
             // the outputs of prior swaps become the inputs to subsequent ones
             params.amountIn = exactInputInternal(
                 params.amountIn,
+                hasMultiplePools ? ADDRESS_THIS : params.recipient, // for intermediate swaps, this contract custodies
                 0,
                 SwapCallbackData({
                     path: params.path.getFirstPool(), // only the first pool in the path is necessary
@@ -131,12 +145,15 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
 
             // decide whether to continue or terminate
             if (hasMultiplePools) {
-                payer = address(this); // at this point, the caller has paid
+                payer = ADDRESS_THIS; // at this point, the caller has paid
                 params.path = params.path.skipToken();
             } else {
-                return params.amountIn;
+                amountOut = params.amountIn;
+                break;
             }
         }
+
+        require(amountOut >= params.amountOutMinimum, 'Too little received');
     }
 
     /// @dev Performs a single exact output swap
@@ -146,6 +163,10 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
         uint160 sqrtPriceLimitX96,
         SwapCallbackData memory data
     ) private returns (uint256 amountIn) {
+        // find and replace recipient addresses
+        if (recipient == MSG_SENDER) recipient = msg.sender;
+        else if (recipient == ADDRESS_THIS) recipient = address(this);
+
         (address tokenOut, address tokenIn, uint24 fee) = data.path.decodeFirstPool();
 
         bool zeroForOne = tokenIn < tokenOut;
@@ -180,11 +201,13 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
         // avoid an SLOAD by using the swap return data
         amountIn = exactOutputInternal(
             params.amountOut,
-            address(this),
+            params.recipient,
             params.sqrtPriceLimitX96,
             SwapCallbackData({path: abi.encodePacked(params.tokenOut, params.fee, params.tokenIn), payer: msg.sender})
         );
 
+        // allow small gas savings by omitting slippage check if calldata is all 0s
+        if (params.amountInMaximum > 0) require(amountIn <= params.amountInMaximum, 'Too much requested');
         // has to be reset even though we don't use it in the single hop case
         amountInCached = DEFAULT_AMOUNT_IN_CACHED;
     }
@@ -195,12 +218,14 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
         // swap, which happens first, and subsequent swaps are paid for within nested callback frames
         exactOutputInternal(
             params.amountOut,
-            address(this),
+            params.recipient,
             0,
             SwapCallbackData({path: params.path, payer: msg.sender})
         );
 
         amountIn = amountInCached;
+        // allow small gas savings by omitting slippage check if calldata is all 0s
+        if (params.amountInMaximum > 0) require(amountIn <= params.amountInMaximum, 'Too much requested');
         amountInCached = DEFAULT_AMOUNT_IN_CACHED;
     }
 }

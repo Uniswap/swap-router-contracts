@@ -13,6 +13,9 @@ import { computePoolAddress } from './shared/computePoolAddress'
 import { defaultAbiCoder } from '@ethersproject/abi'
 import { solidityPack } from 'ethers/lib/utils'
 
+const MSG_SENDER = '0x0000000000000000000000000000000000000000'
+const ADDRESS_THIS = '0x0000000000000000000000000000000000000001'
+
 describe('SwapRouter', function () {
   this.timeout(40000)
   let wallet: Wallet
@@ -67,17 +70,6 @@ describe('SwapRouter', function () {
       [
         router.interface.getSighash(functionSignature),
         defaultAbiCoder.encode(router.interface.functions[functionSignature].inputs, [amount, trader.address]),
-      ]
-    )
-  }
-
-  function encodeSweepToken(token: string, amount: number) {
-    const functionSignature = 'sweepToken(address,uint256,address)'
-    return solidityPack(
-      ['bytes4', 'bytes'],
-      [
-        router.interface.getSighash(functionSignature),
-        defaultAbiCoder.encode(router.interface.functions[functionSignature].inputs, [token, amount, trader.address]),
       ]
     )
   }
@@ -173,14 +165,14 @@ describe('SwapRouter', function () {
 
         const params = {
           path: encodePath(tokens, new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
+          recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
           amountIn,
+          amountOutMinimum,
         }
 
         const data = [router.interface.encodeFunctionData('exactInput', [params])]
         if (outputIsWETH9) {
           data.push(encodeUnwrapWETH9(amountOutMinimum))
-        } else {
-          data.push(encodeSweepToken(tokens[tokens.length - 1], amountOutMinimum))
         }
 
         // ensure that the swap fails if the limit is any tighter
@@ -291,11 +283,9 @@ describe('SwapRouter', function () {
             .to.emit(tokens[2], 'Transfer')
             .withArgs(
               computePoolAddress(factory.address, [tokens[1].address, tokens[2].address], FeeAmount.MEDIUM),
-              router.address,
+              trader.address,
               1
             )
-            .to.emit(tokens[2], 'Transfer')
-            .withArgs(router.address, trader.address, 1)
         })
       })
 
@@ -400,18 +390,15 @@ describe('SwapRouter', function () {
           tokenIn,
           tokenOut,
           fee: FeeAmount.MEDIUM,
-          sqrtPriceLimitX96:
-            sqrtPriceLimitX96 ?? tokenIn.toLowerCase() < tokenOut.toLowerCase()
-              ? BigNumber.from('4295128740')
-              : BigNumber.from('1461446703485210103287273052203988822378723970341'),
+          recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
           amountIn,
+          amountOutMinimum,
+          sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
         }
 
         const data = [router.interface.encodeFunctionData('exactInputSingle', [params])]
         if (outputIsWETH9) {
           data.push(encodeUnwrapWETH9(amountOutMinimum))
-        } else {
-          data.push(encodeSweepToken(tokenOut, amountOutMinimum))
         }
 
         // ensure that the swap fails if the limit is any tighter
@@ -533,7 +520,9 @@ describe('SwapRouter', function () {
 
         const params = {
           path: encodePath(tokens.slice().reverse(), new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
+          recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
           amountOut,
+          amountInMaximum,
         }
 
         const data = [router.interface.encodeFunctionData('exactOutput', [params])]
@@ -543,8 +532,6 @@ describe('SwapRouter', function () {
 
         if (outputIsWETH9) {
           data.push(encodeUnwrapWETH9(amountOut))
-        } else {
-          data.push(encodeSweepToken(tokens[tokens.length - 1], amountOut))
         }
 
         // ensure that the swap fails if the limit is any tighter
@@ -637,7 +624,7 @@ describe('SwapRouter', function () {
             .to.emit(tokens[2], 'Transfer')
             .withArgs(
               computePoolAddress(factory.address, [tokens[2].address, tokens[1].address], FeeAmount.MEDIUM),
-              router.address,
+              trader.address,
               1
             )
             .to.emit(tokens[1], 'Transfer')
@@ -652,8 +639,6 @@ describe('SwapRouter', function () {
               computePoolAddress(factory.address, [tokens[1].address, tokens[0].address], FeeAmount.MEDIUM),
               5
             )
-            .to.emit(tokens[2], 'Transfer')
-            .withArgs(router.address, trader.address, 1)
         })
       })
 
@@ -758,11 +743,10 @@ describe('SwapRouter', function () {
           tokenIn,
           tokenOut,
           fee: FeeAmount.MEDIUM,
+          recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
           amountOut,
-          sqrtPriceLimitX96:
-            sqrtPriceLimitX96 ?? tokenIn.toLowerCase() < tokenOut.toLowerCase()
-              ? BigNumber.from('4295128740')
-              : BigNumber.from('1461446703485210103287273052203988822378723970341'),
+          amountInMaximum,
+          sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
         }
 
         const data = [router.interface.encodeFunctionData('exactOutputSingle', [params])]
@@ -771,8 +755,6 @@ describe('SwapRouter', function () {
         }
         if (outputIsWETH9) {
           data.push(encodeUnwrapWETH9(amountOut))
-        } else {
-          data.push(encodeSweepToken(tokenOut, amountOut))
         }
 
         // ensure that the swap fails if the limit is any tighter
@@ -885,7 +867,9 @@ describe('SwapRouter', function () {
         const amountOutMinimum = 100
         const params = {
           path: encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
+          recipient: ADDRESS_THIS,
           amountIn: 102,
+          amountOutMinimum: 0,
         }
 
         const functionSignature = 'sweepTokenWithFee(address,uint256,address,uint256,address)'
@@ -914,7 +898,9 @@ describe('SwapRouter', function () {
         const amountOutMinimum = 100
         const params = {
           path: encodePath([tokens[0].address, weth9.address], [FeeAmount.MEDIUM]),
+          recipient: ADDRESS_THIS,
           amountIn: 102,
+          amountOutMinimum: 0,
         }
 
         const functionSignature = 'unwrapWETH9WithFee(uint256,address,uint256,address)'
