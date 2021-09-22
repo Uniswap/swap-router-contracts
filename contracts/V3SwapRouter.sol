@@ -21,7 +21,7 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
 
     /// @dev Used as a flag for identifying msg.sender, saves gas by sending more 0 bytes
     address private constant MSG_SENDER = address(0);
-    
+
     /// @dev Used as a flag for identifying address(this), saves gas by sending more 0 bytes
     address private constant ADDRESS_THIS = address(1);
 
