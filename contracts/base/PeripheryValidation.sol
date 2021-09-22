@@ -5,11 +5,11 @@ import '../interfaces/IPeripheryValidation.sol';
 import './BlockTimestamp.sol';
 
 abstract contract PeripheryValidation is IPeripheryValidation, BlockTimestamp {
-    function checkDeadline(uint256 deadline) external view override {
+    function checkDeadline(uint256 deadline) external payable override {
         require(_blockTimestamp() <= deadline, 'Transaction too old');
     }
 
-    function checkPreviousBlockhash(bytes32 previousBlockhash) external view override {
+    function checkPreviousBlockhash(bytes32 previousBlockhash) external payable override {
         require(blockhash(block.number - 1) == previousBlockhash, 'Unexpected parent block');
     }
 }

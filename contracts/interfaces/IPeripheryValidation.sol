@@ -6,9 +6,9 @@ pragma solidity =0.7.6;
 interface IPeripheryValidation {
     /// @notice Verify that this transaction is not occurring after a given deadline
     /// @param deadline The timestamp in epoch seconds before or on which the transaction's block must occur
-    function checkDeadline(uint256 deadline) external view;
+    function checkDeadline(uint256 deadline) external payable;
 
     /// @notice Verify that this transaction is occurring in a specific block
     /// @param previousBlockhash The hash of the block prior to the one being mined currently
-    function checkPreviousBlockhash(bytes32 previousBlockhash) external view;
+    function checkPreviousBlockhash(bytes32 previousBlockhash) external payable;
 }
