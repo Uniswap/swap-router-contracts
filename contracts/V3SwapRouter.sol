@@ -206,8 +206,7 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
             SwapCallbackData({path: abi.encodePacked(params.tokenOut, params.fee, params.tokenIn), payer: msg.sender})
         );
 
-        // allow small gas savings by omitting slippage check if calldata is all 0s
-        if (params.amountInMaximum > 0) require(amountIn <= params.amountInMaximum, 'Too much requested');
+        require(amountIn <= params.amountInMaximum, 'Too much requested');
         // has to be reset even though we don't use it in the single hop case
         amountInCached = DEFAULT_AMOUNT_IN_CACHED;
     }
@@ -224,8 +223,7 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
         );
 
         amountIn = amountInCached;
-        // allow small gas savings by omitting slippage check if calldata is all 0s
-        if (params.amountInMaximum > 0) require(amountIn <= params.amountInMaximum, 'Too much requested');
+        require(amountIn <= params.amountInMaximum, 'Too much requested');
         amountInCached = DEFAULT_AMOUNT_IN_CACHED;
     }
 }

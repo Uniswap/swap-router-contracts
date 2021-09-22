@@ -138,7 +138,7 @@ describe('SwapRouter gas tests', function () {
       path: encodePath(tokens, new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
       recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
       amountIn,
-      amountOutMinimum,
+      amountOutMinimum: outputIsWETH9 ? 0 : amountOutMinimum, // save on calldata
     }
 
     const data = [router.interface.encodeFunctionData('exactInput', [params])]
@@ -170,7 +170,7 @@ describe('SwapRouter gas tests', function () {
       fee: FeeAmount.MEDIUM,
       recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
       amountIn,
-      amountOutMinimum,
+      amountOutMinimum: outputIsWETH9 ? 0 : amountOutMinimum, // save on calldata
       sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
     }
 
