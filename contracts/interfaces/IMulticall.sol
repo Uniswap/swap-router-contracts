@@ -17,7 +17,10 @@ interface IMulticall {
     /// @param previousBlockhash The expected parent blockHash
     /// @param data The encoded function data for each of the calls to make to this contract
     /// @return results The results from each of the calls passed in via data
-    function multicall(bytes32 previousBlockhash, bytes[] calldata data) external payable returns (bytes[] memory results);
+    function multicall(bytes32 previousBlockhash, bytes[] calldata data)
+        external
+        payable
+        returns (bytes[] memory results);
 
     /// @notice Call multiple functions in the current contract and return the data from all of them if they all succeed
     /// @dev The `msg.value` should not be trusted for any method callable from multicall.
