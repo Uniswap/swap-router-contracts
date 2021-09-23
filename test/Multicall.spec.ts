@@ -21,12 +21,14 @@ describe('Multicall', async () => {
 
   it('revert messages are returned', async () => {
     await expect(
-      multicall.multicall([multicall.interface.encodeFunctionData('functionThatRevertsWithError', ['abcdef'])])
+      multicall['multicall(bytes[])']([
+        multicall.interface.encodeFunctionData('functionThatRevertsWithError', ['abcdef']),
+      ])
     ).to.be.revertedWith('abcdef')
   })
 
   it('return data is properly encoded', async () => {
-    const [data] = await multicall.callStatic.multicall([
+    const [data] = await multicall.callStatic['multicall(bytes[])']([
       multicall.interface.encodeFunctionData('functionThatReturnsTuple', ['1', '2']),
     ])
     const {
@@ -38,12 +40,12 @@ describe('Multicall', async () => {
 
   describe('context is preserved', () => {
     it('msg.value', async () => {
-      await multicall.multicall([multicall.interface.encodeFunctionData('pays')], { value: 3 })
+      await multicall['multicall(bytes[])']([multicall.interface.encodeFunctionData('pays')], { value: 3 })
       expect(await multicall.paid()).to.eq(3)
     })
 
     it('msg.value used twice', async () => {
-      await multicall.multicall(
+      await multicall['multicall(bytes[])'](
         [multicall.interface.encodeFunctionData('pays'), multicall.interface.encodeFunctionData('pays')],
         { value: 3 }
       )
@@ -60,6 +62,8 @@ describe('Multicall', async () => {
   })
 
   it('gas cost of pay w/ multicall', async () => {
-    await snapshotGasCost(multicall.multicall([multicall.interface.encodeFunctionData('pays')], { value: 3 }))
+    await snapshotGasCost(
+      multicall['multicall(bytes[])']([multicall.interface.encodeFunctionData('pays')], { value: 3 })
+    )
   })
 })

@@ -8,9 +8,8 @@ import './V3SwapRouter.sol';
 import './base/PeripheryImmutableState.sol';
 import './base/Multicall.sol';
 import './base/SelfPermit.sol';
-import './base/PeripheryValidation.sol';
 
 /// @title Uniswap V2 and V3 Swap Router
-contract SwapRouter02 is ISwapRouter02, V2SwapRouter, V3SwapRouter, Multicall, SelfPermit, PeripheryValidation {
+contract SwapRouter02 is ISwapRouter02, V2SwapRouter, V3SwapRouter, Multicall, SelfPermit {
     constructor(address _factory, address _WETH9) PeripheryImmutableState(_factory, _WETH9) {}
 }

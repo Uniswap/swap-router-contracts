@@ -141,15 +141,12 @@ describe('SwapRouter gas tests', function () {
       amountOutMinimum: outputIsWETH9 ? 0 : amountOutMinimum, // save on calldata
     }
 
-    const data = [
-      router.interface.encodeFunctionData('checkDeadline', [1]),
-      router.interface.encodeFunctionData('exactInput', [params]),
-    ]
+    const data = [router.interface.encodeFunctionData('exactInput', [params])]
     if (outputIsWETH9) {
       data.push(encodeUnwrapWETH9(amountOutMinimum))
     }
 
-    return router.connect(trader).multicall(data, { value })
+    return router.connect(trader)['multicall(uint256,bytes[])'](1, data, { value })
   }
 
   async function exactInputSingle(
@@ -174,15 +171,12 @@ describe('SwapRouter gas tests', function () {
       sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
     }
 
-    const data = [
-      router.interface.encodeFunctionData('checkDeadline', [1]),
-      router.interface.encodeFunctionData('exactInputSingle', [params]),
-    ]
+    const data = [router.interface.encodeFunctionData('exactInputSingle', [params])]
     if (outputIsWETH9) {
       data.push(encodeUnwrapWETH9(amountOutMinimum))
     }
 
-    return router.connect(trader).multicall(data, { value })
+    return router.connect(trader)['multicall(uint256,bytes[])'](1, data, { value })
   }
 
   async function exactOutput(tokens: string[]): Promise<ContractTransaction> {
@@ -201,10 +195,7 @@ describe('SwapRouter gas tests', function () {
       amountInMaximum,
     }
 
-    const data = [
-      router.interface.encodeFunctionData('checkDeadline', [1]),
-      router.interface.encodeFunctionData('exactOutput', [params]),
-    ]
+    const data = [router.interface.encodeFunctionData('exactOutput', [params])]
     if (inputIsWETH9) {
       data.push(router.interface.encodeFunctionData('refundETH'))
     }
@@ -213,7 +204,7 @@ describe('SwapRouter gas tests', function () {
       data.push(encodeUnwrapWETH9(amountOut))
     }
 
-    return router.connect(trader).multicall(data, { value })
+    return router.connect(trader)['multicall(uint256,bytes[])'](1, data, { value })
   }
 
   async function exactOutputSingle(
@@ -238,10 +229,7 @@ describe('SwapRouter gas tests', function () {
       sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
     }
 
-    const data = [
-      router.interface.encodeFunctionData('checkDeadline', [1]),
-      router.interface.encodeFunctionData('exactOutputSingle', [params]),
-    ]
+    const data = [router.interface.encodeFunctionData('exactOutputSingle', [params])]
     if (inputIsWETH9) {
       data.push(router.interface.encodeFunctionData('refundETH'))
     }
@@ -250,7 +238,7 @@ describe('SwapRouter gas tests', function () {
       data.push(encodeUnwrapWETH9(amountOut))
     }
 
-    return router.connect(trader).multicall(data, { value })
+    return router.connect(trader)['multicall(uint256,bytes[])'](1, data, { value })
   }
 
   // TODO should really throw this in the fixture

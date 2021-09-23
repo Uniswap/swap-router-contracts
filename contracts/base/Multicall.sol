@@ -3,12 +3,35 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 import '../interfaces/IMulticall.sol';
+import '../base/PeripheryValidation.sol';
 
 /// @title Multicall
 /// @notice Enables calling multiple methods in a single call to the contract
-abstract contract Multicall is IMulticall {
+abstract contract Multicall is IMulticall, PeripheryValidation {
     /// @inheritdoc IMulticall
-    function multicall(bytes[] calldata data) external payable override returns (bytes[] memory results) {
+    function multicall(uint256 deadline, bytes[] calldata data)
+        external
+        payable
+        override
+        checkDeadline(deadline)
+        returns (bytes[] memory)
+    {
+        return multicall(data);
+    }
+
+    /// @inheritdoc IMulticall
+    function multicall(bytes32 previousBlockhash, bytes[] calldata data)
+        external
+        payable
+        override
+        checkPreviousBlockhash(previousBlockhash)
+        returns (bytes[] memory)
+    {
+        return multicall(data);
+    }
+
+    /// @inheritdoc IMulticall
+    function multicall(bytes[] calldata data) public payable override returns (bytes[] memory results) {
         results = new bytes[](data.length);
         for (uint256 i = 0; i < data.length; i++) {
             (bool success, bytes memory result) = address(this).delegatecall(data[i]);

@@ -179,7 +179,7 @@ describe('SwapRouter', function () {
         const amountOut = await router.connect(trader).callStatic.exactInput(params, { value })
         expect(amountOut.toNumber()).to.be.eq(amountOutMinimum)
 
-        return router.connect(trader).multicall(data, { value })
+        return router.connect(trader)['multicall(bytes[])'](data, { value })
       }
 
       describe('single-pool', () => {
@@ -408,7 +408,7 @@ describe('SwapRouter', function () {
         // optimized for the gas test
         return data.length === 1
           ? router.connect(trader).exactInputSingle(params, { value })
-          : router.connect(trader).multicall(data, { value })
+          : router.connect(trader)['multicall(bytes[])'](data, { value })
       }
 
       it('0 -> 1', async () => {
@@ -538,7 +538,7 @@ describe('SwapRouter', function () {
         const amountIn = await router.connect(trader).callStatic.exactOutput(params, { value })
         expect(amountIn.toNumber()).to.be.eq(amountInMaximum)
 
-        return router.connect(trader).multicall(data, { value })
+        return router.connect(trader)['multicall(bytes[])'](data, { value })
       }
 
       describe('single-pool', () => {
@@ -761,7 +761,7 @@ describe('SwapRouter', function () {
         const amountIn = await router.connect(trader).callStatic.exactOutputSingle(params, { value })
         expect(amountIn.toNumber()).to.be.eq(amountInMaximum)
 
-        return router.connect(trader).multicall(data, { value })
+        return router.connect(trader)['multicall(bytes[])'](data, { value })
       }
 
       it('0 -> 1', async () => {
@@ -887,7 +887,7 @@ describe('SwapRouter', function () {
             ]
           ),
         ]
-        await router.connect(trader).multicall(data)
+        await router.connect(trader)['multicall(bytes[])'](data)
         const balance = await tokens[1].balanceOf(feeRecipient)
         expect(balance.eq(1)).to.be.eq(true)
       })
@@ -918,7 +918,7 @@ describe('SwapRouter', function () {
             ]
           ),
         ]
-        await router.connect(trader).multicall(data)
+        await router.connect(trader)['multicall(bytes[])'](data)
         const endBalance = await waffle.provider.getBalance(feeRecipient)
         expect(endBalance.sub(startBalance).eq(1)).to.be.eq(true)
       })
