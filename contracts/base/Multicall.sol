@@ -3,11 +3,11 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 import '../interfaces/IMulticall.sol';
-import '../base/PeripheryValidation.sol';
+import '../base/PeripheryValidationExtended.sol';
 
 /// @title Multicall
 /// @notice Enables calling multiple methods in a single call to the contract
-abstract contract Multicall is IMulticall, PeripheryValidation {
+abstract contract Multicall is IMulticall, PeripheryValidationExtended {
     /// @inheritdoc IMulticall
     function multicall(uint256 deadline, bytes[] calldata data)
         external
