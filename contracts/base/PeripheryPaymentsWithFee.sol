@@ -3,12 +3,12 @@ pragma solidity >=0.7.5;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
+import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
 
 import './PeripheryPayments.sol';
 import '../interfaces/IPeripheryPaymentsWithFee.sol';
 
 import '../interfaces/external/IWETH9.sol';
-import '../libraries/TransferHelper.sol';
 
 abstract contract PeripheryPaymentsWithFee is PeripheryPayments, IPeripheryPaymentsWithFee {
     using LowGasSafeMath for uint256;
