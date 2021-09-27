@@ -75,4 +75,9 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
             TransferHelper.safeTransferFrom(token, payer, recipient, value);
         }
     }
+
+    /// @inheritdoc IPeripheryPayments
+    function pull(address token, uint256 value) external payable override {
+        TransferHelper.safeTransferFrom(token, msg.sender, address(this), value);
+    }
 }
