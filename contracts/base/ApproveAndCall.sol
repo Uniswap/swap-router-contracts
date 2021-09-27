@@ -2,33 +2,57 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import '../interfaces/IApproveAndCall.sol';
+import './ImmutableState.sol';
 
-abstract contract ApproveAndCall is IApproveAndCall  {
-    function approveAndCall(
-        address[] calldata approveTokens,
-        uint256[] calldata approveAmounts,
-        address target,
-        bytes[] calldata data
-    )
-        external
-        payable
-        override
-        returns (bytes[] memory results)
-    {
-        require(approveTokens.length == approveAmounts.length, 'Length mismatch');
+abstract contract ApproveAndCall is IApproveAndCall, ImmutableState  {
+    function tryApprove(address token, uint256 amount) private returns (bool) {
+        (bool success, bytes memory data) = token.call(
+            abi.encodeWithSelector(IERC20.approve.selector, positionManager, amount)
+        );
+        return success && (data.length == 0 || abi.decode(data, (bool)));
+    }
 
-        // approve token(s) for amount(s)
-        for (uint256 i = 0; i < data.length; i++) {
-            TransferHelper.safeApprove(approveTokens[i], target, approveAmounts[0]);
-        }
+    /// @dev Can be called off-chain to determine which of the more efficient functions below should be called
+    function approve(address token) external payable override returns (SuccessfulApproveType) {
+        // try type(uint256).max / type(uint256).max - 1
+        if (tryApprove(token, type(uint256).max)) return SuccessfulApproveType.MAX;
+        if (tryApprove(token, type(uint256).max - 1)) return SuccessfulApproveType.MAX_MINUS_ONE;
 
-        // make call(s)
+        // set approval to 0 (must succeed)
+        require(tryApprove(token, 0), 'A0');
+
+        // try type(uint256).max / type(uint256).max - 1
+        if (tryApprove(token, type(uint256).max)) return SuccessfulApproveType.ZERO_THEN_MAX;
+        if (tryApprove(token, type(uint256).max - 1)) return SuccessfulApproveType.ZERO_THEN_MAX_MINUS_ONE;
+
+        revert('AR');
+    }
+
+    function approveMax(address token) external payable override {
+        require(tryApprove(token, type(uint256).max), 'M');
+    }
+
+    function approveMaxMinusOne(address token) external payable override {
+        require(tryApprove(token, type(uint256).max - 1), 'M1');
+    }
+
+    function approveZeroThenMax(address token) external payable override {
+        require(tryApprove(token, 0), 'ZERO');
+        require(tryApprove(token, type(uint256).max), '0M');
+    }
+
+    function approveZeroThenMaxMinusOne(address token) external payable override {
+        require(tryApprove(token, 0), 'ZERO');
+        require(tryApprove(token, type(uint256).max - 1), '0M1');
+    }
+
+    function callPositionManager(bytes[] calldata data) external payable override returns (bytes[] memory results) {
         results = new bytes[](data.length);
         for (uint256 i = 0; i < data.length; i++) {
-            (bool success, bytes memory result) = target.call(data[i]);
+            (bool success, bytes memory result) = positionManager.call(data[i]);
 
             if (!success) {
                 // Next 5 lines from https://ethereum.stackexchange.com/a/83577
@@ -40,11 +64,6 @@ abstract contract ApproveAndCall is IApproveAndCall  {
             }
 
             results[i] = result;
-        }
-
-        // unapprove token(s)
-        for (uint256 i = 0; i < data.length; i++) {
-            TransferHelper.safeApprove(approveTokens[i], target, 0);
         }
     }
 }
