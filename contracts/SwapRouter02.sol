@@ -12,16 +12,11 @@ import './base/ApproveAndCall.sol';
 import './base/Multicall.sol';
 
 /// @title Uniswap V2 and V3 Swap Router
-contract SwapRouter02 is
-    ISwapRouter02,
-    V2SwapRouter,
-    V3SwapRouter,
-    ApproveAndCall,
-    Multicall,
-    SelfPermit
-{
-    constructor(address _factoryV2, address factoryV3, address _positionManager, address _WETH9)
-        ImmutableState(_factoryV2, _positionManager)
-        PeripheryImmutableState(factoryV3, _WETH9)
-        {}
+contract SwapRouter02 is ISwapRouter02, V2SwapRouter, V3SwapRouter, ApproveAndCall, Multicall, SelfPermit {
+    constructor(
+        address _factoryV2,
+        address factoryV3,
+        address _positionManager,
+        address _WETH9
+    ) ImmutableState(_factoryV2, _positionManager) PeripheryImmutableState(factoryV3, _WETH9) {}
 }
