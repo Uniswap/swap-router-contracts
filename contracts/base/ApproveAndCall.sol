@@ -48,21 +48,17 @@ abstract contract ApproveAndCall is IApproveAndCall, ImmutableState {
         require(tryApprove(token, type(uint256).max - 1), '0M1');
     }
 
-    function callPositionManager(bytes[] calldata data) external payable override returns (bytes[] memory results) {
-        results = new bytes[](data.length);
-        for (uint256 i = 0; i < data.length; i++) {
-            (bool success, bytes memory result) = positionManager.call(data[i]);
+    function callPositionManager(bytes calldata data) external payable override returns (bytes memory result) {
+        bool success;
+        (success, result) = positionManager.call(data);
 
-            if (!success) {
-                // Next 5 lines from https://ethereum.stackexchange.com/a/83577
-                if (result.length < 68) revert();
-                assembly {
-                    result := add(result, 0x04)
-                }
-                revert(abi.decode(result, (string)));
+        if (!success) {
+            // Next 5 lines from https://ethereum.stackexchange.com/a/83577
+            if (result.length < 68) revert();
+            assembly {
+                result := add(result, 0x04)
             }
-
-            results[i] = result;
+            revert(abi.decode(result, (string)));
         }
     }
 }

@@ -15,5 +15,5 @@ interface IApproveAndCall {
 
     function approveZeroThenMaxMinusOne(address token) external payable;
 
-    function callPositionManager(bytes[] calldata data) external payable returns (bytes[] memory results);
+    function callPositionManager(bytes calldata data) external payable returns (bytes memory result);
 }

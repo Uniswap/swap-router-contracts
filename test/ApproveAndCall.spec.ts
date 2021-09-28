@@ -140,7 +140,7 @@ describe('ApproveAndCall', function () {
       }
       data.push(
         router.interface.encodeFunctionData('callPositionManager', [
-          [nft.interface.encodeFunctionData('mint', [liquidityParams])],
+          nft.interface.encodeFunctionData('mint', [liquidityParams]),
         ])
       )
 
