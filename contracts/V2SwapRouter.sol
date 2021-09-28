@@ -15,6 +15,12 @@ import './base/PeripheryPaymentsWithFeeExtended.sol';
 abstract contract V2SwapRouter is IV2SwapRouter, ImmutableState, PeripheryPaymentsWithFeeExtended {
     using LowGasSafeMath for uint256;
 
+    /// @dev Used as a flag for identifying msg.sender, saves gas by sending more 0 bytes
+    address private constant MSG_SENDER = address(0);
+
+    /// @dev Used as a flag for identifying address(this), saves gas by sending more 0 bytes
+    address private constant ADDRESS_THIS = address(1);
+
     // supports fee-on-transfer tokens
     // requires the initial amount to have already been sent to the first pair
     function _swap(address[] memory path, address _to) private {
@@ -47,8 +53,15 @@ abstract contract V2SwapRouter is IV2SwapRouter, ImmutableState, PeripheryPaymen
         address to
     ) external payable override returns (uint256 amountOut) {
         pay(path[0], msg.sender, UniswapV2Library.pairFor(factoryV2, path[0], path[1]), amountIn);
+
+        // find and replace to addresses
+        if (to == MSG_SENDER) to = msg.sender;
+        else if (to == ADDRESS_THIS) to = address(this);
+
         uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
+
         _swap(path, to);
+
         amountOut = IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore);
         require(amountOut >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
     }
@@ -62,7 +75,13 @@ abstract contract V2SwapRouter is IV2SwapRouter, ImmutableState, PeripheryPaymen
     ) external payable override returns (uint256 amountIn) {
         amountIn = UniswapV2Library.getAmountsIn(factoryV2, amountOut, path)[0];
         require(amountIn <= amountInMax, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');
+
         pay(path[0], msg.sender, UniswapV2Library.pairFor(factoryV2, path[0], path[1]), amountIn);
+
+        // find and replace to addresses
+        if (to == MSG_SENDER) to = msg.sender;
+        else if (to == ADDRESS_THIS) to = address(this);
+
         _swap(path, to);
     }
 }
