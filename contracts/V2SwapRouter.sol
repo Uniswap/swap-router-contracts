@@ -15,9 +15,8 @@ import './base/PeripheryPaymentsWithFee.sol';
 abstract contract V2SwapRouter is IV2SwapRouter, ImmutableState, PeripheryPaymentsWithFee {
     using LowGasSafeMath for uint256;
 
-    // **** SWAP (supporting fee-on-transfer tokens) ****
+    // supports fee-on-transfer tokens
     // requires the initial amount to have already been sent to the first pair
-    // TODO add optimized msg.sender/address(this) constants
     function _swap(address[] memory path, address _to) private {
         for (uint256 i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
@@ -40,12 +39,13 @@ abstract contract V2SwapRouter is IV2SwapRouter, ImmutableState, PeripheryPaymen
         }
     }
 
+    /// @inheritdoc IV2SwapRouter
     function swapExactTokensForTokens(
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
         address to
-    ) external payable returns (uint256 amountOut) {
+    ) external payable override returns (uint256 amountOut) {
         pay(path[0], msg.sender, UniswapV2Library.pairFor(factoryV2, path[0], path[1]), amountIn);
         uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swap(path, to);
@@ -53,15 +53,14 @@ abstract contract V2SwapRouter is IV2SwapRouter, ImmutableState, PeripheryPaymen
         require(amountOut >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
     }
 
-    // TODO do 2 balanceOf checks here so that the returned amountIn is accurate in the case of fee-on-transfer tokens?
+    /// @inheritdoc IV2SwapRouter
     function swapTokensForExactTokens(
         uint256 amountOut,
         uint256 amountInMax,
         address[] calldata path,
         address to
-    ) external payable returns (uint256 amountIn) {
-        uint256[] memory amounts = UniswapV2Library.getAmountsIn(factoryV2, amountOut, path);
-        amountIn = amounts[0];
+    ) external payable override returns (uint256 amountIn) {
+        amountIn = UniswapV2Library.getAmountsIn(factoryV2, amountOut, path)[0];
         require(amountIn <= amountInMax, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');
         pay(path[0], msg.sender, UniswapV2Library.pairFor(factoryV2, path[0], path[1]), amountIn);
         _swap(path, to);
