@@ -119,8 +119,8 @@ describe('ApproveAndCall', function () {
       data.push(router.interface.encodeFunctionData('pull', [tokenIn, amountOutMinimum]))
 
       // encode the approves
-      data.push(router.interface.encodeFunctionData('approve', [tokenIn, constants.MaxUint256]))
-      data.push(router.interface.encodeFunctionData('approve', [tokenOut, constants.MaxUint256]))
+      data.push(router.interface.encodeFunctionData('approveMax', [tokenIn]))
+      data.push(router.interface.encodeFunctionData('approveMax', [tokenOut]))
 
       // encode the add liquidity
       const [token0, token1] =
