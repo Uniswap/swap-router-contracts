@@ -2,9 +2,9 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import '../base/Multicall.sol';
+import '../base/MulticallExtended.sol';
 
-contract TestMulticall is Multicall {
+contract TestMulticall is MulticallExtended {
     function functionThatRevertsWithError(string memory error) external pure {
         revert(error);
     }

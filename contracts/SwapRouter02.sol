@@ -9,10 +9,10 @@ import './interfaces/ISwapRouter02.sol';
 import './V2SwapRouter.sol';
 import './V3SwapRouter.sol';
 import './base/ApproveAndCall.sol';
-import './base/Multicall.sol';
+import './base/MulticallExtended.sol';
 
 /// @title Uniswap V2 and V3 Swap Router
-contract SwapRouter02 is ISwapRouter02, V2SwapRouter, V3SwapRouter, ApproveAndCall, Multicall, SelfPermit {
+contract SwapRouter02 is ISwapRouter02, V2SwapRouter, V3SwapRouter, ApproveAndCall, MulticallExtended, SelfPermit {
     constructor(
         address _factoryV2,
         address factoryV3,
