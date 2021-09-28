@@ -1,7 +1,7 @@
 import { Fixture } from 'ethereum-waffle'
 import { constants, Contract, ContractTransaction, Wallet } from 'ethers'
 import { waffle, ethers } from 'hardhat'
-import { IWETH9, MockTimeSwapRouter02, TestERC20 } from '../typechain'
+import { MockTimeSwapRouter02, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
@@ -119,8 +119,8 @@ describe('ApproveAndCall', function () {
       data.push(router.interface.encodeFunctionData('pull', [tokenIn, amountOutMinimum]))
 
       // encode the approves
-      data.push(router.interface.encodeFunctionData('approveMax', [tokenIn]))
-      data.push(router.interface.encodeFunctionData('approveMax', [tokenOut]))
+      data.push(router.interface.encodeFunctionData('approve', [tokenIn, constants.MaxUint256]))
+      data.push(router.interface.encodeFunctionData('approve', [tokenOut, constants.MaxUint256]))
 
       // encode the add liquidity
       const [token0, token1] =

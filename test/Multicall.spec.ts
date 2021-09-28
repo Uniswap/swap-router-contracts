@@ -1,5 +1,5 @@
 import { Wallet } from 'ethers'
-import { ethers, waffle } from 'hardhat'
+import { ethers } from 'hardhat'
 import { TestMulticall } from '../typechain/TestMulticall'
 import { expect } from './shared/expect'
 
