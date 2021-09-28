@@ -10,11 +10,11 @@ import '@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol';
 import '@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol';
 
 import './interfaces/IV3SwapRouter.sol';
-import './base/PeripheryPaymentsWithFee.sol';
+import './base/PeripheryPaymentsWithFeeExtended.sol';
 
 /// @title Uniswap V3 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V3
-abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFee {
+abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFeeExtended {
     using Path for bytes;
     using SafeCast for uint256;
 

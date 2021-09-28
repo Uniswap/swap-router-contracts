@@ -8,11 +8,11 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import './interfaces/IV2SwapRouter.sol';
 import './base/ImmutableState.sol';
 import './libraries/UniswapV2Library.sol';
-import './base/PeripheryPaymentsWithFee.sol';
+import './base/PeripheryPaymentsWithFeeExtended.sol';
 
 /// @title Uniswap V2 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V2
-abstract contract V2SwapRouter is IV2SwapRouter, ImmutableState, PeripheryPaymentsWithFee {
+abstract contract V2SwapRouter is IV2SwapRouter, ImmutableState, PeripheryPaymentsWithFeeExtended {
     using LowGasSafeMath for uint256;
 
     // supports fee-on-transfer tokens
