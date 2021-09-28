@@ -36,4 +36,9 @@ interface IPeripheryPayments {
         uint256 amountMinimum,
         address recipient
     ) external payable;
+
+    /// @notice Transfers the specified amount of a token from the msg.sender to address(this)
+    /// @param token The token to pay
+    /// @param value The amount to pay
+    function pull(address token, uint256 value) external payable;
 }

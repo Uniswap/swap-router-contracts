@@ -11,7 +11,6 @@ import '@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol';
 
 import './interfaces/IV3SwapRouter.sol';
 import './base/PeripheryPaymentsWithFee.sol';
-import './interfaces/external/IWETH9.sol';
 
 /// @title Uniswap V3 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V3

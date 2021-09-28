@@ -2,13 +2,11 @@
 pragma solidity >=0.7.5;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
+import '@uniswap/v3-periphery/contracts/interfaces/external/IWETH9.sol';
+import '@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol';
 
 import '../interfaces/IPeripheryPayments.sol';
-import '../interfaces/external/IWETH9.sol';
-
-import '../libraries/TransferHelper.sol';
-
-import './PeripheryImmutableState.sol';
 
 abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableState {
     receive() external payable {
@@ -76,5 +74,10 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
             // pull payment
             TransferHelper.safeTransferFrom(token, payer, recipient, value);
         }
+    }
+
+    /// @inheritdoc IPeripheryPayments
+    function pull(address token, uint256 value) external payable override {
+        TransferHelper.safeTransferFrom(token, msg.sender, address(this), value);
     }
 }

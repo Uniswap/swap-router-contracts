@@ -1,31 +1,31 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`SwapRouter gas tests #exactInput 0 -> 1 -> 2 1`] = `175244`;
+exports[`SwapRouter gas tests #exactInput 0 -> 1 -> 2 1`] = `175362`;
 
-exports[`SwapRouter gas tests #exactInput 0 -> 1 1`] = `110422`;
+exports[`SwapRouter gas tests #exactInput 0 -> 1 1`] = `110470`;
 
 exports[`SwapRouter gas tests #exactInput 0 -> 1 minimal 1`] = `98059`;
 
-exports[`SwapRouter gas tests #exactInput 0 -> WETH9 1`] = `127216`;
+exports[`SwapRouter gas tests #exactInput 0 -> WETH9 1`] = `127354`;
 
-exports[`SwapRouter gas tests #exactInput WETH9 -> 0 1`] = `108880`;
+exports[`SwapRouter gas tests #exactInput WETH9 -> 0 1`] = `108794`;
 
-exports[`SwapRouter gas tests #exactInputSingle 0 -> 1 1`] = `109845`;
+exports[`SwapRouter gas tests #exactInputSingle 0 -> 1 1`] = `109871`;
 
-exports[`SwapRouter gas tests #exactInputSingle 0 -> WETH9 1`] = `126639`;
+exports[`SwapRouter gas tests #exactInputSingle 0 -> WETH9 1`] = `126755`;
 
-exports[`SwapRouter gas tests #exactInputSingle WETH9 -> 0 1`] = `108303`;
+exports[`SwapRouter gas tests #exactInputSingle WETH9 -> 0 1`] = `108195`;
 
-exports[`SwapRouter gas tests #exactOutput 0 -> 1 -> 2 1`] = `169162`;
+exports[`SwapRouter gas tests #exactOutput 0 -> 1 -> 2 1`] = `169258`;
 
-exports[`SwapRouter gas tests #exactOutput 0 -> 1 1`] = `111634`;
+exports[`SwapRouter gas tests #exactOutput 0 -> 1 1`] = `111660`;
 
-exports[`SwapRouter gas tests #exactOutput 0 -> WETH9 1`] = `129228`;
+exports[`SwapRouter gas tests #exactOutput 0 -> WETH9 1`] = `128556`;
 
-exports[`SwapRouter gas tests #exactOutput WETH9 -> 0 1`] = `118981`;
+exports[`SwapRouter gas tests #exactOutput WETH9 -> 0 1`] = `119661`;
 
-exports[`SwapRouter gas tests #exactOutputSingle 0 -> 1 1`] = `111788`;
+exports[`SwapRouter gas tests #exactOutputSingle 0 -> 1 1`] = `111837`;
 
-exports[`SwapRouter gas tests #exactOutputSingle 0 -> WETH9 1`] = `129382`;
+exports[`SwapRouter gas tests #exactOutputSingle 0 -> WETH9 1`] = `128733`;
 
-exports[`SwapRouter gas tests #exactOutputSingle WETH9 -> 0 1`] = `119135`;
+exports[`SwapRouter gas tests #exactOutputSingle WETH9 -> 0 1`] = `112625`;
