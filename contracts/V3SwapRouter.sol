@@ -10,19 +10,14 @@ import '@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol';
 import '@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol';
 
 import './interfaces/IV3SwapRouter.sol';
+import './base/ConstantState.sol';
 import './base/PeripheryPaymentsWithFeeExtended.sol';
 
 /// @title Uniswap V3 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V3
-abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFeeExtended {
+abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPaymentsWithFeeExtended {
     using Path for bytes;
     using SafeCast for uint256;
-
-    /// @dev Used as a flag for identifying msg.sender, saves gas by sending more 0 bytes
-    address private constant MSG_SENDER = address(0);
-
-    /// @dev Used as a flag for identifying address(this), saves gas by sending more 0 bytes
-    address private constant ADDRESS_THIS = address(1);
 
     /// @dev Used as the placeholder value for amountInCached, because the computed amount in for an exact output swap
     /// can never actually be this value

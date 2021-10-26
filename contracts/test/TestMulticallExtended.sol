@@ -4,9 +4,15 @@ pragma abicoder v2;
 
 import '../base/MulticallExtended.sol';
 
-contract TestMulticall is MulticallExtended {
-    function functionThatRevertsWithError(string memory error) external pure {
-        revert(error);
+contract TestMulticallExtended is MulticallExtended {
+    uint256 time;
+
+    function _blockTimestamp() internal view override returns (uint256) {
+        return time;
+    }
+
+    function setTime(uint256 _time) external {
+        time = _time;
     }
 
     struct Tuple {
@@ -16,15 +22,5 @@ contract TestMulticall is MulticallExtended {
 
     function functionThatReturnsTuple(uint256 a, uint256 b) external pure returns (Tuple memory tuple) {
         tuple = Tuple({b: a, a: b});
-    }
-
-    uint256 public paid;
-
-    function pays() external payable {
-        paid += msg.value;
-    }
-
-    function returnSender() external view returns (address) {
-        return msg.sender;
     }
 }

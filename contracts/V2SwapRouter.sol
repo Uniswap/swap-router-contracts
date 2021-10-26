@@ -6,20 +6,15 @@ import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import './interfaces/IV2SwapRouter.sol';
+import './base/ConstantState.sol';
 import './base/ImmutableState.sol';
 import './libraries/UniswapV2Library.sol';
 import './base/PeripheryPaymentsWithFeeExtended.sol';
 
 /// @title Uniswap V2 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V2
-abstract contract V2SwapRouter is IV2SwapRouter, ImmutableState, PeripheryPaymentsWithFeeExtended {
+abstract contract V2SwapRouter is IV2SwapRouter, ConstantState, ImmutableState, PeripheryPaymentsWithFeeExtended {
     using LowGasSafeMath for uint256;
-
-    /// @dev Used as a flag for identifying msg.sender, saves gas by sending more 0 bytes
-    address private constant MSG_SENDER = address(0);
-
-    /// @dev Used as a flag for identifying address(this), saves gas by sending more 0 bytes
-    address private constant ADDRESS_THIS = address(1);
 
     // supports fee-on-transfer tokens
     // requires the initial amount to have already been sent to the first pair

@@ -3,7 +3,7 @@ import { BigNumber, constants, ContractTransaction, Wallet } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { IUniswapV3Pool, IWETH9, MockTimeSwapRouter02, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
-import { FeeAmount, TICK_SPACINGS } from './shared/constants'
+import { ADDRESS_THIS, FeeAmount, MSG_SENDER, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
@@ -14,9 +14,6 @@ import { defaultAbiCoder } from '@ethersproject/abi'
 
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 import { solidityPack } from 'ethers/lib/utils'
-
-const MSG_SENDER = '0x0000000000000000000000000000000000000000'
-const ADDRESS_THIS = '0x0000000000000000000000000000000000000001'
 
 describe('SwapRouter gas tests', function () {
   this.timeout(40000)
