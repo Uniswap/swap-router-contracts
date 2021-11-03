@@ -1,18 +1,18 @@
+import { defaultAbiCoder } from '@ethersproject/abi'
 import { Fixture } from 'ethereum-waffle'
 import { constants, Contract, ContractTransaction, Wallet } from 'ethers'
-import { waffle, ethers } from 'hardhat'
+import { solidityPack } from 'ethers/lib/utils'
+import { ethers, waffle } from 'hardhat'
 import { MockTimeSwapRouter02, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
-import { FeeAmount, TICK_SPACINGS } from './shared/constants'
+import { ADDRESS_THIS, FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
 import { getMaxTick, getMinTick } from './shared/ticks'
-import { defaultAbiCoder } from '@ethersproject/abi'
-import { solidityPack } from 'ethers/lib/utils'
 
-const ADDRESS_THIS = '0x0000000000000000000000000000000000000001'
+const POSITION_MANAGER = 0
 
 describe('ApproveAndCall', function () {
   this.timeout(40000)
@@ -119,8 +119,8 @@ describe('ApproveAndCall', function () {
       data.push(router.interface.encodeFunctionData('pull', [tokenIn, amountOutMinimum]))
 
       // encode the approves
-      data.push(router.interface.encodeFunctionData('approveMax', [tokenIn]))
-      data.push(router.interface.encodeFunctionData('approveMax', [tokenOut]))
+      data.push(router.interface.encodeFunctionData('approveMax', [POSITION_MANAGER, tokenIn]))
+      data.push(router.interface.encodeFunctionData('approveMax', [POSITION_MANAGER, tokenOut]))
 
       // encode the add liquidity
       const [token0, token1] =
@@ -139,7 +139,8 @@ describe('ApproveAndCall', function () {
         deadline: 2 ** 32,
       }
       data.push(
-        router.interface.encodeFunctionData('callPositionManager', [
+        router.interface.encodeFunctionData('callTarget', [
+          POSITION_MANAGER,
           nft.interface.encodeFunctionData('mint', [liquidityParams]),
         ])
       )

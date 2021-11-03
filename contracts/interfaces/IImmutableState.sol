@@ -9,4 +9,7 @@ interface IImmutableState {
 
     /// @return Returns the address of Uniswap V3 NFT position manager
     function positionManager() external view returns (address);
+
+    /// @return Returns the address of the 0x router
+    function zeroEx() external view returns (address);
 }

@@ -2,6 +2,8 @@ import { BigNumber } from 'ethers'
 
 export const MaxUint128 = BigNumber.from(2).pow(128).sub(1)
 
+export const ZERO_EX = '0x1000000000000000000000000000000000000000' // dummy address
+
 export enum FeeAmount {
   LOW = 500,
   MEDIUM = 3000,

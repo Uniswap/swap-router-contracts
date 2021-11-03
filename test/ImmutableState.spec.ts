@@ -1,10 +1,10 @@
-import { Contract } from 'ethers'
-import { waffle, ethers } from 'hardhat'
-
 import { Fixture } from 'ethereum-waffle'
+import { Contract } from 'ethers'
+import { ethers, waffle } from 'hardhat'
 import { ImmutableStateTest } from '../typechain'
-import { expect } from './shared/expect'
 import completeFixture from './shared/completeFixture'
+import { ZERO_EX } from './shared/constants'
+import { expect } from './shared/expect'
 import { v2FactoryFixture } from './shared/externalFixtures'
 
 describe('ImmutableState', () => {
@@ -17,7 +17,7 @@ describe('ImmutableState', () => {
     const { nft } = await completeFixture(wallets, provider)
 
     const stateFactory = await ethers.getContractFactory('ImmutableStateTest')
-    const state = (await stateFactory.deploy(factoryV2.address, nft.address)) as ImmutableStateTest
+    const state = (await stateFactory.deploy(factoryV2.address, nft.address, ZERO_EX)) as ImmutableStateTest
 
     return {
       nft,
@@ -44,15 +44,15 @@ describe('ImmutableState', () => {
     expect(((await state.provider.getCode(state.address)).length - 2) / 2).to.matchSnapshot()
   })
 
-  describe('#factoryV2', () => {
-    it('points to v2 core factory', async () => {
-      expect(await state.factoryV2()).to.eq(factoryV2.address)
-    })
+  it('#factoryV2', async () => {
+    expect(await state.factoryV2()).to.eq(factoryV2.address)
   })
 
-  describe('#positionManager', () => {
-    it('points to NFT', async () => {
-      expect(await state.positionManager()).to.eq(nft.address)
-    })
+  it('#positionManager', async () => {
+    expect(await state.positionManager()).to.eq(nft.address)
+  })
+
+  it('#zeroEx', async () => {
+    expect(await state.zeroEx()).to.eq(ZERO_EX)
   })
 })

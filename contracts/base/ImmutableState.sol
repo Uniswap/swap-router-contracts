@@ -10,9 +10,16 @@ abstract contract ImmutableState is IImmutableState {
     address public immutable override factoryV2;
     /// @inheritdoc IImmutableState
     address public immutable override positionManager;
+    /// @inheritdoc IImmutableState
+    address public immutable override zeroEx;
 
-    constructor(address _factoryV2, address _positionManager) {
+    constructor(
+        address _factoryV2,
+        address _positionManager,
+        address _zeroEx
+    ) {
         factoryV2 = _factoryV2;
         positionManager = _positionManager;
+        zeroEx = _zeroEx;
     }
 }

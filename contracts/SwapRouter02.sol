@@ -17,6 +17,7 @@ contract SwapRouter02 is ISwapRouter02, V2SwapRouter, V3SwapRouter, ApproveAndCa
         address _factoryV2,
         address factoryV3,
         address _positionManager,
-        address _WETH9
-    ) ImmutableState(_factoryV2, _positionManager) PeripheryImmutableState(factoryV3, _WETH9) {}
+        address _WETH9,
+        address zeroEx
+    ) ImmutableState(_factoryV2, _positionManager, zeroEx) PeripheryImmutableState(factoryV3, _WETH9) {}
 }

@@ -1,20 +1,19 @@
+import { Contract } from '@ethersproject/contracts'
+import { abi as FACTORY_V2_ABI, bytecode as FACTORY_V2_BYTECODE } from '@uniswap/v2-core/build/UniswapV2Factory.json'
 import {
   abi as FACTORY_ABI,
   bytecode as FACTORY_BYTECODE,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
-import { abi as FACTORY_V2_ABI, bytecode as FACTORY_V2_BYTECODE } from '@uniswap/v2-core/build/UniswapV2Factory.json'
-import { Fixture } from 'ethereum-waffle'
-import { ethers, waffle } from 'hardhat'
-import { IWETH9, MockTimeSwapRouter02 } from '../../typechain'
-
-import WETH9 from '../contracts/WETH9.json'
-import { Contract } from '@ethersproject/contracts'
-import { constants } from 'ethers'
-
 import {
   abi as NFT_POSITION_MANAGER_ABI,
   bytecode as NFT_POSITION_MANAGER_BYTECODE,
 } from '@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json'
+import { Fixture } from 'ethereum-waffle'
+import { constants } from 'ethers'
+import { ethers, waffle } from 'hardhat'
+import { IWETH9, MockTimeSwapRouter02 } from '../../typechain'
+import WETH9 from '../contracts/WETH9.json'
+import { ZERO_EX } from './constants'
 
 const wethFixture: Fixture<{ weth9: IWETH9 }> = async ([wallet]) => {
   const weth9 = (await waffle.deployContract(wallet, {
@@ -69,7 +68,8 @@ export const v3RouterFixture: Fixture<{
     factoryV2.address,
     factory.address,
     nft.address,
-    weth9.address
+    weth9.address,
+    ZERO_EX
   )) as MockTimeSwapRouter02
 
   return { weth9, factoryV2, factory, nft, router }

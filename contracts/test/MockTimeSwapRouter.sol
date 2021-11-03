@@ -11,8 +11,9 @@ contract MockTimeSwapRouter02 is SwapRouter02 {
         address _factoryV2,
         address factoryV3,
         address _positionManager,
-        address _WETH9
-    ) SwapRouter02(_factoryV2, factoryV3, _positionManager, _WETH9) {}
+        address _WETH9,
+        address zeroEx
+    ) SwapRouter02(_factoryV2, factoryV3, _positionManager, _WETH9, zeroEx) {}
 
     function _blockTimestamp() internal view override returns (uint256) {
         return time;

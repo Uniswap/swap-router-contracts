@@ -9,58 +9,73 @@ import '../interfaces/IApproveAndCall.sol';
 import './ImmutableState.sol';
 
 abstract contract ApproveAndCall is IApproveAndCall, ImmutableState {
-    function tryApprove(address token, uint256 amount) private returns (bool) {
-        (bool success, bytes memory data) =
-            token.call(abi.encodeWithSelector(IERC20.approve.selector, positionManager, amount));
+    function getTargetAddress(Target target) private view returns (address) {
+        return target == Target.POSITION_MANAGER ? positionManager : zeroEx;
+    }
+
+    function tryApprove(
+        address token,
+        address target,
+        uint256 amount
+    ) private returns (bool) {
+        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(IERC20.approve.selector, target, amount));
         return success && (data.length == 0 || abi.decode(data, (bool)));
     }
 
     /// @inheritdoc IApproveAndCall
-    function getApprovalType(address token, uint256 amount) external override returns (ApprovalType) {
+    function getApprovalType(
+        Target target,
+        address token,
+        uint256 amount
+    ) external override returns (ApprovalType) {
+        address targetAddress = getTargetAddress(target);
+
         // check existing approval
-        uint256 approval = IERC20(token).allowance(address(this), positionManager);
+        uint256 approval = IERC20(token).allowance(address(this), targetAddress);
         if (approval >= amount) return ApprovalType.NOT_REQUIRED;
 
         // try type(uint256).max / type(uint256).max - 1
-        if (tryApprove(token, type(uint256).max)) return ApprovalType.MAX;
-        if (tryApprove(token, type(uint256).max - 1)) return ApprovalType.MAX_MINUS_ONE;
+        if (tryApprove(token, targetAddress, type(uint256).max)) return ApprovalType.MAX;
+        if (tryApprove(token, targetAddress, type(uint256).max - 1)) return ApprovalType.MAX_MINUS_ONE;
 
         // set approval to 0 (must succeed)
-        require(tryApprove(token, 0), 'A0');
+        require(tryApprove(token, targetAddress, 0), 'A0');
 
         // try type(uint256).max / type(uint256).max - 1
-        if (tryApprove(token, type(uint256).max)) return ApprovalType.ZERO_THEN_MAX;
-        if (tryApprove(token, type(uint256).max - 1)) return ApprovalType.ZERO_THEN_MAX_MINUS_ONE;
+        if (tryApprove(token, targetAddress, type(uint256).max)) return ApprovalType.ZERO_THEN_MAX;
+        if (tryApprove(token, targetAddress, type(uint256).max - 1)) return ApprovalType.ZERO_THEN_MAX_MINUS_ONE;
 
         revert('APP');
     }
 
     /// @inheritdoc IApproveAndCall
-    function approveMax(address token) external payable override {
-        TransferHelper.safeApprove(token, positionManager, type(uint256).max);
+    function approveMax(Target target, address token) external payable override {
+        TransferHelper.safeApprove(token, getTargetAddress(target), type(uint256).max);
     }
 
     /// @inheritdoc IApproveAndCall
-    function approveMaxMinusOne(address token) external payable override {
-        TransferHelper.safeApprove(token, positionManager, type(uint256).max - 1);
+    function approveMaxMinusOne(Target target, address token) external payable override {
+        TransferHelper.safeApprove(token, getTargetAddress(target), type(uint256).max - 1);
     }
 
     /// @inheritdoc IApproveAndCall
-    function approveZeroThenMax(address token) external payable override {
-        TransferHelper.safeApprove(token, positionManager, 0);
-        TransferHelper.safeApprove(token, positionManager, type(uint256).max);
+    function approveZeroThenMax(Target target, address token) external payable override {
+        address targetAddress = getTargetAddress(target);
+        TransferHelper.safeApprove(token, targetAddress, 0);
+        TransferHelper.safeApprove(token, targetAddress, type(uint256).max);
     }
 
     /// @inheritdoc IApproveAndCall
-    function approveZeroThenMaxMinusOne(address token) external payable override {
-        TransferHelper.safeApprove(token, positionManager, 0);
-        TransferHelper.safeApprove(token, positionManager, type(uint256).max - 1);
+    function approveZeroThenMaxMinusOne(Target target, address token) external payable override {
+        address targetAddress = getTargetAddress(target);
+        TransferHelper.safeApprove(token, targetAddress, 0);
+        TransferHelper.safeApprove(token, targetAddress, type(uint256).max - 1);
     }
 
     /// @inheritdoc IApproveAndCall
-    function callPositionManager(bytes calldata data) external payable override returns (bytes memory result) {
+    function callTarget(Target target, bytes calldata data) external payable override returns (bytes memory result) {
         bool success;
-        (success, result) = positionManager.call(data);
+        (success, result) = getTargetAddress(target).call(data);
 
         if (!success) {
             // Next 5 lines from https://ethereum.stackexchange.com/a/83577
