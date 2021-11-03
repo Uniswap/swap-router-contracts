@@ -15,7 +15,7 @@ abstract contract ApproveAndCall is IApproveAndCall, ImmutableState {
         return success && (data.length == 0 || abi.decode(data, (bool)));
     }
 
-    /// @dev Lens to be called off-chain to determine which (if any) of the approval functions below should be called
+    /// @inheritdoc IApproveAndCall
     function getApprovalType(address token, uint256 amount) external override returns (ApprovalType) {
         // check existing approval
         uint256 approval = IERC20(token).allowance(address(this), positionManager);
@@ -35,24 +35,29 @@ abstract contract ApproveAndCall is IApproveAndCall, ImmutableState {
         revert('APP');
     }
 
+    /// @inheritdoc IApproveAndCall
     function approveMax(address token) external payable override {
         TransferHelper.safeApprove(token, positionManager, type(uint256).max);
     }
 
+    /// @inheritdoc IApproveAndCall
     function approveMaxMinusOne(address token) external payable override {
         TransferHelper.safeApprove(token, positionManager, type(uint256).max - 1);
     }
 
+    /// @inheritdoc IApproveAndCall
     function approveZeroThenMax(address token) external payable override {
         TransferHelper.safeApprove(token, positionManager, 0);
         TransferHelper.safeApprove(token, positionManager, type(uint256).max);
     }
 
+    /// @inheritdoc IApproveAndCall
     function approveZeroThenMaxMinusOne(address token) external payable override {
         TransferHelper.safeApprove(token, positionManager, 0);
         TransferHelper.safeApprove(token, positionManager, type(uint256).max - 1);
     }
 
+    /// @inheritdoc IApproveAndCall
     function callPositionManager(bytes calldata data) external payable override returns (bytes memory result) {
         bool success;
         (success, result) = positionManager.call(data);

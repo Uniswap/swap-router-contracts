@@ -18,7 +18,7 @@ interface IPeripheryPaymentsExtended is IPeripheryPayments {
     function sweepToken(address token, uint256 amountMinimum) external payable;
 
     /// @notice Transfers the specified amount of a token from the msg.sender to address(this)
-    /// @param token The token to pay
+    /// @param token The token to pull
     /// @param value The amount to pay
     function pull(address token, uint256 value) external payable;
 }
