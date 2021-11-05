@@ -32,8 +32,8 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState {
             blockStartingTick = currentTick;
         } else {
             uint256 prevIndex = (uint256(observationIndex) + observationCardinality - 1) % observationCardinality;
-            (uint32 prevObservationTimestamp, int56 prevTickCumulative, , bool prevInitialized) = IUniswapV3Pool(pool)
-                .observations(prevIndex);
+            (uint32 prevObservationTimestamp, int56 prevTickCumulative, , bool prevInitialized) =
+                IUniswapV3Pool(pool).observations(prevIndex);
 
             require(prevInitialized, 'ONI');
 
