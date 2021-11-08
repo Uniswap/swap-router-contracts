@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity =0.7.6;
+pragma abicoder v2;
 
 import '../interfaces/IOracleSlippage.sol';
 
@@ -42,15 +43,12 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState {
         }
     }
 
-    /// @inheritdoc IOracleSlippage
-    function checkOracleSlippage(
-        bytes memory path,
-        uint24 maximumTickDivergence,
-        uint32 secondsAgo
-    ) external view override {
-        // running synthetic ticks and a flag indicating the direction of the price
-        int256 syntheticAverageTick;
-        int256 syntheticCurrentTick;
+    /// @dev Always returns synthetic ticks representing tokenOut/tokenIn prices (lower ticks are worse)
+    function getSyntheticTicks(bytes memory path, uint32 secondsAgo)
+        private
+        view
+        returns (int256 syntheticAverageTick, int256 syntheticCurrentTick)
+    {
         bool lowerTicksAreWorse;
 
         uint256 numPools = path.numPools();
@@ -96,10 +94,55 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState {
             }
         }
 
-        if (lowerTicksAreWorse) {
-            require(syntheticAverageTick - syntheticCurrentTick < maximumTickDivergence, 'Divergence');
-        } else {
-            require(syntheticCurrentTick - syntheticAverageTick < maximumTickDivergence, 'Divergence');
+        if (!lowerTicksAreWorse) {
+            syntheticAverageTick *= -1;
+            syntheticCurrentTick *= -1;
         }
+    }
+
+    /// @inheritdoc IOracleSlippage
+    function checkOracleSlippage(
+        bytes memory path,
+        uint24 maximumTickDivergence,
+        uint32 secondsAgo
+    ) external view override {
+        (int256 syntheticAverageTick, int256 syntheticCurrentTick) = getSyntheticTicks(path, secondsAgo);
+        require(syntheticAverageTick - syntheticCurrentTick < maximumTickDivergence, 'Divergence');
+    }
+
+    /// @dev Cast a int256 to a int24, revert on overflow or underflow
+    function toInt24(int256 y) private pure returns (int24 z) {
+        require((z = int24(y)) == y);
+    }
+
+    /// @inheritdoc IOracleSlippage
+    function checkOracleSlippage(
+        bytes[] memory paths,
+        uint128[] memory amounts,
+        uint24 maximumTickDivergence,
+        uint32 secondsAgo
+    ) external view override {
+        require(paths.length == amounts.length, 'Array length mismatch');
+
+        OracleLibrary.WeightedTickData[] memory weightedSyntheticAverageTicks =
+            new OracleLibrary.WeightedTickData[](paths.length);
+        OracleLibrary.WeightedTickData[] memory weightedSyntheticCurrentTicks =
+            new OracleLibrary.WeightedTickData[](paths.length);
+
+        for (uint256 i = 0; i < paths.length; i++) {
+            (int256 syntheticAverageTick, int256 syntheticCurrentTick) = getSyntheticTicks(paths[i], secondsAgo);
+            weightedSyntheticAverageTicks[i].tick = toInt24(syntheticAverageTick);
+            weightedSyntheticCurrentTicks[i].tick = toInt24(syntheticCurrentTick);
+            weightedSyntheticAverageTicks[i].weight = amounts[i];
+            weightedSyntheticCurrentTicks[i].weight = amounts[i];
+        }
+
+        int24 averageSyntheticAverageTick = OracleLibrary.getWeightedArithmeticMeanTick(weightedSyntheticAverageTicks);
+        int24 averageSyntheticCurrentTick = OracleLibrary.getWeightedArithmeticMeanTick(weightedSyntheticCurrentTicks);
+
+        require(
+            int256(averageSyntheticAverageTick) - averageSyntheticCurrentTick < maximumTickDivergence,
+            'Divergence'
+        );
     }
 }
