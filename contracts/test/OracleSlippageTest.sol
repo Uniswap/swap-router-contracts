@@ -51,4 +51,12 @@ contract OracleSlippageTest is OracleSlippage {
     {
         return getSyntheticTicks(path, secondsAgo);
     }
+
+    function testGetSyntheticTicks(
+        bytes[] memory paths,
+        uint128[] memory amounts,
+        uint32 secondsAgo
+    ) external view returns (int256 averageSyntheticAverageTick, int256 averageSyntheticCurrentTick) {
+        return getSyntheticTicks(paths, amounts, secondsAgo);
+    }
 }

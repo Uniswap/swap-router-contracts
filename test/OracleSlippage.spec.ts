@@ -11,7 +11,7 @@ const tokens = [
   '0x0000000000000000000000000000000000000003',
 ]
 
-describe.only('OracleSlippage', function () {
+describe('OracleSlippage', function () {
   this.timeout(40000)
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
@@ -81,7 +81,7 @@ describe.only('OracleSlippage', function () {
     })
   })
 
-  describe('#getSyntheticTicks', () => {
+  describe('#getSyntheticTicks(bytes,uint32)', () => {
     describe('single pool', () => {
       describe('unchanged ticks; secondsAgo = 0', () => {
         beforeEach(async () => {
@@ -89,7 +89,7 @@ describe.only('OracleSlippage', function () {
         })
 
         it('normal order', async () => {
-          const { syntheticAverageTick, syntheticCurrentTick } = await oracle.testGetSyntheticTicks(
+          const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
             encodePath(tokens.slice(0, 2), [FeeAmount.LOW]),
             0
           )
@@ -98,7 +98,7 @@ describe.only('OracleSlippage', function () {
         })
 
         it('reverse order', async () => {
-          const { syntheticAverageTick, syntheticCurrentTick } = await oracle.testGetSyntheticTicks(
+          const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
             encodePath(tokens.slice(0, 2).reverse(), [FeeAmount.LOW]),
             0
           )
@@ -113,7 +113,7 @@ describe.only('OracleSlippage', function () {
         })
 
         it('normal order', async () => {
-          const { syntheticAverageTick, syntheticCurrentTick } = await oracle.testGetSyntheticTicks(
+          const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
             encodePath(tokens.slice(0, 2), [FeeAmount.LOW]),
             0
           )
@@ -122,7 +122,7 @@ describe.only('OracleSlippage', function () {
         })
 
         it('reverse order', async () => {
-          const { syntheticAverageTick, syntheticCurrentTick } = await oracle.testGetSyntheticTicks(
+          const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
             encodePath(tokens.slice(0, 2).reverse(), [FeeAmount.LOW]),
             0
           )
@@ -131,15 +131,13 @@ describe.only('OracleSlippage', function () {
         })
       })
 
-      describe('unchanged ticks; secondsAgo != 1', () => {
-        let mockPool: MockObservations
-
+      describe('unchanged ticks; secondsAgo != 0', () => {
         beforeEach(async () => {
-          mockPool = await createMockPool(tokens[0], tokens[1], FeeAmount.LOW, [0, 1, 2], [0, 11, 11])
+          await createMockPool(tokens[0], tokens[1], FeeAmount.LOW, [0, 1, 2], [0, 11, 11])
         })
 
         it('normal order', async () => {
-          const { syntheticAverageTick, syntheticCurrentTick } = await oracle.testGetSyntheticTicks(
+          const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
             encodePath(tokens.slice(0, 2), [FeeAmount.LOW]),
             1
           )
@@ -148,7 +146,7 @@ describe.only('OracleSlippage', function () {
         })
 
         it('reverse order', async () => {
-          const { syntheticAverageTick, syntheticCurrentTick } = await oracle.testGetSyntheticTicks(
+          const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
             encodePath(tokens.slice(0, 2).reverse(), [FeeAmount.LOW]),
             1
           )
@@ -164,7 +162,7 @@ describe.only('OracleSlippage', function () {
           })
 
           it('normal order', async () => {
-            const { syntheticAverageTick, syntheticCurrentTick } = await oracle.testGetSyntheticTicks(
+            const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
               encodePath(tokens.slice(0, 2), [FeeAmount.LOW]),
               1
             )
@@ -173,7 +171,7 @@ describe.only('OracleSlippage', function () {
           })
 
           it('reverse order', async () => {
-            const { syntheticAverageTick, syntheticCurrentTick } = await oracle.testGetSyntheticTicks(
+            const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
               encodePath(tokens.slice(0, 2).reverse(), [FeeAmount.LOW]),
               1
             )
@@ -188,7 +186,7 @@ describe.only('OracleSlippage', function () {
           })
 
           it('normal order', async () => {
-            const { syntheticAverageTick, syntheticCurrentTick } = await oracle.testGetSyntheticTicks(
+            const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
               encodePath(tokens.slice(0, 2), [FeeAmount.LOW]),
               2
             )
@@ -197,13 +195,251 @@ describe.only('OracleSlippage', function () {
           })
 
           it('reverse order', async () => {
-            const { syntheticAverageTick, syntheticCurrentTick } = await oracle.testGetSyntheticTicks(
+            const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
               encodePath(tokens.slice(0, 2).reverse(), [FeeAmount.LOW]),
               2
             )
             expect(syntheticAverageTick).to.eq(-11)
             expect(syntheticCurrentTick).to.eq(-13)
           })
+        })
+      })
+    })
+
+    describe('two pools', () => {
+      describe('unchanged ticks; secondsAgo = 0', () => {
+        beforeEach(async () => {
+          await createMockPool(tokens[0], tokens[1], FeeAmount.LOW, [0, 1, 2], [0, 11, 11])
+          await createMockPool(tokens[1], tokens[2], FeeAmount.LOW, [0, 1, 2], [0, 11, 11])
+        })
+
+        it('normal order', async () => {
+          const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
+            encodePath(tokens, [FeeAmount.LOW, FeeAmount.LOW]),
+            0
+          )
+          expect(syntheticAverageTick).to.eq(22)
+          expect(syntheticCurrentTick).to.eq(22)
+        })
+
+        it('reverse order', async () => {
+          const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
+            encodePath(tokens.slice().reverse(), [FeeAmount.LOW, FeeAmount.LOW]),
+            0
+          )
+          expect(syntheticAverageTick).to.eq(-22)
+          expect(syntheticCurrentTick).to.eq(-22)
+        })
+      })
+
+      describe('changed ticks; secondsAgo = 0', () => {
+        beforeEach(async () => {
+          await createMockPool(tokens[0], tokens[1], FeeAmount.LOW, [0, 1, 2], [0, 11, 12])
+          await createMockPool(tokens[1], tokens[2], FeeAmount.LOW, [0, 1, 2], [0, 11, 12])
+        })
+
+        it('normal order', async () => {
+          const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
+            encodePath(tokens, [FeeAmount.LOW, FeeAmount.LOW]),
+            0
+          )
+          expect(syntheticAverageTick).to.eq(22)
+          expect(syntheticCurrentTick).to.eq(24)
+        })
+
+        it('reverse order', async () => {
+          const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
+            encodePath(tokens.slice().reverse(), [FeeAmount.LOW, FeeAmount.LOW]),
+            0
+          )
+          expect(syntheticAverageTick).to.eq(-22)
+          expect(syntheticCurrentTick).to.eq(-24)
+        })
+      })
+
+      describe('unchanged ticks; secondsAgo != 0', () => {
+        beforeEach(async () => {
+          await createMockPool(tokens[0], tokens[1], FeeAmount.LOW, [0, 1, 2], [0, 11, 11])
+          await createMockPool(tokens[1], tokens[2], FeeAmount.LOW, [0, 1, 2], [0, 11, 11])
+        })
+
+        it('normal order', async () => {
+          const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
+            encodePath(tokens, [FeeAmount.LOW, FeeAmount.LOW]),
+            1
+          )
+          expect(syntheticAverageTick).to.eq(22)
+          expect(syntheticCurrentTick).to.eq(22)
+        })
+
+        it('reverse order', async () => {
+          const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
+            encodePath(tokens.slice().reverse(), [FeeAmount.LOW, FeeAmount.LOW]),
+            1
+          )
+          expect(syntheticAverageTick).to.eq(-22)
+          expect(syntheticCurrentTick).to.eq(-22)
+        })
+      })
+
+      describe('changed ticks', () => {
+        describe('secondsAgo = 1', () => {
+          beforeEach(async () => {
+            await createMockPool(tokens[0], tokens[1], FeeAmount.LOW, [0, 1, 2], [0, 11, 12])
+            await createMockPool(tokens[1], tokens[2], FeeAmount.LOW, [0, 1, 2], [0, 11, 12])
+          })
+
+          it('normal order', async () => {
+            const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
+              encodePath(tokens, [FeeAmount.LOW, FeeAmount.LOW]),
+              1
+            )
+            expect(syntheticAverageTick).to.eq(22)
+            expect(syntheticCurrentTick).to.eq(24)
+          })
+
+          it('reverse order', async () => {
+            const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
+              encodePath(tokens.slice().reverse(), [FeeAmount.LOW, FeeAmount.LOW]),
+              1
+            )
+            expect(syntheticAverageTick).to.eq(-22)
+            expect(syntheticCurrentTick).to.eq(-24)
+          })
+        })
+
+        describe('secondsAgo = 2', () => {
+          beforeEach(async () => {
+            await createMockPool(tokens[0], tokens[1], FeeAmount.LOW, [0, 1, 2], [10, 12, 13])
+            await createMockPool(tokens[1], tokens[2], FeeAmount.LOW, [0, 1, 2], [10, 12, 13])
+          })
+
+          it('normal order', async () => {
+            const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
+              encodePath(tokens, [FeeAmount.LOW, FeeAmount.LOW]),
+              2
+            )
+            expect(syntheticAverageTick).to.eq(22)
+            expect(syntheticCurrentTick).to.eq(26)
+          })
+
+          it('reverse order', async () => {
+            const { syntheticAverageTick, syntheticCurrentTick } = await oracle['testGetSyntheticTicks(bytes,uint32)'](
+              encodePath(tokens.slice().reverse(), [FeeAmount.LOW, FeeAmount.LOW]),
+              2
+            )
+            expect(syntheticAverageTick).to.eq(-22)
+            expect(syntheticCurrentTick).to.eq(-26)
+          })
+        })
+      })
+    })
+  })
+
+  describe('#getSyntheticTicks(bytes[],uint128[],uint32)', () => {
+    describe('same price', () => {
+      beforeEach(async () => {
+        await createMockPool(tokens[0], tokens[1], FeeAmount.LOW, [0, 1, 2], [0, 11, 12])
+        await createMockPool(tokens[1], tokens[2], FeeAmount.LOW, [0, 1, 2], [0, 11, 12])
+        await createMockPool(tokens[0], tokens[2], FeeAmount.LOW, [0, 1, 2], [0, 22, 24])
+      })
+
+      it('normal order', async () => {
+        const { averageSyntheticAverageTick, averageSyntheticCurrentTick } = await oracle[
+          'testGetSyntheticTicks(bytes[],uint128[],uint32)'
+        ](
+          [encodePath(tokens, [FeeAmount.LOW, FeeAmount.LOW]), encodePath([tokens[0], tokens[2]], [FeeAmount.LOW])],
+          [1, 1],
+          0
+        )
+
+        expect(averageSyntheticAverageTick).to.eq(22)
+        expect(averageSyntheticCurrentTick).to.eq(24)
+      })
+
+      it('reverse order', async () => {
+        const { averageSyntheticAverageTick, averageSyntheticCurrentTick } = await oracle[
+          'testGetSyntheticTicks(bytes[],uint128[],uint32)'
+        ](
+          [
+            encodePath(tokens.slice().reverse(), [FeeAmount.LOW, FeeAmount.LOW]),
+            encodePath([tokens[2], tokens[0]], [FeeAmount.LOW]),
+          ],
+          [1, 1],
+          0
+        )
+
+        expect(averageSyntheticAverageTick).to.eq(-22)
+        expect(averageSyntheticCurrentTick).to.eq(-24)
+      })
+    })
+
+    describe('difference price', () => {
+      beforeEach(async () => {
+        await createMockPool(tokens[0], tokens[1], FeeAmount.LOW, [0, 1, 2], [0, 11, 12])
+        await createMockPool(tokens[1], tokens[2], FeeAmount.LOW, [0, 1, 2], [0, 11, 12])
+        await createMockPool(tokens[0], tokens[2], FeeAmount.LOW, [0, 1, 2], [0, 44, 48])
+      })
+
+      describe('same weight', () => {
+        it('normal order', async () => {
+          const { averageSyntheticAverageTick, averageSyntheticCurrentTick } = await oracle[
+            'testGetSyntheticTicks(bytes[],uint128[],uint32)'
+          ](
+            [encodePath(tokens, [FeeAmount.LOW, FeeAmount.LOW]), encodePath([tokens[0], tokens[2]], [FeeAmount.LOW])],
+            [1, 1],
+            0
+          )
+
+          expect(averageSyntheticAverageTick).to.eq(33)
+          expect(averageSyntheticCurrentTick).to.eq(36)
+        })
+
+        it('reverse order', async () => {
+          const { averageSyntheticAverageTick, averageSyntheticCurrentTick } = await oracle[
+            'testGetSyntheticTicks(bytes[],uint128[],uint32)'
+          ](
+            [
+              encodePath(tokens.slice().reverse(), [FeeAmount.LOW, FeeAmount.LOW]),
+              encodePath([tokens[2], tokens[0]], [FeeAmount.LOW]),
+            ],
+            [1, 1],
+            0
+          )
+
+          expect(averageSyntheticAverageTick).to.eq(-33)
+          expect(averageSyntheticCurrentTick).to.eq(-36)
+        })
+      })
+
+      describe('different weights', () => {
+        it('normal order', async () => {
+          const { averageSyntheticAverageTick, averageSyntheticCurrentTick } = await oracle[
+            'testGetSyntheticTicks(bytes[],uint128[],uint32)'
+          ](
+            [encodePath(tokens, [FeeAmount.LOW, FeeAmount.LOW]), encodePath([tokens[0], tokens[2]], [FeeAmount.LOW])],
+            [1, 2],
+            0
+          )
+
+          expect(averageSyntheticAverageTick).to.eq(36)
+          expect(averageSyntheticCurrentTick).to.eq(40)
+        })
+
+        it('reverse order', async () => {
+          const { averageSyntheticAverageTick, averageSyntheticCurrentTick } = await oracle[
+            'testGetSyntheticTicks(bytes[],uint128[],uint32)'
+          ](
+            [
+              encodePath(tokens.slice().reverse(), [FeeAmount.LOW, FeeAmount.LOW]),
+              encodePath([tokens[2], tokens[0]], [FeeAmount.LOW]),
+            ],
+            [1, 2],
+            0
+          )
+
+          expect(averageSyntheticAverageTick).to.eq(-37)
+          expect(averageSyntheticCurrentTick).to.eq(-40)
         })
       })
     })
