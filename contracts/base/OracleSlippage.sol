@@ -5,16 +5,17 @@ pragma abicoder v2;
 import '../interfaces/IOracleSlippage.sol';
 
 import '@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol';
+import '@uniswap/v3-periphery/contracts/base/BlockTimestamp.sol';
 import '@uniswap/v3-periphery/contracts/libraries/Path.sol';
 import '@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol';
 
-abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState {
+abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState, BlockTimestamp {
     using Path for bytes;
 
     function getBlockStartingAndCurrentTick(address pool)
-        private
+        internal
         view
         returns (int24 blockStartingTick, int24 currentTick)
     {
@@ -29,7 +30,7 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState {
         // therefore the tick in `slot0` is the same as at the beginning of the current block.
         // We don't need to check if this observation is initialized - it is guaranteed to be.
         (uint32 observationTimestamp, int56 tickCumulative, , ) = IUniswapV3Pool(pool).observations(observationIndex);
-        if (observationTimestamp != uint32(block.timestamp)) {
+        if (observationTimestamp != uint32(_blockTimestamp())) {
             blockStartingTick = currentTick;
         } else {
             uint256 prevIndex = (uint256(observationIndex) + observationCardinality - 1) % observationCardinality;
@@ -43,9 +44,18 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState {
         }
     }
 
+    /// @dev Virtual function that can be overriden in tests
+    function getPoolAddress(
+        address tokenIn,
+        address tokenOut,
+        uint24 fee
+    ) internal view virtual returns (address pool) {
+        pool = PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenIn, tokenOut, fee));
+    }
+
     /// @dev Always returns synthetic ticks representing tokenOut/tokenIn prices (lower ticks are worse)
     function getSyntheticTicks(bytes memory path, uint32 secondsAgo)
-        private
+        internal
         view
         returns (int256 syntheticAverageTick, int256 syntheticCurrentTick)
     {
@@ -54,12 +64,9 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState {
         uint256 numPools = path.numPools();
         address previousTokenIn;
         for (uint256 i = 0; i < numPools; i++) {
-            bool first = i == 0;
-            bool last = i == numPools - 1;
-
             // this assumes the path is sorted in swap order
             (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
-            address pool = PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenIn, tokenOut, fee));
+            address pool = getPoolAddress(tokenIn, tokenOut, fee);
 
             // get the average and current ticks for the current pool
             int256 averageTick;
@@ -72,19 +79,20 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState {
                 (, currentTick, , , , , ) = IUniswapV3Pool(pool).slot0();
             }
 
-            if (!last) {
-                path = path.skipToken();
-                previousTokenIn = tokenIn;
-            } else {
+            if (i == numPools - 1) {
                 // if we're here, this is the last pool in the path, meaning tokenOut represents the
                 // destination token. so, if tokenIn < tokenOut, then tokenIn is token0 of the last pool,
                 // meaning the current running ticks are going to represent tokenOut/tokenIn prices.
                 // so, the lower these prices gets, the worse of a price the swap will get
                 lowerTicksAreWorse = tokenIn < tokenOut;
+            } else {
+                // if we're here, we need to iterate over the next pool in the path
+                path = path.skipToken();
+                previousTokenIn = tokenIn;
             }
 
             // accumulate the ticks derived from the current pool into the running synthetic ticks
-            bool add = first || (previousTokenIn < tokenIn ? tokenIn < tokenOut : tokenOut < tokenIn);
+            bool add = (i == 0) || (previousTokenIn < tokenIn ? tokenIn < tokenOut : tokenOut < tokenIn);
             if (add) {
                 syntheticAverageTick += averageTick;
                 syntheticCurrentTick += currentTick;
