@@ -8,8 +8,8 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import './interfaces/IV2SwapRouter.sol';
 import './base/ConstantState.sol';
 import './base/ImmutableState.sol';
-import './libraries/UniswapV2Library.sol';
 import './base/PeripheryPaymentsWithFeeExtended.sol';
+import './libraries/UniswapV2Library.sol';
 
 /// @title Uniswap V2 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V2

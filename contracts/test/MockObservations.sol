@@ -14,6 +14,7 @@ contract MockObservations {
     // observations
     Oracle.Observation[65535] public observations;
 
+    // block timestamps always monotonic increasing from 0, cumulative ticks are calculated automatically
     constructor(
         uint32[3] memory blockTimestamps,
         int24[3] memory ticks,

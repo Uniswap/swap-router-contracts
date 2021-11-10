@@ -52,7 +52,7 @@ describe('OracleSlippage', function () {
     return mockPool as MockObservations
   }
 
-  describe('#testGetBlockStartingAndCurrentTick', () => {
+  describe('#getBlockStartingAndCurrentTick', () => {
     it('fails when observationCardinality == 1', async () => {
       const mockPool = await createMockPool(tokens[0], tokens[1], FeeAmount.LOW, [0, 1, 2], [0, 0, 0], true)
       await expect(oracle.testGetBlockStartingAndCurrentTick(mockPool.address)).to.be.revertedWith('NEO')

@@ -16,10 +16,10 @@ interface IOracleSlippage {
         uint32 secondsAgo
     ) external view;
 
-    /// @notice Ensures that the weighted current (synthetic) tick over the path is no worse than
-    /// `maximumTickDivergence` ticks away from the average as of `secondsAgo`
+    /// @notice Ensures that the weighted average current (synthetic) tick over the path is no
+    /// worse than `maximumTickDivergence` ticks away from the average as of `secondsAgo`
     /// @param paths The paths to fetch prices over
-    /// @param amounts The weights for each entry in `path`
+    /// @param amounts The weights for each entry in `paths`
     /// @param maximumTickDivergence The maximum number of ticks that the price can degrade by
     /// @param secondsAgo The number of seconds ago to compute oracle prices against
     function checkOracleSlippage(
