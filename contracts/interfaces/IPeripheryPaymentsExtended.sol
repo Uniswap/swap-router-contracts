@@ -11,6 +11,11 @@ interface IPeripheryPaymentsExtended is IPeripheryPayments {
     /// @param amountMinimum The minimum amount of WETH9 to unwrap
     function unwrapWETH9(uint256 amountMinimum) external payable;
 
+    /// @notice Wraps the contract's ETH balance into WETH9
+    /// @dev The resulting WETH9 is custodied by the router, thus will require further distribution
+    /// @param value The amount of ETH to wrap
+    function wrapETH(uint256 value) external payable;
+
     /// @notice Transfers the full amount of a token held by this contract to msg.sender
     /// @dev The amountMinimum parameter prevents malicious contracts from stealing the token from users
     /// @param token The contract address of the token which will be transferred to msg.sender
