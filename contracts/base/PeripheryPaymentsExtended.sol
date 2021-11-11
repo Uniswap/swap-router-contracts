@@ -13,6 +13,11 @@ abstract contract PeripheryPaymentsExtended is IPeripheryPaymentsExtended, Perip
     }
 
     /// @inheritdoc IPeripheryPaymentsExtended
+    function wrapETH(uint256 value) external payable override {
+        IWETH9(WETH9).deposit{value: value}();
+    }
+
+    /// @inheritdoc IPeripheryPaymentsExtended
     function sweepToken(address token, uint256 amountMinimum) external payable override {
         sweepToken(token, amountMinimum, msg.sender);
     }
