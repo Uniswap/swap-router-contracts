@@ -43,7 +43,7 @@ abstract contract V2SwapRouter is IV2SwapRouter, ImmutableState, PeripheryPaymen
         ExactInputV2Params calldata params,
         address recipient,
         bool hasAlreadyPaid
-    ) internal returns (uint256 amountOut) {
+    ) private returns (uint256 amountOut) {
         pay(
             params.path[0],
             hasAlreadyPaid ? address(this) : msg.sender,
@@ -123,7 +123,7 @@ abstract contract V2SwapRouter is IV2SwapRouter, ImmutableState, PeripheryPaymen
         ExactOutputV2Params calldata params,
         address recipient,
         bool hasAlreadyPaid
-    ) internal returns (uint256 amountIn) {
+    ) private returns (uint256 amountIn) {
         amountIn = UniswapV2Library.getAmountsIn(factoryV2, params.amountOut, params.path)[0];
         require(amountIn <= params.amountInMaximum, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');
 
