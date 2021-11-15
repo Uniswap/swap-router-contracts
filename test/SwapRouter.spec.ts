@@ -964,31 +964,25 @@ describe('SwapRouter', function () {
 
     describe('#exactInput', () => {
       async function exactInput(
-        tokens: string[],
+        path: string[],
         amountIn: number = 2,
         amountOutMinimum: number = 1
       ): Promise<ContractTransaction> {
-        const inputIsWETH = weth9.address === tokens[0]
-        const outputIsWETH9 = tokens[tokens.length - 1] === weth9.address
+        const inputIsWETH = weth9.address === path[0]
+        const outputIsWETH9 = path[path.length - 1] === weth9.address
 
+        const method = outputIsWETH9 ? 'swapExactTokensForTokensToRouter' : 'swapExactTokensForTokensToSelf'
         const value = inputIsWETH ? amountIn : 0
 
-        const params: [number, number, string[], string, boolean] = [
-          amountIn,
-          amountOutMinimum,
-          tokens,
-          outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
-          false,
-        ]
+        const params = { amountIn, amountOutMinimum, path }
 
-        const data = [router.interface.encodeFunctionData('swapExactTokensForTokens', params)]
+        const data = [(router.interface.encodeFunctionData as any)(method, [params])]
         if (outputIsWETH9) {
           data.push(encodeUnwrapWETH9(amountOutMinimum))
         }
 
         // ensure that the swap fails if the limit is any tighter
-        const paramsWithValue: [number, number, string[], string, boolean, { value: number }] = [...params, { value }]
-        const amountOut = await router.connect(trader).callStatic.swapExactTokensForTokens(...paramsWithValue)
+        const amountOut = await router.connect(trader).callStatic[method](params, { value })
         expect(amountOut.toNumber()).to.be.eq(amountOutMinimum)
 
         return router.connect(trader)['multicall(bytes[])'](data, { value })
@@ -1150,24 +1144,23 @@ describe('SwapRouter', function () {
 
     describe('#exactOutput', () => {
       async function exactOutput(
-        tokens: string[],
+        path: string[],
         amountOut: number = 1,
         amountInMaximum: number = 2
       ): Promise<ContractTransaction> {
-        const inputIsWETH9 = tokens[0] === weth9.address
-        const outputIsWETH9 = tokens[tokens.length - 1] === weth9.address
+        const inputIsWETH9 = path[0] === weth9.address
+        const outputIsWETH9 = path[path.length - 1] === weth9.address
 
+        const method = outputIsWETH9 ? 'swapTokensForExactTokensToRouter' : 'swapTokensForExactTokensToSelf'
         const value = inputIsWETH9 ? amountInMaximum : 0
 
-        const params: [number, number, string[], string, boolean] = [
+        const params = {
           amountOut,
           amountInMaximum,
-          tokens,
-          outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
-          false,
-        ]
+          path,
+        }
 
-        const data = [router.interface.encodeFunctionData('swapTokensForExactTokens', params)]
+        const data = [(router.interface.encodeFunctionData as any)(method, [params])]
         if (inputIsWETH9) {
           data.push(router.interface.encodeFunctionData('refundETH'))
         }
@@ -1176,8 +1169,7 @@ describe('SwapRouter', function () {
         }
 
         // ensure that the swap fails if the limit is any tighter
-        const paramsWithValue: [number, number, string[], string, boolean, { value: number }] = [...params, { value }]
-        const amountIn = await router.connect(trader).callStatic.swapTokensForExactTokens(...paramsWithValue)
+        const amountIn = await router.connect(trader).callStatic[method](params, { value })
         expect(amountIn.toNumber()).to.be.eq(amountInMaximum)
 
         return router.connect(trader)['multicall(bytes[])'](data, { value })
