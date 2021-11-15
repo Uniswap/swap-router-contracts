@@ -1,18 +1,18 @@
+import { defaultAbiCoder } from '@ethersproject/abi'
+import { abi as PAIR_V2_ABI } from '@uniswap/v2-core/build/UniswapV2Pair.json'
 import { Fixture } from 'ethereum-waffle'
 import { BigNumber, constants, Contract, ContractTransaction, Wallet } from 'ethers'
-import { waffle, ethers } from 'hardhat'
-import { IWETH9, MockTimeSwapRouter02, TestERC20, IUniswapV2Pair } from '../typechain'
+import { solidityPack } from 'ethers/lib/utils'
+import { ethers, waffle } from 'hardhat'
+import { IUniswapV2Pair, IWETH9, MockTimeSwapRouter02, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
+import { computePoolAddress } from './shared/computePoolAddress'
 import { ADDRESS_THIS, FeeAmount, MSG_SENDER, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
 import { getMaxTick, getMinTick } from './shared/ticks'
-import { computePoolAddress } from './shared/computePoolAddress'
-import { defaultAbiCoder } from '@ethersproject/abi'
-import { solidityPack } from 'ethers/lib/utils'
-import { abi as PAIR_V2_ABI } from '@uniswap/v2-core/build/UniswapV2Pair.json'
 
 describe('SwapRouter', function () {
   this.timeout(40000)
@@ -169,6 +169,7 @@ describe('SwapRouter', function () {
           recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
           amountIn,
           amountOutMinimum,
+          hasAlreadyPaid: false,
         }
 
         const data = [router.interface.encodeFunctionData('exactInput', [params])]
@@ -395,6 +396,7 @@ describe('SwapRouter', function () {
           amountIn,
           amountOutMinimum,
           sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
+          hasAlreadyPaid: false,
         }
 
         const data = [router.interface.encodeFunctionData('exactInputSingle', [params])]
@@ -524,6 +526,7 @@ describe('SwapRouter', function () {
           recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
           amountOut,
           amountInMaximum,
+          hasAlreadyPaid: false,
         }
 
         const data = [router.interface.encodeFunctionData('exactOutput', [params])]
@@ -748,6 +751,7 @@ describe('SwapRouter', function () {
           amountOut,
           amountInMaximum,
           sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
+          hasAlreadyPaid: false,
         }
 
         const data = [router.interface.encodeFunctionData('exactOutputSingle', [params])]
@@ -871,6 +875,7 @@ describe('SwapRouter', function () {
           recipient: ADDRESS_THIS,
           amountIn: 102,
           amountOutMinimum: 0,
+          hasAlreadyPaid: false,
         }
 
         const functionSignature = 'sweepTokenWithFee(address,uint256,address,uint256,address)'
@@ -902,6 +907,7 @@ describe('SwapRouter', function () {
           recipient: ADDRESS_THIS,
           amountIn: 102,
           amountOutMinimum: 0,
+          hasAlreadyPaid: false,
         }
 
         const functionSignature = 'unwrapWETH9WithFee(uint256,address,uint256,address)'
@@ -967,11 +973,12 @@ describe('SwapRouter', function () {
 
         const value = inputIsWETH ? amountIn : 0
 
-        const params: [number, number, string[], string] = [
+        const params: [number, number, string[], string, boolean] = [
           amountIn,
           amountOutMinimum,
           tokens,
           outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
+          false,
         ]
 
         const data = [router.interface.encodeFunctionData('swapExactTokensForTokens', params)]
@@ -980,7 +987,7 @@ describe('SwapRouter', function () {
         }
 
         // ensure that the swap fails if the limit is any tighter
-        const paramsWithValue: [number, number, string[], string, { value: number }] = [...params, { value }]
+        const paramsWithValue: [number, number, string[], string, boolean, { value: number }] = [...params, { value }]
         const amountOut = await router.connect(trader).callStatic.swapExactTokensForTokens(...paramsWithValue)
         expect(amountOut.toNumber()).to.be.eq(amountOutMinimum)
 
@@ -1152,11 +1159,12 @@ describe('SwapRouter', function () {
 
         const value = inputIsWETH9 ? amountInMaximum : 0
 
-        const params: [number, number, string[], string] = [
+        const params: [number, number, string[], string, boolean] = [
           amountOut,
           amountInMaximum,
           tokens,
           outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
+          false,
         ]
 
         const data = [router.interface.encodeFunctionData('swapTokensForExactTokens', params)]
@@ -1168,7 +1176,7 @@ describe('SwapRouter', function () {
         }
 
         // ensure that the swap fails if the limit is any tighter
-        const paramsWithValue: [number, number, string[], string, { value: number }] = [...params, { value }]
+        const paramsWithValue: [number, number, string[], string, boolean, { value: number }] = [...params, { value }]
         const amountIn = await router.connect(trader).callStatic.swapTokensForExactTokens(...paramsWithValue)
         expect(amountIn.toNumber()).to.be.eq(amountInMaximum)
 

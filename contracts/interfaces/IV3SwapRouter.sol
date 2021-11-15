@@ -15,6 +15,7 @@ interface IV3SwapRouter is IUniswapV3SwapCallback {
         uint256 amountIn;
         uint256 amountOutMinimum;
         uint160 sqrtPriceLimitX96;
+        bool hasAlreadyPaid;
     }
 
     /// @notice Swaps `amountIn` of one token for as much as possible of another token
@@ -27,6 +28,7 @@ interface IV3SwapRouter is IUniswapV3SwapCallback {
         address recipient;
         uint256 amountIn;
         uint256 amountOutMinimum;
+        bool hasAlreadyPaid;
     }
 
     /// @notice Swaps `amountIn` of one token for as much as possible of another along the specified path
@@ -42,6 +44,7 @@ interface IV3SwapRouter is IUniswapV3SwapCallback {
         uint256 amountOut;
         uint256 amountInMaximum;
         uint160 sqrtPriceLimitX96;
+        bool hasAlreadyPaid;
     }
 
     /// @notice Swaps as little as possible of one token for `amountOut` of another token
@@ -54,6 +57,7 @@ interface IV3SwapRouter is IUniswapV3SwapCallback {
         address recipient;
         uint256 amountOut;
         uint256 amountInMaximum;
+        bool hasAlreadyPaid;
     }
 
     /// @notice Swaps as little as possible of one token for `amountOut` of another along the specified path (reversed)
