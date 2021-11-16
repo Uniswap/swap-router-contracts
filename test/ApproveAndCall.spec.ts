@@ -5,14 +5,12 @@ import { solidityPack } from 'ethers/lib/utils'
 import { ethers, waffle } from 'hardhat'
 import { MockTimeSwapRouter02, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
-import { FeeAmount, TICK_SPACINGS } from './shared/constants'
+import { ADDRESS_THIS, FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
 import { getMaxTick, getMinTick } from './shared/ticks'
-
-const ADDRESS_THIS = '0x0000000000000000000000000000000000000001'
 
 describe('ApproveAndCall', function () {
   this.timeout(40000)
