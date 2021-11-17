@@ -203,13 +203,23 @@ describe('ApproveAndCall', function () {
         await tokens[0].transfer(trader.address, amountIn + amountOutMinimum)
         await tokens[0].connect(trader).approve(router.address, amountIn + amountOutMinimum)
 
-        let traderNFTBalanceBefore = await nft.balanceOf(trader.address)
+        const traderToken0BalanceBefore = await tokens[0].balanceOf(trader.address)
+        const traderToken1BalanceBefore = await tokens[1].balanceOf(trader.address)
+        expect(traderToken0BalanceBefore.toNumber()).to.be.eq(amountIn + amountOutMinimum)
+        expect(traderToken1BalanceBefore.toNumber()).to.be.eq(0)
+
+        const traderNFTBalanceBefore = await nft.balanceOf(trader.address)
         expect(traderNFTBalanceBefore.toNumber()).to.be.eq(0)
 
         await singleAssetAddExactInput(tokens[0].address, tokens[1].address, amountIn, amountOutMinimum)
 
-        traderNFTBalanceBefore = await nft.balanceOf(trader.address)
-        expect(traderNFTBalanceBefore.toNumber()).to.be.eq(1)
+        const traderToken0BalanceAfter = await tokens[0].balanceOf(trader.address)
+        const traderToken1BalanceAfter = await tokens[1].balanceOf(trader.address)
+        expect(traderToken0BalanceAfter.toNumber()).to.be.eq(0)
+        expect(traderToken1BalanceAfter.toNumber()).to.be.eq(1) // dust
+
+        const traderNFTBalanceAfter = await nft.balanceOf(trader.address)
+        expect(traderNFTBalanceAfter.toNumber()).to.be.eq(1)
       })
     })
 
@@ -293,13 +303,27 @@ describe('ApproveAndCall', function () {
         await tokens[0].transfer(trader.address, amountIn * 2)
         await tokens[0].connect(trader).approve(router.address, amountIn * 2)
 
-        let traderNFTBalanceBefore = await nft.balanceOf(trader.address)
+        const traderToken0BalanceBefore = await tokens[0].balanceOf(trader.address)
+        const traderToken1BalanceBefore = await tokens[1].balanceOf(trader.address)
+        const traderToken2BalanceBefore = await tokens[2].balanceOf(trader.address)
+        expect(traderToken0BalanceBefore.toNumber()).to.be.eq(amountIn * 2)
+        expect(traderToken1BalanceBefore.toNumber()).to.be.eq(0)
+        expect(traderToken2BalanceBefore.toNumber()).to.be.eq(0)
+
+        const traderNFTBalanceBefore = await nft.balanceOf(trader.address)
         expect(traderNFTBalanceBefore.toNumber()).to.be.eq(0)
 
         await anyAssetAddExactInput(tokens[0].address, tokens[1].address, tokens[2].address, amountIn, amountOutMinimum)
 
-        traderNFTBalanceBefore = await nft.balanceOf(trader.address)
-        expect(traderNFTBalanceBefore.toNumber()).to.be.eq(1)
+        const traderToken0BalanceAfter = await tokens[0].balanceOf(trader.address)
+        const traderToken1BalanceAfter = await tokens[1].balanceOf(trader.address)
+        const traderToken2BalanceAfter = await tokens[2].balanceOf(trader.address)
+        expect(traderToken0BalanceAfter.toNumber()).to.be.eq(0)
+        expect(traderToken1BalanceAfter.toNumber()).to.be.eq(0)
+        expect(traderToken2BalanceAfter.toNumber()).to.be.eq(0)
+
+        const traderNFTBalanceAfter = await nft.balanceOf(trader.address)
+        expect(traderNFTBalanceAfter.toNumber()).to.be.eq(1)
       })
     })
   })
