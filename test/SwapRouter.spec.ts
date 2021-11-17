@@ -950,6 +950,7 @@ describe('SwapRouter', function () {
 
     return pair
   }
+
   describe('swaps - v2', () => {
     let pairs: IUniswapV2Pair[]
     let wethPairs: IUniswapV2Pair[]
@@ -965,7 +966,7 @@ describe('SwapRouter', function () {
       pairs = [pair01, pair12]
     })
 
-    describe('#exactInput', () => {
+    describe('#swapExactTokensForTokens', () => {
       async function exactInput(
         tokens: string[],
         amountIn: number = 2,
@@ -1151,7 +1152,7 @@ describe('SwapRouter', function () {
       })
     })
 
-    describe('#exactOutput', () => {
+    describe('#swapTokensForExactTokens', () => {
       async function exactOutput(
         tokens: string[],
         amountOut: number = 1,
