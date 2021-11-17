@@ -36,7 +36,7 @@ describe('MulticallExtended', async () => {
       multicall['multicall(bytes32,bytes[])'](constants.HashZero, [
         multicall.interface.encodeFunctionData('functionThatReturnsTuple', ['1', '2']),
       ])
-    ).to.be.revertedWith('Unexpected parent block')
+    ).to.be.revertedWith('Blockhash')
   })
 
   it('passes previousBlockhash check', async () => {
