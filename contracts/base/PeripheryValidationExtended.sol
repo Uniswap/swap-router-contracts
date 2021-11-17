@@ -5,7 +5,7 @@ import '@uniswap/v3-periphery/contracts/base/PeripheryValidation.sol';
 
 abstract contract PeripheryValidationExtended is PeripheryValidation {
     modifier checkPreviousBlockhash(bytes32 previousBlockhash) {
-        require(blockhash(block.number - 1) == previousBlockhash, 'Unexpected parent block');
+        require(blockhash(block.number - 1) == previousBlockhash, 'Blockhash');
         _;
     }
 }

@@ -8,6 +8,7 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-periphery/contracts/libraries/Path.sol';
 import '@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol';
 import '@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import './interfaces/IV3SwapRouter.sol';
 import './base/ConstantState.sol';
@@ -102,19 +103,26 @@ abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPayment
     }
 
     /// @inheritdoc IV3SwapRouter
-    function exactInputSingle(ExactInputSingleParams calldata params)
+    function exactInputSingle(ExactInputSingleParams memory params)
         external
         payable
         override
         returns (uint256 amountOut)
     {
+        bool hasAlreadyPaid;
+        // use amountIn == CONTRACT_BALANCE as a flag to swap the entire balance of the contract
+        if (params.amountIn == CONTRACT_BALANCE) {
+            hasAlreadyPaid = true;
+            params.amountIn = IERC20(params.tokenIn).balanceOf(address(this));
+        }
+
         amountOut = exactInputInternal(
             params.amountIn,
             params.recipient,
             params.sqrtPriceLimitX96,
             SwapCallbackData({
                 path: abi.encodePacked(params.tokenIn, params.fee, params.tokenOut),
-                payer: params.hasAlreadyPaid ? address(this) : msg.sender
+                payer: hasAlreadyPaid ? address(this) : msg.sender
             })
         );
         require(amountOut >= params.amountOutMinimum, 'Too little received');
@@ -122,7 +130,15 @@ abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPayment
 
     /// @inheritdoc IV3SwapRouter
     function exactInput(ExactInputParams memory params) external payable override returns (uint256 amountOut) {
-        address payer = params.hasAlreadyPaid ? address(this) : msg.sender;
+        bool hasAlreadyPaid;
+        // use amountIn == CONTRACT_BALANCE as a flag to swap the entire balance of the contract
+        if (params.amountIn == CONTRACT_BALANCE) {
+            hasAlreadyPaid = true;
+            (address tokenIn, , ) = params.path.decodeFirstPool();
+            params.amountIn = IERC20(tokenIn).balanceOf(address(this));
+        }
+
+        address payer = hasAlreadyPaid ? address(this) : msg.sender;
 
         while (true) {
             bool hasMultiplePools = params.path.hasMultiplePools();
@@ -198,10 +214,7 @@ abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPayment
             params.amountOut,
             params.recipient,
             params.sqrtPriceLimitX96,
-            SwapCallbackData({
-                path: abi.encodePacked(params.tokenOut, params.fee, params.tokenIn),
-                payer: params.hasAlreadyPaid ? address(this) : msg.sender
-            })
+            SwapCallbackData({path: abi.encodePacked(params.tokenOut, params.fee, params.tokenIn), payer: msg.sender})
         );
 
         require(amountIn <= params.amountInMaximum, 'Too much requested');
@@ -215,7 +228,7 @@ abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPayment
             params.amountOut,
             params.recipient,
             0,
-            SwapCallbackData({path: params.path, payer: params.hasAlreadyPaid ? address(this) : msg.sender})
+            SwapCallbackData({path: params.path, payer: msg.sender})
         );
 
         amountIn = amountInCached;
