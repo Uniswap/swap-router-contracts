@@ -48,6 +48,8 @@ interface IV3SwapRouter is IUniswapV3SwapCallback {
     }
 
     /// @notice Swaps as little as possible of one token for `amountOut` of another token
+    /// @dev If params.hasAlreadyPaid is true, callers should be sure to retrieve any excess tokens
+    /// that may remain in the router after the swap.
     /// @param params The parameters necessary for the swap, encoded as `ExactOutputSingleParams` in calldata
     /// @return amountIn The amount of the input token
     function exactOutputSingle(ExactOutputSingleParams calldata params) external payable returns (uint256 amountIn);
@@ -61,6 +63,8 @@ interface IV3SwapRouter is IUniswapV3SwapCallback {
     }
 
     /// @notice Swaps as little as possible of one token for `amountOut` of another along the specified path (reversed)
+    /// @dev If params.hasAlreadyPaid is true, callers should be sure to retrieve any excess tokens
+    /// that may remain in the router after the swap.
     /// @param params The parameters necessary for the multi-hop swap, encoded as `ExactOutputParams` in calldata
     /// @return amountIn The amount of the input token
     function exactOutput(ExactOutputParams calldata params) external payable returns (uint256 amountIn);
