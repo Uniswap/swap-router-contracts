@@ -152,6 +152,7 @@ describe('ApproveAndCall', function () {
           recipient: ADDRESS_THIS, // have to send to the router, as it will be adding liquidity for the caller
           amountIn,
           amountOutMinimum,
+          hasAlreadyPaid: false,
         }
         // ensure that the swap fails if the limit is any tighter
         const amountOut = await router.connect(trader).callStatic.exactInput(params)
@@ -242,6 +243,7 @@ describe('ApproveAndCall', function () {
           recipient: ADDRESS_THIS, // have to send to the router, as it will be adding liquidity for the caller
           amountIn,
           amountOutMinimum,
+          hasAlreadyPaid: false,
         }
         // ensure that the swap fails if the limit is any tighter
         let amountOut = await router.connect(trader).callStatic.exactInput(params)
@@ -254,6 +256,7 @@ describe('ApproveAndCall', function () {
           recipient: ADDRESS_THIS, // have to send to the router, as it will be adding liquidity for the caller
           amountIn,
           amountOutMinimum,
+          hasAlreadyPaid: false,
         }
         // ensure that the swap fails if the limit is any tighter
         amountOut = await router.connect(trader).callStatic.exactInput(params)

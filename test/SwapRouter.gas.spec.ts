@@ -135,6 +135,7 @@ describe('SwapRouter gas tests', function () {
       recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
       amountIn,
       amountOutMinimum: outputIsWETH9 ? 0 : amountOutMinimum, // save on calldata
+      hasAlreadyPaid: false,
     }
 
     const data = [router.interface.encodeFunctionData('exactInput', [params])]
@@ -165,6 +166,7 @@ describe('SwapRouter gas tests', function () {
       amountIn,
       amountOutMinimum: outputIsWETH9 ? 0 : amountOutMinimum, // save on calldata
       sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
+      hasAlreadyPaid: false,
     }
 
     const data = [router.interface.encodeFunctionData('exactInputSingle', [params])]
