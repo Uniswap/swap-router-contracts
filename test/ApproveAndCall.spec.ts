@@ -7,10 +7,17 @@ import { MockTimeSwapRouter02, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { ADDRESS_THIS, FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
-import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
 import { getMaxTick, getMinTick } from './shared/ticks'
+
+enum ApprovalType {
+  NOT_REQUIRED,
+  MAX,
+  MAX_MINUS_ONE,
+  ZERO_THEN_MAX,
+  ZERO_THEN_MAX_MINUS_ONE,
+}
 
 describe('ApproveAndCall', function () {
   this.timeout(40000)
@@ -26,10 +33,7 @@ describe('ApproveAndCall', function () {
 
     // approve & fund wallets
     for (const token of tokens) {
-      await token.approve(router.address, constants.MaxUint256)
       await token.approve(nft.address, constants.MaxUint256)
-      await token.connect(trader).approve(router.address, constants.MaxUint256)
-      await token.transfer(trader.address, expandTo18Decimals(1_000_000))
     }
 
     return {
@@ -91,71 +95,208 @@ describe('ApproveAndCall', function () {
       return nft.mint(liquidityParams)
     }
 
-    beforeEach('create 0-1 pool', async () => {
-      await createPool(tokens[0].address, tokens[1].address)
+    describe('approvals', () => {
+      it('#approveMax', async () => {
+        let approvalType = await router.callStatic.getApprovalType(tokens[0].address, 123)
+        expect(approvalType).to.be.eq(ApprovalType.MAX)
+
+        await router.approveMax(tokens[0].address)
+
+        approvalType = await router.callStatic.getApprovalType(tokens[0].address, 123)
+        expect(approvalType).to.be.eq(ApprovalType.NOT_REQUIRED)
+      })
+
+      it('#approveMax', async () => {
+        await router.approveMax(tokens[0].address)
+      })
+
+      it('#approveMaxMinusOne', async () => {
+        await router.approveMaxMinusOne(tokens[0].address)
+      })
+
+      describe('#approveZeroThenMax', async () => {
+        it('from 0', async () => {
+          await router.approveZeroThenMax(tokens[0].address)
+        })
+        it('from max', async () => {
+          await router.approveMax(tokens[0].address)
+          await router.approveZeroThenMax(tokens[0].address)
+        })
+      })
+
+      describe('#approveZeroThenMax', async () => {
+        it('from 0', async () => {
+          await router.approveZeroThenMaxMinusOne(tokens[0].address)
+        })
+        it('from max', async () => {
+          await router.approveMax(tokens[0].address)
+          await router.approveZeroThenMaxMinusOne(tokens[0].address)
+        })
+      })
     })
 
-    async function singleAssetAddExactInput(
-      tokenIn: string,
-      tokenOut: string,
-      amountIn: number = 3,
-      amountOutMinimum: number = 1
-    ): Promise<ContractTransaction> {
-      // encode the exact input swap
-      const params = {
-        path: encodePath([tokenIn, tokenOut], [FeeAmount.MEDIUM]),
-        recipient: ADDRESS_THIS, // have to send to the router, as it will be adding liquidity for the caller
-        amountIn,
-        amountOutMinimum,
-        hasAlreadyPaid: false,
-      }
-      // ensure that the swap fails if the limit is any tighter
-      const amountOut = await router.connect(trader).callStatic.exactInput(params)
-      expect(amountOut.toNumber()).to.be.eq(amountOutMinimum)
-      const data = [router.interface.encodeFunctionData('exactInput', [params])]
-
-      // encode the pull (we take the same as the amountOutMinimum, assuming a 50/50 range)
-      data.push(router.interface.encodeFunctionData('pull', [tokenIn, amountOutMinimum]))
-
-      // encode the approves
-      data.push(router.interface.encodeFunctionData('approveMax', [tokenIn]))
-      data.push(router.interface.encodeFunctionData('approveMax', [tokenOut]))
-
-      // encode the add liquidity
-      const [token0, token1] =
-        tokenIn.toLowerCase() < tokenOut.toLowerCase() ? [tokenIn, tokenOut] : [tokenOut, tokenIn]
-      const liquidityParams = {
-        token0,
-        token1,
-        fee: FeeAmount.MEDIUM,
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        recipient: trader.address,
-        amount0Desired: amountOutMinimum,
-        amount1Desired: amountOutMinimum,
-        amount0Min: 0,
-        amount1Min: 0,
-        deadline: 2 ** 32,
-      }
-      data.push(
-        router.interface.encodeFunctionData('callPositionManager', [
-          nft.interface.encodeFunctionData('mint', [liquidityParams]),
-        ])
-      )
-
-      // encode the sweeps
-      data.push(encodeSweepToken(tokenIn, 0))
-      data.push(encodeSweepToken(tokenOut, 0))
-
-      return router.connect(trader)['multicall(bytes[])'](data)
-    }
-
     describe('single-asset add', () => {
+      beforeEach('create 0-1 pool', async () => {
+        await createPool(tokens[0].address, tokens[1].address)
+      })
+
+      async function singleAssetAddExactInput(
+        tokenIn: string,
+        tokenOut: string,
+        amountIn: number,
+        amountOutMinimum: number
+      ): Promise<ContractTransaction> {
+        // encode the exact input swap
+        const params = {
+          path: encodePath([tokenIn, tokenOut], [FeeAmount.MEDIUM]),
+          recipient: ADDRESS_THIS, // have to send to the router, as it will be adding liquidity for the caller
+          amountIn,
+          amountOutMinimum,
+          hasAlreadyPaid: false,
+        }
+        // ensure that the swap fails if the limit is any tighter
+        const amountOut = await router.connect(trader).callStatic.exactInput(params)
+        expect(amountOut.toNumber()).to.be.eq(amountOutMinimum)
+        const data = [router.interface.encodeFunctionData('exactInput', [params])]
+
+        // encode the pull (we take the same as the amountOutMinimum, assuming a 50/50 range)
+        data.push(router.interface.encodeFunctionData('pull', [tokenIn, amountOutMinimum]))
+
+        // encode the approves
+        data.push(router.interface.encodeFunctionData('approveMax', [tokenIn]))
+        data.push(router.interface.encodeFunctionData('approveMax', [tokenOut]))
+
+        // encode the add liquidity
+        const [token0, token1] =
+          tokenIn.toLowerCase() < tokenOut.toLowerCase() ? [tokenIn, tokenOut] : [tokenOut, tokenIn]
+        const liquidityParams = {
+          token0,
+          token1,
+          fee: FeeAmount.MEDIUM,
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: trader.address,
+          amount0Desired: amountOutMinimum,
+          amount1Desired: amountOutMinimum,
+          amount0Min: 0,
+          amount1Min: 0,
+          deadline: 2 ** 32,
+        }
+        data.push(
+          router.interface.encodeFunctionData('callPositionManager', [
+            nft.interface.encodeFunctionData('mint', [liquidityParams]),
+          ])
+        )
+
+        // encode the sweeps
+        data.push(encodeSweepToken(tokenIn, 0))
+        data.push(encodeSweepToken(tokenOut, 0))
+
+        return router.connect(trader)['multicall(bytes[])'](data)
+      }
+
       it('0 -> 1', async () => {
+        const amountIn = 1000
+        const amountOutMinimum = 996
+
+        // prep for the swap + add by sending tokens
+        await tokens[0].transfer(trader.address, amountIn + amountOutMinimum)
+        await tokens[0].connect(trader).approve(router.address, amountIn + amountOutMinimum)
+
         let traderNFTBalanceBefore = await nft.balanceOf(trader.address)
         expect(traderNFTBalanceBefore.toNumber()).to.be.eq(0)
 
-        await singleAssetAddExactInput(tokens[0].address, tokens[1].address, 1000, 996)
+        await singleAssetAddExactInput(tokens[0].address, tokens[1].address, amountIn, amountOutMinimum)
+
+        traderNFTBalanceBefore = await nft.balanceOf(trader.address)
+        expect(traderNFTBalanceBefore.toNumber()).to.be.eq(1)
+      })
+    })
+
+    describe('any-asset add', () => {
+      beforeEach('create 0-1, 0-2, and 1-2 pools pools', async () => {
+        await createPool(tokens[0].address, tokens[1].address)
+        await createPool(tokens[0].address, tokens[2].address)
+        await createPool(tokens[1].address, tokens[2].address)
+      })
+
+      async function anyAssetAddExactInput(
+        tokenStart: string,
+        tokenA: string,
+        tokenB: string,
+        amountIn: number,
+        amountOutMinimum: number
+      ): Promise<ContractTransaction> {
+        // encode the exact input swaps
+        let params = {
+          path: encodePath([tokenStart, tokenA], [FeeAmount.MEDIUM]),
+          recipient: ADDRESS_THIS, // have to send to the router, as it will be adding liquidity for the caller
+          amountIn,
+          amountOutMinimum,
+          hasAlreadyPaid: false,
+        }
+        // ensure that the swap fails if the limit is any tighter
+        let amountOut = await router.connect(trader).callStatic.exactInput(params)
+        expect(amountOut.toNumber()).to.be.eq(amountOutMinimum)
+        let data = [router.interface.encodeFunctionData('exactInput', [params])]
+
+        // encode the exact input swaps
+        params = {
+          path: encodePath([tokenStart, tokenB], [FeeAmount.MEDIUM]),
+          recipient: ADDRESS_THIS, // have to send to the router, as it will be adding liquidity for the caller
+          amountIn,
+          amountOutMinimum,
+          hasAlreadyPaid: false,
+        }
+        // ensure that the swap fails if the limit is any tighter
+        amountOut = await router.connect(trader).callStatic.exactInput(params)
+        expect(amountOut.toNumber()).to.be.eq(amountOutMinimum)
+        data.push(router.interface.encodeFunctionData('exactInput', [params]))
+
+        // encode the approves
+        data.push(router.interface.encodeFunctionData('approveMax', [tokenA]))
+        data.push(router.interface.encodeFunctionData('approveMax', [tokenB]))
+
+        // encode the add liquidity
+        const [token0, token1] = tokenA.toLowerCase() < tokenB.toLowerCase() ? [tokenA, tokenB] : [tokenB, tokenA]
+        const liquidityParams = {
+          token0,
+          token1,
+          fee: FeeAmount.MEDIUM,
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: trader.address,
+          amount0Desired: amountOutMinimum,
+          amount1Desired: amountOutMinimum,
+          amount0Min: 0,
+          amount1Min: 0,
+          deadline: 2 ** 32,
+        }
+        data.push(
+          router.interface.encodeFunctionData('callPositionManager', [
+            nft.interface.encodeFunctionData('mint', [liquidityParams]),
+          ])
+        )
+
+        // encode the sweeps
+        data.push(encodeSweepToken(tokenA, 0))
+        data.push(encodeSweepToken(tokenB, 0))
+
+        return router.connect(trader)['multicall(bytes[])'](data)
+      }
+
+      it('0 -> 1 and 0 -> 2', async () => {
+        const amountIn = 1000
+        const amountOutMinimum = 996
+
+        // prep for the swap + add by sending tokens
+        await tokens[0].transfer(trader.address, amountIn * 2)
+        await tokens[0].connect(trader).approve(router.address, amountIn * 2)
+
+        let traderNFTBalanceBefore = await nft.balanceOf(trader.address)
+        expect(traderNFTBalanceBefore.toNumber()).to.be.eq(0)
+
+        await anyAssetAddExactInput(tokens[0].address, tokens[1].address, tokens[2].address, amountIn, amountOutMinimum)
 
         traderNFTBalanceBefore = await nft.balanceOf(trader.address)
         expect(traderNFTBalanceBefore.toNumber()).to.be.eq(1)
