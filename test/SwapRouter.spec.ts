@@ -1,18 +1,18 @@
+import { defaultAbiCoder } from '@ethersproject/abi'
+import { abi as PAIR_V2_ABI } from '@uniswap/v2-core/build/UniswapV2Pair.json'
 import { Fixture } from 'ethereum-waffle'
 import { BigNumber, constants, Contract, ContractTransaction, Wallet } from 'ethers'
-import { waffle, ethers } from 'hardhat'
-import { IWETH9, MockTimeSwapRouter02, TestERC20, IUniswapV2Pair } from '../typechain'
+import { solidityPack } from 'ethers/lib/utils'
+import { ethers, waffle } from 'hardhat'
+import { IUniswapV2Pair, IWETH9, MockTimeSwapRouter02, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
+import { computePoolAddress } from './shared/computePoolAddress'
 import { ADDRESS_THIS, FeeAmount, MSG_SENDER, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
 import { getMaxTick, getMinTick } from './shared/ticks'
-import { computePoolAddress } from './shared/computePoolAddress'
-import { defaultAbiCoder } from '@ethersproject/abi'
-import { solidityPack } from 'ethers/lib/utils'
-import { abi as PAIR_V2_ABI } from '@uniswap/v2-core/build/UniswapV2Pair.json'
 
 describe('SwapRouter', function () {
   this.timeout(40000)
@@ -75,6 +75,17 @@ describe('SwapRouter', function () {
     )
   }
 
+  function encodeSweep(token: string, amount: number, recipient: string) {
+    const functionSignature = 'sweepToken(address,uint256,address)'
+    return solidityPack(
+      ['bytes4', 'bytes'],
+      [
+        router.interface.getSighash(functionSignature),
+        defaultAbiCoder.encode(router.interface.functions[functionSignature].inputs, [token, amount, recipient]),
+      ]
+    )
+  }
+
   before('create fixture loader', async () => {
     ;[wallet, trader] = await (ethers as any).getSigners()
     loadFixture = waffle.createFixtureLoader([wallet, trader])
@@ -112,45 +123,39 @@ describe('SwapRouter', function () {
     expect(((await router.provider.getCode(router.address)).length - 2) / 2).to.matchSnapshot()
   })
 
-  describe('swaps - v3', () => {
-    const liquidity = 1000000
-    async function createPool(tokenAddressA: string, tokenAddressB: string) {
-      if (tokenAddressA.toLowerCase() > tokenAddressB.toLowerCase())
-        [tokenAddressA, tokenAddressB] = [tokenAddressB, tokenAddressA]
+  const liquidity = 1000000
+  async function createV3Pool(tokenAddressA: string, tokenAddressB: string) {
+    if (tokenAddressA.toLowerCase() > tokenAddressB.toLowerCase())
+      [tokenAddressA, tokenAddressB] = [tokenAddressB, tokenAddressA]
 
-      await nft.createAndInitializePoolIfNecessary(
-        tokenAddressA,
-        tokenAddressB,
-        FeeAmount.MEDIUM,
-        encodePriceSqrt(1, 1)
-      )
+    await nft.createAndInitializePoolIfNecessary(tokenAddressA, tokenAddressB, FeeAmount.MEDIUM, encodePriceSqrt(1, 1))
 
-      const liquidityParams = {
-        token0: tokenAddressA,
-        token1: tokenAddressB,
-        fee: FeeAmount.MEDIUM,
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        recipient: wallet.address,
-        amount0Desired: 1000000,
-        amount1Desired: 1000000,
-        amount0Min: 0,
-        amount1Min: 0,
-        deadline: 2 ** 32,
-      }
-
-      return nft.mint(liquidityParams)
+    const liquidityParams = {
+      token0: tokenAddressA,
+      token1: tokenAddressB,
+      fee: FeeAmount.MEDIUM,
+      tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+      tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+      recipient: wallet.address,
+      amount0Desired: 1000000,
+      amount1Desired: 1000000,
+      amount0Min: 0,
+      amount1Min: 0,
+      deadline: 2 ** 32,
     }
 
+    return nft.mint(liquidityParams)
+  }
+  describe('swaps - v3', () => {
     async function createPoolWETH9(tokenAddress: string) {
       await weth9.deposit({ value: liquidity })
       await weth9.approve(nft.address, constants.MaxUint256)
-      return createPool(weth9.address, tokenAddress)
+      return createV3Pool(weth9.address, tokenAddress)
     }
 
     beforeEach('create 0-1 and 1-2 pools', async () => {
-      await createPool(tokens[0].address, tokens[1].address)
-      await createPool(tokens[1].address, tokens[2].address)
+      await createV3Pool(tokens[0].address, tokens[1].address)
+      await createV3Pool(tokens[1].address, tokens[2].address)
     })
 
     describe('#exactInput', () => {
@@ -169,6 +174,7 @@ describe('SwapRouter', function () {
           recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
           amountIn,
           amountOutMinimum,
+          hasAlreadyPaid: false,
         }
 
         const data = [router.interface.encodeFunctionData('exactInput', [params])]
@@ -395,6 +401,7 @@ describe('SwapRouter', function () {
           amountIn,
           amountOutMinimum,
           sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
+          hasAlreadyPaid: false,
         }
 
         const data = [router.interface.encodeFunctionData('exactInputSingle', [params])]
@@ -524,6 +531,7 @@ describe('SwapRouter', function () {
           recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
           amountOut,
           amountInMaximum,
+          hasAlreadyPaid: false,
         }
 
         const data = [router.interface.encodeFunctionData('exactOutput', [params])]
@@ -748,6 +756,7 @@ describe('SwapRouter', function () {
           amountOut,
           amountInMaximum,
           sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
+          hasAlreadyPaid: false,
         }
 
         const data = [router.interface.encodeFunctionData('exactOutputSingle', [params])]
@@ -871,6 +880,7 @@ describe('SwapRouter', function () {
           recipient: ADDRESS_THIS,
           amountIn: 102,
           amountOutMinimum: 0,
+          hasAlreadyPaid: false,
         }
 
         const functionSignature = 'sweepTokenWithFee(address,uint256,address,uint256,address)'
@@ -902,6 +912,7 @@ describe('SwapRouter', function () {
           recipient: ADDRESS_THIS,
           amountIn: 102,
           amountOutMinimum: 0,
+          hasAlreadyPaid: false,
         }
 
         const functionSignature = 'unwrapWETH9WithFee(uint256,address,uint256,address)'
@@ -926,33 +937,31 @@ describe('SwapRouter', function () {
     })
   })
 
+  async function createV2Pool(tokenA: TestERC20, tokenB: TestERC20): Promise<IUniswapV2Pair> {
+    await factoryV2.createPair(tokenA.address, tokenB.address)
+
+    const pairAddress = await factoryV2.getPair(tokenA.address, tokenB.address)
+    const pair = new ethers.Contract(pairAddress, PAIR_V2_ABI, wallet) as IUniswapV2Pair
+
+    await tokenA.transfer(pair.address, liquidity)
+    await tokenB.transfer(pair.address, liquidity)
+
+    await pair.mint(wallet.address)
+
+    return pair
+  }
   describe('swaps - v2', () => {
     let pairs: IUniswapV2Pair[]
     let wethPairs: IUniswapV2Pair[]
 
-    const liquidity = 1000000
-    async function createPool(tokenA: TestERC20, tokenB: TestERC20): Promise<IUniswapV2Pair> {
-      await factoryV2.createPair(tokenA.address, tokenB.address)
-
-      const pairAddress = await factoryV2.getPair(tokenA.address, tokenB.address)
-      const pair = new ethers.Contract(pairAddress, PAIR_V2_ABI, wallet) as IUniswapV2Pair
-
-      await tokenA.transfer(pair.address, liquidity)
-      await tokenB.transfer(pair.address, liquidity)
-
-      await pair.mint(wallet.address)
-
-      return pair
-    }
-
     async function createPoolWETH9(token: TestERC20) {
       await weth9.deposit({ value: liquidity })
-      return createPool((weth9 as unknown) as TestERC20, token)
+      return createV2Pool((weth9 as unknown) as TestERC20, token)
     }
 
     beforeEach('create 0-1 and 1-2 pools', async () => {
-      const pair01 = await createPool(tokens[0], tokens[1])
-      const pair12 = await createPool(tokens[1], tokens[2])
+      const pair01 = await createV2Pool(tokens[0], tokens[1])
+      const pair12 = await createV2Pool(tokens[1], tokens[2])
       pairs = [pair01, pair12]
     })
 
@@ -967,11 +976,12 @@ describe('SwapRouter', function () {
 
         const value = inputIsWETH ? amountIn : 0
 
-        const params: [number, number, string[], string] = [
+        const params: [number, number, string[], string, boolean] = [
           amountIn,
           amountOutMinimum,
           tokens,
           outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
+          false,
         ]
 
         const data = [router.interface.encodeFunctionData('swapExactTokensForTokens', params)]
@@ -980,7 +990,7 @@ describe('SwapRouter', function () {
         }
 
         // ensure that the swap fails if the limit is any tighter
-        const paramsWithValue: [number, number, string[], string, { value: number }] = [...params, { value }]
+        const paramsWithValue: [number, number, string[], string, boolean, { value: number }] = [...params, { value }]
         const amountOut = await router.connect(trader).callStatic.swapExactTokensForTokens(...paramsWithValue)
         expect(amountOut.toNumber()).to.be.eq(amountOutMinimum)
 
@@ -1152,11 +1162,12 @@ describe('SwapRouter', function () {
 
         const value = inputIsWETH9 ? amountInMaximum : 0
 
-        const params: [number, number, string[], string] = [
+        const params: [number, number, string[], string, boolean] = [
           amountOut,
           amountInMaximum,
           tokens,
           outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
+          false,
         ]
 
         const data = [router.interface.encodeFunctionData('swapTokensForExactTokens', params)]
@@ -1168,7 +1179,7 @@ describe('SwapRouter', function () {
         }
 
         // ensure that the swap fails if the limit is any tighter
-        const paramsWithValue: [number, number, string[], string, { value: number }] = [...params, { value }]
+        const paramsWithValue: [number, number, string[], string, boolean, { value: number }] = [...params, { value }]
         const amountIn = await router.connect(trader).callStatic.swapTokensForExactTokens(...paramsWithValue)
         expect(amountIn.toNumber()).to.be.eq(amountInMaximum)
 
@@ -1317,6 +1328,259 @@ describe('SwapRouter', function () {
             expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(3))
           })
         })
+      })
+    })
+  })
+
+  describe('swaps - v2 + v3', () => {
+    beforeEach('create 0-1 and 1-2 pools', async () => {
+      await createV3Pool(tokens[0].address, tokens[1].address)
+      await createV3Pool(tokens[1].address, tokens[2].address)
+    })
+
+    beforeEach('create 0-1 and 1-2 pools', async () => {
+      await createV2Pool(tokens[0], tokens[1])
+      await createV2Pool(tokens[1], tokens[2])
+    })
+
+    async function exactInputV3(
+      tokens: string[],
+      amountIn: number = 3,
+      amountOutMinimum: number = 1,
+      recipient: string,
+      hasAlreadyPaid: boolean,
+      skipAmountOutMinimumCheck: boolean = false
+    ): Promise<string[]> {
+      const params = {
+        path: encodePath(tokens, new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
+        recipient,
+        amountIn,
+        amountOutMinimum,
+        hasAlreadyPaid,
+      }
+
+      const data = [router.interface.encodeFunctionData('exactInput', [params])]
+
+      if (!skipAmountOutMinimumCheck) {
+        // ensure that the swap fails if the limit is any tighter
+        const amountOut = await router.connect(trader).callStatic.exactInput(params)
+        expect(amountOut.toNumber()).to.be.eq(amountOutMinimum)
+      }
+
+      return data
+    }
+
+    async function exactOutputV3(
+      tokens: string[],
+      amountOut: number = 1,
+      amountInMaximum: number = 3,
+      recipient: string,
+      hasAlreadyPaid: boolean
+    ): Promise<string[]> {
+      const params = {
+        path: encodePath(tokens.slice().reverse(), new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
+        recipient,
+        amountOut,
+        amountInMaximum,
+        hasAlreadyPaid,
+      }
+
+      const data = [router.interface.encodeFunctionData('exactOutput', [params])]
+
+      // ensure that the swap fails if the limit is any tighter
+      const amountIn = await router.connect(trader).callStatic.exactOutput(params)
+      expect(amountIn.toNumber()).to.be.eq(amountInMaximum)
+
+      return data
+    }
+
+    async function exactInputV2(
+      tokens: string[],
+      amountIn: number = 2,
+      amountOutMinimum: number = 1,
+      recipient: string,
+      hasAlreadyPaid: boolean,
+      skipAmountOutMinimumCheck: boolean = false
+    ): Promise<string[]> {
+      const params: [number, number, string[], string, boolean] = [
+        amountIn,
+        amountOutMinimum,
+        tokens,
+        recipient,
+        hasAlreadyPaid,
+      ]
+
+      const data = [router.interface.encodeFunctionData('swapExactTokensForTokens', params)]
+
+      if (!skipAmountOutMinimumCheck) {
+        // ensure that the swap fails if the limit is any tighter
+        const amountOut = await router.connect(trader).callStatic.swapExactTokensForTokens(...params)
+        expect(amountOut.toNumber()).to.be.eq(amountOutMinimum)
+      }
+
+      return data
+    }
+
+    async function exactOutputV2(
+      tokens: string[],
+      amountOut: number = 1,
+      amountInMaximum: number = 2,
+      recipient: string,
+      hasAlreadyPaid: boolean
+    ): Promise<string[]> {
+      const params: [number, number, string[], string, boolean] = [
+        amountOut,
+        amountInMaximum,
+        tokens,
+        recipient,
+        hasAlreadyPaid,
+      ]
+
+      const data = [router.interface.encodeFunctionData('swapTokensForExactTokens', params)]
+
+      // ensure that the swap fails if the limit is any tighter
+      const amountIn = await router.connect(trader).callStatic.swapTokensForExactTokens(...params)
+      expect(amountIn.toNumber()).to.be.eq(amountInMaximum)
+
+      return data
+    }
+
+    describe('simple split route', async () => {
+      it('sending directly', async () => {
+        const swapV3 = await exactInputV3(
+          tokens.slice(0, 2).map((token) => token.address),
+          3,
+          1,
+          MSG_SENDER,
+          false
+        )
+        const swapV2 = await exactInputV2(
+          tokens.slice(0, 2).map((token) => token.address),
+          2,
+          1,
+          MSG_SENDER,
+          false
+        )
+
+        const traderBefore = await getBalances(trader.address)
+
+        await router.connect(trader)['multicall(bytes[])']([...swapV3, ...swapV2])
+
+        const traderAfter = await getBalances(trader.address)
+        expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(5))
+        expect(traderAfter.token1).to.be.eq(traderBefore.token1.add(2))
+      })
+
+      it('sending to router and sweeping', async () => {
+        const swapV3 = await exactInputV3(
+          tokens.slice(0, 2).map((token) => token.address),
+          3,
+          1,
+          ADDRESS_THIS,
+          false
+        )
+        const swapV2 = await exactInputV2(
+          tokens.slice(0, 2).map((token) => token.address),
+          2,
+          1,
+          ADDRESS_THIS,
+          false
+        )
+
+        const sweep = encodeSweep(tokens[1].address, 2, trader.address)
+
+        const traderBefore = await getBalances(trader.address)
+
+        await router.connect(trader)['multicall(bytes[])']([...swapV3, ...swapV2, sweep])
+
+        const traderAfter = await getBalances(trader.address)
+        expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(5))
+        expect(traderAfter.token1).to.be.eq(traderBefore.token1.add(2))
+      })
+    })
+
+    describe('merging', () => {
+      // 0 ↘
+      // 0 → 1 → 2
+
+      // this merge trade is ultimately neither an exact input nor an exact output
+      // we need to start with exact output trades, as we need to know we're not going
+      // to end up with any amount of an intermediate token
+      it('exactOut x 2 + exactIn', async () => {
+        const swapV3 = await exactOutputV3(
+          tokens.slice(0, 2).map((token) => token.address),
+          1,
+          3,
+          ADDRESS_THIS,
+          false
+        )
+        const swapV2 = await exactOutputV2(
+          tokens.slice(0, 2).map((token) => token.address),
+          2,
+          3,
+          ADDRESS_THIS,
+          false
+        )
+
+        const mergeSwap = await exactInputV3(
+          tokens.slice(1, 3).map((token) => token.address),
+          3,
+          1,
+          MSG_SENDER,
+          true,
+          true
+        )
+
+        const traderBefore = await getBalances(trader.address)
+
+        await router.connect(trader)['multicall(bytes[])']([...swapV3, ...swapV2, ...mergeSwap])
+
+        const traderAfter = await getBalances(trader.address)
+        expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(6))
+        expect(traderAfter.token2).to.be.eq(traderBefore.token1.add(1))
+      })
+    })
+
+    describe('splitting', () => {
+      //       ↗ 2
+      // 0 → 1 → 2
+
+      // this split trade is ultimately neither an exact input nor an exact output
+      // we need to start with an exact output trade, as we need to know we're not going
+      // to end up with any amount of an intermediate token
+      it('exactOut + exactIn x 2', async () => {
+        const swapV3 = await exactOutputV3(
+          tokens.slice(0, 2).map((token) => token.address),
+          5,
+          7,
+          ADDRESS_THIS,
+          false
+        )
+
+        const splitSwapV2 = await exactInputV2(
+          tokens.slice(1, 3).map((token) => token.address),
+          2,
+          1,
+          MSG_SENDER,
+          true,
+          true
+        )
+        const splitSwapV3 = await exactInputV3(
+          tokens.slice(1, 3).map((token) => token.address),
+          3,
+          1,
+          MSG_SENDER,
+          true,
+          true
+        )
+
+        const traderBefore = await getBalances(trader.address)
+
+        await router.connect(trader)['multicall(bytes[])']([...swapV3, ...splitSwapV2, ...splitSwapV3])
+
+        const traderAfter = await getBalances(trader.address)
+        expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(7))
+        expect(traderAfter.token2).to.be.eq(traderBefore.token1.add(2))
       })
     })
   })

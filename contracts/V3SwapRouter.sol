@@ -57,15 +57,12 @@ abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPayment
                 : (tokenOut < tokenIn, uint256(amount1Delta));
 
         if (isExactInput) {
-            // we only find and replace for exact input, because for exact output the payer has to be explicitly passed
-            // furthermore, we only match for address(this) because in this context msg.sender is a pool not a swapper
-            address payer = data.payer == ADDRESS_THIS ? address(this) : data.payer;
-            pay(tokenIn, payer, msg.sender, amountToPay);
+            pay(tokenIn, data.payer, msg.sender, amountToPay);
         } else {
             // either initiate the next swap or pay
             if (data.path.hasMultiplePools()) {
                 data.path = data.path.skipToken();
-                exactOutputInternal(amountToPay, MSG_SENDER, 0, data);
+                exactOutputInternal(amountToPay, msg.sender, 0, data);
             } else {
                 amountInCached = amountToPay;
                 // note that because exact output swaps are executed in reverse order, tokenOut is actually tokenIn
@@ -114,14 +111,17 @@ abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPayment
             params.amountIn,
             params.recipient,
             params.sqrtPriceLimitX96,
-            SwapCallbackData({path: abi.encodePacked(params.tokenIn, params.fee, params.tokenOut), payer: msg.sender})
+            SwapCallbackData({
+                path: abi.encodePacked(params.tokenIn, params.fee, params.tokenOut),
+                payer: params.hasAlreadyPaid ? address(this) : msg.sender
+            })
         );
         require(amountOut >= params.amountOutMinimum, 'Too little received');
     }
 
     /// @inheritdoc IV3SwapRouter
     function exactInput(ExactInputParams memory params) external payable override returns (uint256 amountOut) {
-        address payer = msg.sender; // msg.sender pays for the first hop
+        address payer = params.hasAlreadyPaid ? address(this) : msg.sender;
 
         while (true) {
             bool hasMultiplePools = params.path.hasMultiplePools();
@@ -129,7 +129,7 @@ abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPayment
             // the outputs of prior swaps become the inputs to subsequent ones
             params.amountIn = exactInputInternal(
                 params.amountIn,
-                hasMultiplePools ? ADDRESS_THIS : params.recipient, // for intermediate swaps, this contract custodies
+                hasMultiplePools ? address(this) : params.recipient, // for intermediate swaps, this contract custodies
                 0,
                 SwapCallbackData({
                     path: params.path.getFirstPool(), // only the first pool in the path is necessary
@@ -139,7 +139,7 @@ abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPayment
 
             // decide whether to continue or terminate
             if (hasMultiplePools) {
-                payer = ADDRESS_THIS; // at this point, the caller has paid
+                payer = address(this);
                 params.path = params.path.skipToken();
             } else {
                 amountOut = params.amountIn;
@@ -197,7 +197,10 @@ abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPayment
             params.amountOut,
             params.recipient,
             params.sqrtPriceLimitX96,
-            SwapCallbackData({path: abi.encodePacked(params.tokenOut, params.fee, params.tokenIn), payer: msg.sender})
+            SwapCallbackData({
+                path: abi.encodePacked(params.tokenOut, params.fee, params.tokenIn),
+                payer: params.hasAlreadyPaid ? address(this) : msg.sender
+            })
         );
 
         require(amountIn <= params.amountInMaximum, 'Too much requested');
@@ -207,13 +210,11 @@ abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPayment
 
     /// @inheritdoc IV3SwapRouter
     function exactOutput(ExactOutputParams calldata params) external payable override returns (uint256 amountIn) {
-        // it's okay that the payer is fixed to msg.sender here, as they're only paying for the "final" exact output
-        // swap, which happens first, and subsequent swaps are paid for within nested callback frames
         exactOutputInternal(
             params.amountOut,
             params.recipient,
             0,
-            SwapCallbackData({path: params.path, payer: msg.sender})
+            SwapCallbackData({path: params.path, payer: params.hasAlreadyPaid ? address(this) : msg.sender})
         );
 
         amountIn = amountInCached;
