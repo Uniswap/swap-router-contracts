@@ -1,18 +1,16 @@
+import { defaultAbiCoder } from '@ethersproject/abi'
 import { Fixture } from 'ethereum-waffle'
 import { constants, Contract, ContractTransaction, Wallet } from 'ethers'
-import { waffle, ethers } from 'hardhat'
+import { solidityPack } from 'ethers/lib/utils'
+import { ethers, waffle } from 'hardhat'
 import { MockTimeSwapRouter02, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
-import { FeeAmount, TICK_SPACINGS } from './shared/constants'
+import { ADDRESS_THIS, FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
 import { getMaxTick, getMinTick } from './shared/ticks'
-import { defaultAbiCoder } from '@ethersproject/abi'
-import { solidityPack } from 'ethers/lib/utils'
-
-const ADDRESS_THIS = '0x0000000000000000000000000000000000000001'
 
 describe('ApproveAndCall', function () {
   this.timeout(40000)
@@ -109,6 +107,7 @@ describe('ApproveAndCall', function () {
         recipient: ADDRESS_THIS, // have to send to the router, as it will be adding liquidity for the caller
         amountIn,
         amountOutMinimum,
+        hasAlreadyPaid: false,
       }
       // ensure that the swap fails if the limit is any tighter
       const amountOut = await router.connect(trader).callStatic.exactInput(params)

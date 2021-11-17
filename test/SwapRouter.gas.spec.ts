@@ -1,5 +1,8 @@
+import { defaultAbiCoder } from '@ethersproject/abi'
+import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 import { Fixture } from 'ethereum-waffle'
 import { BigNumber, constants, ContractTransaction, Wallet } from 'ethers'
+import { solidityPack } from 'ethers/lib/utils'
 import { ethers, waffle } from 'hardhat'
 import { IUniswapV3Pool, IWETH9, MockTimeSwapRouter02, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
@@ -10,10 +13,6 @@ import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { getMaxTick, getMinTick } from './shared/ticks'
-import { defaultAbiCoder } from '@ethersproject/abi'
-
-import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
-import { solidityPack } from 'ethers/lib/utils'
 
 describe('SwapRouter gas tests', function () {
   this.timeout(40000)
@@ -136,6 +135,7 @@ describe('SwapRouter gas tests', function () {
       recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
       amountIn,
       amountOutMinimum: outputIsWETH9 ? 0 : amountOutMinimum, // save on calldata
+      hasAlreadyPaid: false,
     }
 
     const data = [router.interface.encodeFunctionData('exactInput', [params])]
@@ -166,6 +166,7 @@ describe('SwapRouter gas tests', function () {
       amountIn,
       amountOutMinimum: outputIsWETH9 ? 0 : amountOutMinimum, // save on calldata
       sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
+      hasAlreadyPaid: false,
     }
 
     const data = [router.interface.encodeFunctionData('exactInputSingle', [params])]
@@ -190,6 +191,7 @@ describe('SwapRouter gas tests', function () {
       recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
       amountOut,
       amountInMaximum,
+      hasAlreadyPaid: false,
     }
 
     const data = [router.interface.encodeFunctionData('exactOutput', [params])]
@@ -224,6 +226,7 @@ describe('SwapRouter gas tests', function () {
       amountOut,
       amountInMaximum,
       sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
+      hasAlreadyPaid: false,
     }
 
     const data = [router.interface.encodeFunctionData('exactOutputSingle', [params])]

@@ -45,9 +45,15 @@ abstract contract V2SwapRouter is IV2SwapRouter, ConstantState, ImmutableState, 
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
-        address to
+        address to,
+        bool hasAlreadyPaid
     ) external payable override returns (uint256 amountOut) {
-        pay(path[0], msg.sender, UniswapV2Library.pairFor(factoryV2, path[0], path[1]), amountIn);
+        pay(
+            path[0],
+            hasAlreadyPaid ? address(this) : msg.sender,
+            UniswapV2Library.pairFor(factoryV2, path[0], path[1]),
+            amountIn
+        );
 
         // find and replace to addresses
         if (to == MSG_SENDER) to = msg.sender;
@@ -66,12 +72,18 @@ abstract contract V2SwapRouter is IV2SwapRouter, ConstantState, ImmutableState, 
         uint256 amountOut,
         uint256 amountInMax,
         address[] calldata path,
-        address to
+        address to,
+        bool hasAlreadyPaid
     ) external payable override returns (uint256 amountIn) {
         amountIn = UniswapV2Library.getAmountsIn(factoryV2, amountOut, path)[0];
         require(amountIn <= amountInMax, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');
 
-        pay(path[0], msg.sender, UniswapV2Library.pairFor(factoryV2, path[0], path[1]), amountIn);
+        pay(
+            path[0],
+            hasAlreadyPaid ? address(this) : msg.sender,
+            UniswapV2Library.pairFor(factoryV2, path[0], path[1]),
+            amountIn
+        );
 
         // find and replace to addresses
         if (to == MSG_SENDER) to = msg.sender;
