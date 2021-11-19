@@ -128,7 +128,7 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState, Bl
         uint128[] memory amounts,
         uint32 secondsAgo
     ) internal view returns (int256 averageSyntheticAverageTick, int256 averageSyntheticCurrentTick) {
-        require(paths.length == amounts.length, 'Array length mismatch');
+        require(paths.length == amounts.length);
 
         OracleLibrary.WeightedTickData[] memory weightedSyntheticAverageTicks =
             new OracleLibrary.WeightedTickData[](paths.length);
@@ -154,7 +154,7 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState, Bl
         uint32 secondsAgo
     ) external view override {
         (int256 syntheticAverageTick, int256 syntheticCurrentTick) = getSyntheticTicks(path, secondsAgo);
-        require(syntheticAverageTick - syntheticCurrentTick < maximumTickDivergence, 'Divergence');
+        require(syntheticAverageTick - syntheticCurrentTick < maximumTickDivergence, 'TD');
     }
 
     /// @inheritdoc IOracleSlippage
@@ -166,6 +166,6 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState, Bl
     ) external view override {
         (int256 averageSyntheticAverageTick, int256 averageSyntheticCurrentTick) =
             getSyntheticTicks(paths, amounts, secondsAgo);
-        require(averageSyntheticAverageTick - averageSyntheticCurrentTick < maximumTickDivergence, 'Divergence');
+        require(averageSyntheticAverageTick - averageSyntheticCurrentTick < maximumTickDivergence, 'TD');
     }
 }

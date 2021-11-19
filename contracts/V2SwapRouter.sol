@@ -48,6 +48,12 @@ abstract contract V2SwapRouter is IV2SwapRouter, ConstantState, ImmutableState, 
         address to,
         bool hasAlreadyPaid
     ) external payable override returns (uint256 amountOut) {
+        // use amountIn == CONTRACT_BALANCE as a flag to swap the entire balance of the contract
+        if (amountIn == CONTRACT_BALANCE) {
+            hasAlreadyPaid = true;
+            amountIn = IERC20(path[0]).balanceOf(address(this));
+        }
+
         pay(
             path[0],
             hasAlreadyPaid ? address(this) : msg.sender,
@@ -64,7 +70,7 @@ abstract contract V2SwapRouter is IV2SwapRouter, ConstantState, ImmutableState, 
         _swap(path, to);
 
         amountOut = IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore);
-        require(amountOut >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
+        require(amountOut >= amountOutMin, 'Too little received');
     }
 
     /// @inheritdoc IV2SwapRouter
@@ -72,18 +78,12 @@ abstract contract V2SwapRouter is IV2SwapRouter, ConstantState, ImmutableState, 
         uint256 amountOut,
         uint256 amountInMax,
         address[] calldata path,
-        address to,
-        bool hasAlreadyPaid
+        address to
     ) external payable override returns (uint256 amountIn) {
         amountIn = UniswapV2Library.getAmountsIn(factoryV2, amountOut, path)[0];
-        require(amountIn <= amountInMax, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');
+        require(amountIn <= amountInMax, 'Too much requested');
 
-        pay(
-            path[0],
-            hasAlreadyPaid ? address(this) : msg.sender,
-            UniswapV2Library.pairFor(factoryV2, path[0], path[1]),
-            amountIn
-        );
+        pay(path[0], msg.sender, UniswapV2Library.pairFor(factoryV2, path[0], path[1]), amountIn);
 
         // find and replace to addresses
         if (to == MSG_SENDER) to = msg.sender;

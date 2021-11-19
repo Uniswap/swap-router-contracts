@@ -14,5 +14,6 @@ export const TICK_SPACINGS: { [amount in FeeAmount]: number } = {
   [FeeAmount.HIGH]: 200,
 }
 
+export const CONTRACT_BALANCE = 0
 export const MSG_SENDER = '0x0000000000000000000000000000000000000000'
 export const ADDRESS_THIS = '0x0000000000000000000000000000000000000001'

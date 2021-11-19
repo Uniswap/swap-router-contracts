@@ -191,7 +191,6 @@ describe('SwapRouter gas tests', function () {
       recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
       amountOut,
       amountInMaximum,
-      hasAlreadyPaid: false,
     }
 
     const data = [router.interface.encodeFunctionData('exactOutput', [params])]
@@ -226,7 +225,6 @@ describe('SwapRouter gas tests', function () {
       amountOut,
       amountInMaximum,
       sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
-      hasAlreadyPaid: false,
     }
 
     const data = [router.interface.encodeFunctionData('exactOutputSingle', [params])]

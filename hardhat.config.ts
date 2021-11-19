@@ -1,7 +1,7 @@
-import 'hardhat-typechain'
 import '@nomiclabs/hardhat-ethers'
-import '@nomiclabs/hardhat-waffle'
 import '@nomiclabs/hardhat-etherscan'
+import '@nomiclabs/hardhat-waffle'
+import 'hardhat-typechain'
 import 'hardhat-watcher'
 
 const DEFAULT_COMPILER_SETTINGS = {
