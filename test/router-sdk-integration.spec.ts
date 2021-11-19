@@ -243,7 +243,7 @@ describe.only('router-sdk integration', function () {
       it('mints the correct position', async () => {
   			const [token_0, token_1] = tokens[0].address < tokens[2].address ? [tokens[0], tokens[2]] : [tokens[2], tokens[0]]
   			const poolAddress = await factory.getPool(tokens[0].address, tokens[2].address, FeeAmount.MEDIUM)
-  			const tokenId = 4
+  			const tokenId = 5
 
   			await expect(nft.positions(tokenId)).to.be.revertedWith(
   				"VM Exception while processing transaction: revert Invalid token ID"
@@ -259,10 +259,10 @@ describe.only('router-sdk integration', function () {
   			expect(await nft.ownerOf(tokenId)).to.equal(wallet.address)
   		})
 
-  		it.only('distributes token balances correctly', async () => {
+  		it('distributes token balances correctly', async () => {
   			const [token_0, token_1] = tokens[0].address < tokens[2].address ? [tokens[0], tokens[2]] : [tokens[2], tokens[0]]
   			const poolAddress = await factory.getPool(tokens[0].address, tokens[2].address, FeeAmount.MEDIUM)
-  			const tokenId = 4
+  			const tokenId = 5
 
         // track previous balances
   			const poolBalancePrev0 = await tokens[0].balanceOf(poolAddress)
