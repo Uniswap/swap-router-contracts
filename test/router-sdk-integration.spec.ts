@@ -55,9 +55,9 @@ describe.only('router-sdk integration', () => {
       await token.transfer(trader.address, expandTo18Decimals(1_000_000))
     }
 
-		await weth9.deposit({ value:  toWei('1000')})
-		await weth9.approve(router.address, constants.MaxUint256)
-		await weth9.approve(nft.address, constants.MaxUint256)
+    await weth9.deposit({ value: toWei('1000') })
+    await weth9.approve(router.address, constants.MaxUint256)
+    await weth9.approve(nft.address, constants.MaxUint256)
 
     return {
       weth9,
@@ -101,7 +101,7 @@ describe.only('router-sdk integration', () => {
   let weth9: IWETH9
   let router: MockTimeSwapRouter02
   let nft: Contract
-	let positionValue: TestPositionValue
+  let positionValue: TestPositionValue
   let tokens: [TestERC20, TestERC20, TestERC20]
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
@@ -142,8 +142,8 @@ describe.only('router-sdk integration', () => {
 
   beforeEach('load fixture', async () => {
     ;({ router, tokens, nft, factory, weth9 } = await loadFixture(swapRouterFixture))
-		const positionValueFactory = await ethers.getContractFactory('TestPositionValue')
-		positionValue = await positionValueFactory.deploy() as TestPositionValue
+    const positionValueFactory = await ethers.getContractFactory('TestPositionValue')
+    positionValue = (await positionValueFactory.deploy()) as TestPositionValue
   })
 
   describe('swap and add', () => {
@@ -158,16 +158,16 @@ describe.only('router-sdk integration', () => {
     let pool_1_weth: Pool
     let pool_0_weth: Pool
 
-		let position: Position
+    let position: Position
     let methodParameters: MethodParameters
     let amountInDesired: CurrencyAmount<Currency>
 
     beforeEach('create on-chain contracts', async () => {
       await createPool(tokens[0].address, tokens[1].address)
       await createPool(tokens[1].address, tokens[2].address)
-			await createPool(tokens[0].address, tokens[2].address)
-			await createPool(weth9.address, tokens[1].address)
-			await createPool(weth9.address, tokens[0].address)
+      await createPool(tokens[0].address, tokens[2].address)
+      await createPool(weth9.address, tokens[1].address)
+      await createPool(weth9.address, tokens[0].address)
     })
 
     beforeEach('create sdk components', async () => {
@@ -191,16 +191,15 @@ describe.only('router-sdk integration', () => {
         CurrencyAmount.fromRawAmount(token2, TOKEN_LIQUIDITY_AMOUNT)
       )
 
-			pool_0_weth = v2StylePool(
-				CurrencyAmount.fromRawAmount(token0, TOKEN_LIQUIDITY_AMOUNT),
-				CurrencyAmount.fromRawAmount(weth9sdk, TOKEN_LIQUIDITY_AMOUNT)
-			)
+      pool_0_weth = v2StylePool(
+        CurrencyAmount.fromRawAmount(token0, TOKEN_LIQUIDITY_AMOUNT),
+        CurrencyAmount.fromRawAmount(weth9sdk, TOKEN_LIQUIDITY_AMOUNT)
+      )
 
       pool_1_weth = v2StylePool(
         CurrencyAmount.fromRawAmount(token1, TOKEN_LIQUIDITY_AMOUNT),
         CurrencyAmount.fromRawAmount(weth9sdk, TOKEN_LIQUIDITY_AMOUNT)
       )
-
     })
 
     describe('erc20 --> erc20 zeroForOne', () => {
@@ -220,7 +219,7 @@ describe.only('router-sdk integration', () => {
           tickUpper: 60,
           amount0: toWei('1'),
           amount1: toWei('1'),
-          useFullPrecision: true
+          useFullPrecision: true,
         })
         const addLiquidityOptions = {
           recipient: wallet.address,
@@ -243,38 +242,39 @@ describe.only('router-sdk integration', () => {
       })
 
       it('reverts if tokens are not approved to the router', async () => {
-  			await tokens[0].approve(router.address, 0)
-  			await expect(router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })).to.be.revertedWith('STF')
-  		})
-
+        await tokens[0].approve(router.address, 0)
+        await expect(router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })).to.be.revertedWith('STF')
+      })
 
       it('mints the correct position', async () => {
-  			const [token_0, token_1] = tokens[0].address < tokens[2].address ? [tokens[0], tokens[2]] : [tokens[2], tokens[0]]
-  			const poolAddress = await factory.getPool(tokens[0].address, tokens[2].address, FeeAmount.MEDIUM)
-  			const tokenId = 6
+        const [token_0, token_1] =
+          tokens[0].address < tokens[2].address ? [tokens[0], tokens[2]] : [tokens[2], tokens[0]]
+        const poolAddress = await factory.getPool(tokens[0].address, tokens[2].address, FeeAmount.MEDIUM)
+        const tokenId = 6
 
-  			await expect(nft.positions(tokenId)).to.be.revertedWith(
-  				"VM Exception while processing transaction: revert Invalid token ID"
-  			)
-  			await router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })
+        await expect(nft.positions(tokenId)).to.be.revertedWith(
+          'VM Exception while processing transaction: revert Invalid token ID'
+        )
+        await router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })
 
-  			const mintedPosition = await nft.positions(tokenId)
-  			expect(mintedPosition.tickLower).to.equal(position.tickLower)
-  			expect(mintedPosition.tickUpper).to.equal(position.tickUpper)
-  			expect(mintedPosition.token0).to.equal(token_0.address)
-  			expect(mintedPosition.token1).to.equal(token_1.address)
-  			expect(mintedPosition.liquidity.toString()).to.equal(position.liquidity.toString())
-  			expect(await nft.ownerOf(tokenId)).to.equal(wallet.address)
-  		})
+        const mintedPosition = await nft.positions(tokenId)
+        expect(mintedPosition.tickLower).to.equal(position.tickLower)
+        expect(mintedPosition.tickUpper).to.equal(position.tickUpper)
+        expect(mintedPosition.token0).to.equal(token_0.address)
+        expect(mintedPosition.token1).to.equal(token_1.address)
+        expect(mintedPosition.liquidity.toString()).to.equal(position.liquidity.toString())
+        expect(await nft.ownerOf(tokenId)).to.equal(wallet.address)
+      })
 
-  		it('distributes token balances correctly', async () => {
-  			const [token_0, token_1] = tokens[0].address < tokens[2].address ? [tokens[0], tokens[2]] : [tokens[2], tokens[0]]
-  			const poolAddress = await factory.getPool(tokens[0].address, tokens[2].address, FeeAmount.MEDIUM)
-  			const tokenId = 6
+      it('distributes token balances correctly', async () => {
+        const [token_0, token_1] =
+          tokens[0].address < tokens[2].address ? [tokens[0], tokens[2]] : [tokens[2], tokens[0]]
+        const poolAddress = await factory.getPool(tokens[0].address, tokens[2].address, FeeAmount.MEDIUM)
+        const tokenId = 6
 
         // track previous balances
-  			const poolBalancePrev0 = await tokens[0].balanceOf(poolAddress)
-  			const poolBalancePrev2 = await tokens[2].balanceOf(poolAddress)
+        const poolBalancePrev0 = await tokens[0].balanceOf(poolAddress)
+        const poolBalancePrev2 = await tokens[2].balanceOf(poolAddress)
         const userBalancePrev0 = await tokens[0].balanceOf(wallet.address)
         const userBalancePrev2 = await tokens[2].balanceOf(wallet.address)
 
@@ -285,23 +285,25 @@ describe.only('router-sdk integration', () => {
         const tx = await (await router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })).wait()
 
         // track ending balances
-  			const poolBalanceCurrent0 = await tokens[0].balanceOf(poolAddress)
-  			const poolBalanceCurrent2= await tokens[2].balanceOf(poolAddress)
+        const poolBalanceCurrent0 = await tokens[0].balanceOf(poolAddress)
+        const poolBalanceCurrent2 = await tokens[2].balanceOf(poolAddress)
         const userBalanceCurrent0 = await tokens[0].balanceOf(wallet.address)
         const userBalanceCurrent2 = await tokens[2].balanceOf(wallet.address)
 
         // test balances are correct
-  			expect(poolBalanceCurrent0.sub(poolBalancePrev0)).to.equal(amountInDesired.quotient.toString())
-  			expect(poolBalanceCurrent2.sub(poolBalancePrev2)).to.equal(amountInDesired.quotient.toString())
+        expect(poolBalanceCurrent0.sub(poolBalancePrev0)).to.equal(amountInDesired.quotient.toString())
+        expect(poolBalanceCurrent2.sub(poolBalancePrev2)).to.equal(amountInDesired.quotient.toString())
         expect(await tokens[0].balanceOf(router.address)).to.equal(0)
         expect(await tokens[2].balanceOf(router.address)).to.equal(0)
         expect(userBalancePrev0.sub(userBalanceCurrent0)).to.equal(toWei('2'))
 
         // test correct amount of tokens pulled for tokenOut add liquidity
-        const amount2RemainingAfterSwap = amountInDesired.asFraction.subtract(amount2FromSwap.asFraction).quotient.toString()
+        const amount2RemainingAfterSwap = amountInDesired.asFraction
+          .subtract(amount2FromSwap.asFraction)
+          .quotient.toString()
         const amount2Pulled = userBalancePrev2.sub(userBalanceCurrent2).toString()
         expect(amount2RemainingAfterSwap).to.equal(amount2Pulled)
-  		})
+      })
 
       it('potential events test', async () => {
         const tx = await (await router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })).wait()
@@ -357,6 +359,6 @@ describe.only('router-sdk integration', () => {
       it('stuff', async () => {
         // console.log(methodParameters)
       })
+    })
   })
-})
 })
