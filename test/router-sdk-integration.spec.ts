@@ -253,7 +253,7 @@ describe.only('router-sdk integration', () => {
         const tokenId = 6
 
         await expect(nft.positions(tokenId)).to.be.revertedWith(
-          'VM Exception while processing transaction: revert Invalid token ID'
+          "VM Exception while processing transaction: reverted with reason string 'Invalid token ID'"
         )
         await router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })
 
