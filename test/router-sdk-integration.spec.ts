@@ -33,7 +33,7 @@ const toWei = (n: string) => utils.parseEther(n).toString()
 const ADDRESS_THIS = '0x0000000000000000000000000000000000000001'
 const TOKEN_LIQUIDITY_AMOUNT = toWei('100')
 
-describe.only('router-sdk integration', function () {
+describe.only('router-sdk integration', () => {
   let wallet: Wallet
   let trader: Wallet
 
@@ -55,7 +55,7 @@ describe.only('router-sdk integration', function () {
       await token.transfer(trader.address, expandTo18Decimals(1_000_000))
     }
 
-		await weth9.deposit({ value:  TOKEN_LIQUIDITY_AMOUNT})
+		await weth9.deposit({ value:  toWei('1000')})
 		await weth9.approve(router.address, constants.MaxUint256)
 		await weth9.approve(nft.address, constants.MaxUint256)
 
@@ -174,7 +174,7 @@ describe.only('router-sdk integration', function () {
       token0 = new Token(1, tokens[0].address, 18) as Currency
       token1 = new Token(1, tokens[1].address, 18) as Currency
       token2 = new Token(1, tokens[2].address, 18) as Currency
-      weth9sdk = new Token(1, weth9.address, 18) as Currency
+      weth9sdk = new Token(1, weth9.address, 18, 'WETH', 'Wrapped Ether') as Currency
 
       pool_0_1 = v2StylePool(
         CurrencyAmount.fromRawAmount(token0, TOKEN_LIQUIDITY_AMOUNT),
@@ -316,102 +316,47 @@ describe.only('router-sdk integration', function () {
       })
     })
 
-    describe.only('weth9 --> erc20', () => {
+    describe.skip('weth9 --> erc20', () => {
       let eth: Currency
 
       beforeEach(async () => {
         // setup trade components
         const slippageTolerance = new Percent(1)
-        const eth = Ether.onChain(1)
-        const routeOriginal = new V3RouteSDK([pool_1_weth, pool_0_1], eth.wrapped, token0)
-        const route = new RouteV3(routeOriginal)
-        amountInDesired = CurrencyAmount.fromRawAmount(eth, toWei('1'))
-        const expectedOut = await pool_0_1.getOutputAmount(amountInDesired.wrapped)
-        const trade = await Trade.fromRoute(route, amountInDesired, TradeType.EXACT_INPUT)
-
-        // setup position components
-        position = Position.fromAmounts({
-          pool: pool_0_weth,
-          tickLower: -60,
-          tickUpper: 60,
-          amount0: toWei('1'),
-          amount1: toWei('1'),
-          useFullPrecision: true
-        })
-        const addLiquidityOptions = {
-          recipient: wallet.address,
-          slippageTolerance,
-          deadline: 2 ** 32,
-        }
-
-        methodParameters = SwapRouter.swapAndAddCallParameters(
-          trade,
-          { slippageTolerance },
-          position,
-          addLiquidityOptions
-        )
+        const eth = Ether.onChain(0)
+        // console.log(eth.wrapped)
+        // console.log(weth9sdk)
+        const routeOriginal = new V3RouteSDK([pool_1_weth, pool_0_1], eth, token0)
+        // const route = new RouteV3(routeOriginal)
+        // amountInDesired = CurrencyAmount.fromRawAmount(eth, toWei('1'))
+        // const expectedOut = await pool_0_1.getOutputAmount(amountInDesired.wrapped)
+        // const trade = await Trade.fromRoute(route, amountInDesired, TradeType.EXACT_INPUT)
+        //
+        // // setup position components
+        // position = Position.fromAmounts({
+        //   pool: pool_0_weth,
+        //   tickLower: -60,
+        //   tickUpper: 60,
+        //   amount0: toWei('1'),
+        //   amount1: toWei('1'),
+        //   useFullPrecision: true
+        // })
+        // const addLiquidityOptions = {
+        //   recipient: wallet.address,
+        //   slippageTolerance,
+        //   deadline: 2 ** 32,
+        // }
+        //
+        // methodParameters = SwapRouter.swapAndAddCallParameters(
+        //   trade,
+        //   { slippageTolerance },
+        //   position,
+        //   addLiquidityOptions
+        // )
       })
 
-      it('reverts if tokens are not approved to the router', async () => {
-  			await tokens[0].approve(router.address, 0)
-  			await expect(router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })).to.be.revertedWith('STF')
-  		})
-
-
-      it('mints the correct position', async () => {
-  			const [token_0, token_1] = tokens[0].address < weth9.address ? [tokens[0], weth9] : [weth9, tokens[0]]
-  			const poolAddress = await factory.getPool(tokens[0].address, tokens[2].address, FeeAmount.MEDIUM)
-  			const tokenId = 6
-
-  			await expect(nft.positions(tokenId)).to.be.revertedWith(
-  				"VM Exception while processing transaction: revert Invalid token ID"
-  			)
-  			await router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })
-
-  			const mintedPosition = await nft.positions(tokenId)
-  			expect(mintedPosition.tickLower).to.equal(position.tickLower)
-  			expect(mintedPosition.tickUpper).to.equal(position.tickUpper)
-  			expect(mintedPosition.token0).to.equal(token_0.address)
-  			expect(mintedPosition.token1).to.equal(token_1.address)
-  			expect(mintedPosition.liquidity.toString()).to.equal(position.liquidity.toString())
-  			expect(await nft.ownerOf(tokenId)).to.equal(wallet.address)
-  		})
-
-  		it('distributes token balances correctly', async () => {
-  			const [token_0, token_1] = tokens[0].address < weth9.address ? [tokens[0], weth9] : [weth9, tokens[0]]
-  			const poolAddress = await factory.getPool(tokens[0].address, tokens[2].address, FeeAmount.MEDIUM)
-  			const tokenId = 6
-
-        // track previous balances
-  			const poolBalancePrev0 = await tokens[0].balanceOf(poolAddress)
-  			const poolBalancePrev2 = await weth9.balanceOf(poolAddress)
-        const userBalancePrev0 = await tokens[0].balanceOf(wallet.address)
-        const userBalancePrev2 = await weth9.balanceOf(wallet.address)
-
-        // track amountOut from swap
-        const expectedOut_0_1 = (await pool_0_1.getOutputAmount(amountInDesired.wrapped))[0]
-        const amount2FromSwap = (await pool_1_2.getOutputAmount(expectedOut_0_1))[0]
-
-        const tx = await (await router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })).wait()
-
-        // track ending balances
-  			const poolBalanceCurrent0 = await tokens[0].balanceOf(poolAddress)
-  			const poolBalanceCurrent2= await weth9.balanceOf(poolAddress)
-        const userBalanceCurrent0 = await tokens[0].balanceOf(wallet.address)
-        const userBalanceCurrent2 = await weth9.balanceOf(wallet.address)
-
-        // test balances are correct
-  			expect(poolBalanceCurrent0.sub(poolBalancePrev0)).to.equal(amountInDesired.quotient.toString())
-  			expect(poolBalanceCurrent2.sub(poolBalancePrev2)).to.equal(amountInDesired.quotient.toString())
-        expect(await tokens[0].balanceOf(router.address)).to.equal(0)
-        expect(await weth9.balanceOf(router.address)).to.equal(0)
-        expect(userBalancePrev0.sub(userBalanceCurrent0)).to.equal(toWei('2'))
-
-        // test correct amount of tokens pulled for tokenOut to add liquidity
-        const amount2RemainingAfterSwap = amountInDesired.asFraction.subtract(amount2FromSwap.asFraction).quotient.toString()
-        const amount2Pulled = userBalancePrev2.sub(userBalanceCurrent2).toString()
-        expect(amount2RemainingAfterSwap).to.equal(amount2Pulled)
-  		})
-    })
+      it('stuff', async () => {
+        // console.log(methodParameters)
+      })
   })
+})
 })
