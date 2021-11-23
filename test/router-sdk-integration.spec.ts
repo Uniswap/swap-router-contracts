@@ -161,6 +161,8 @@ describe.only('router-sdk integration', () => {
     let position: Position
     let methodParameters: MethodParameters
     let amountInDesired: CurrencyAmount<Currency>
+    let slippageTolerance: Percent
+    let trade: any
 
     beforeEach('create on-chain contracts', async () => {
       await createPool(tokens[0].address, tokens[1].address)
@@ -205,12 +207,12 @@ describe.only('router-sdk integration', () => {
     describe('erc20 --> erc20 zeroForOne', () => {
       beforeEach(async () => {
         // setup trade components
-        const slippageTolerance = new Percent(1)
+        slippageTolerance = new Percent(1)
         const routeOriginal = new V3RouteSDK([pool_0_1, pool_1_2], token0, token2)
         const route = new RouteV3(routeOriginal)
         amountInDesired = CurrencyAmount.fromRawAmount(token0, toWei('1'))
         const expectedOut = await pool_0_1.getOutputAmount(amountInDesired.wrapped)
-        const trade = await Trade.fromRoute(route, amountInDesired, TradeType.EXACT_INPUT)
+        trade = await Trade.fromRoute(route, amountInDesired, TradeType.EXACT_INPUT)
 
         // setup position components
         position = Position.fromAmounts({
@@ -221,100 +223,204 @@ describe.only('router-sdk integration', () => {
           amount1: toWei('1'),
           useFullPrecision: true,
         })
-        const addLiquidityOptions = {
-          recipient: wallet.address,
-          slippageTolerance,
-          deadline: 2 ** 32,
-        }
-
-        methodParameters = SwapRouter.swapAndAddCallParameters(
-          trade,
-          { slippageTolerance },
-          position,
-          addLiquidityOptions
-        )
       })
 
-      it.skip('returns encoded calldata', async () => {
-        expect(methodParameters.calldata).to.equal(
-          '0xac9650d8000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000026000000000000000000000000000000000000000000000000000000000000002e0000000000000000000000000000000000000000000000000000000000000036000000000000000000000000000000000000000000000000000000000000003c00000000000000000000000000000000000000000000000000000000000000420000000000000000000000000000000000000000000000000000000000000062000000000000000000000000000000000000000000000000000000000000006a00000000000000000000000000000000000000000000000000000000000000124b858183f0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000de0b6b3a764000000000000000000000000000000000000000000000000000006c33ed4b59e17e400000000000000000000000000000000000000000000000000000000000000420165878a594ca255338adfa4d48449f69242eb8f000bb85fc8d32690cc91d4c39d9d3abcbd16989f875707000bb8a513e6e4b8f2a923d98304ec87f64353c4d5c853000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044f2d5d56b000000000000000000000000a513e6e4b8f2a923d98304ec87f64353c4d5c853000000000000000000000000000000000000000000000000071d77def1c5e81c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044f2d5d56b0000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f0000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000024571ac8b00000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000024571ac8b0000000000000000000000000a513e6e4b8f2a923d98304ec87f64353c4d5c8530000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001c4b3a2af1300000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000164883164560000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f000000000000000000000000a513e6e4b8f2a923d98304ec87f64353c4d5c8530000000000000000000000000000000000000000000000000000000000000bb8ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc4000000000000000000000000000000000000000000000000000000000000003c0000000000000000000000000000000000000000000000000de0b6b3a76400000000000000000000000000000000000000000000000000000de0b6b3a764000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044e90a182f0000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044e90a182f000000000000000000000000a513e6e4b8f2a923d98304ec87f64353c4d5c853000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
-        )
+      describe('mint new position', async () => {
+        beforeEach(async () => {
+          const addLiquidityOptions = {
+            recipient: wallet.address,
+            slippageTolerance,
+            deadline: 2 ** 32,
+          }
+
+          methodParameters = SwapRouter.swapAndAddCallParameters(
+            trade,
+            { slippageTolerance },
+            position,
+            addLiquidityOptions
+          )
+        })
+
+        it('returns encoded calldata', async () => {
+          expect(methodParameters.calldata).to.equal(
+            '0xac9650d800000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002800000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000038000000000000000000000000000000000000000000000000000000000000003e00000000000000000000000000000000000000000000000000000000000000440000000000000000000000000000000000000000000000000000000000000064000000000000000000000000000000000000000000000000000000000000006c0000000000000000000000000000000000000000000000000000000000000014416548c67000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000de0b6b3a764000000000000000000000000000000000000000000000000000006c33ed4b59e17e4000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000420165878a594ca255338adfa4d48449f69242eb8f000bb85fc8d32690cc91d4c39d9d3abcbd16989f875707000bb8a513e6e4b8f2a923d98304ec87f64353c4d5c853000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044f2d5d56b000000000000000000000000a513e6e4b8f2a923d98304ec87f64353c4d5c853000000000000000000000000000000000000000000000000071d77def1c5e81c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044f2d5d56b0000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f0000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000024571ac8b00000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000024571ac8b0000000000000000000000000a513e6e4b8f2a923d98304ec87f64353c4d5c8530000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001c4b3a2af1300000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000164883164560000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f000000000000000000000000a513e6e4b8f2a923d98304ec87f64353c4d5c8530000000000000000000000000000000000000000000000000000000000000bb8ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc4000000000000000000000000000000000000000000000000000000000000003c0000000000000000000000000000000000000000000000000de0b6b3a76400000000000000000000000000000000000000000000000000000de0b6b3a764000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044e90a182f0000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044e90a182f000000000000000000000000a513e6e4b8f2a923d98304ec87f64353c4d5c853000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+          )
+        })
+
+        it('reverts if tokens are not approved to the router', async () => {
+          await tokens[0].approve(router.address, 0)
+          await expect(router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })).to.be.revertedWith(
+            'STF'
+          )
+        })
+
+        it('mints the correct position', async () => {
+          const [token_0, token_1] =
+            tokens[0].address < tokens[2].address ? [tokens[0], tokens[2]] : [tokens[2], tokens[0]]
+          const poolAddress = await factory.getPool(tokens[0].address, tokens[2].address, FeeAmount.MEDIUM)
+          const tokenId = 6
+
+          await expect(nft.positions(tokenId)).to.be.revertedWith(
+            "VM Exception while processing transaction: reverted with reason string 'Invalid token ID'"
+          )
+          await router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })
+
+          const mintedPosition = await nft.positions(tokenId)
+          expect(mintedPosition.tickLower).to.equal(position.tickLower)
+          expect(mintedPosition.tickUpper).to.equal(position.tickUpper)
+          expect(mintedPosition.token0).to.equal(token_0.address)
+          expect(mintedPosition.token1).to.equal(token_1.address)
+          expect(mintedPosition.liquidity.toString()).to.equal(position.liquidity.toString())
+          expect(await nft.ownerOf(tokenId)).to.equal(wallet.address)
+        })
+
+        it('distributes token balances correctly', async () => {
+          const [token_0, token_1] =
+            tokens[0].address < tokens[2].address ? [tokens[0], tokens[2]] : [tokens[2], tokens[0]]
+          const poolAddress = await factory.getPool(tokens[0].address, tokens[2].address, FeeAmount.MEDIUM)
+          const tokenId = 6
+
+          // track previous balances
+          const poolBalancePrev0 = await tokens[0].balanceOf(poolAddress)
+          const poolBalancePrev2 = await tokens[2].balanceOf(poolAddress)
+          const userBalancePrev0 = await tokens[0].balanceOf(wallet.address)
+          const userBalancePrev2 = await tokens[2].balanceOf(wallet.address)
+
+          // track amountOut from swap
+          const expectedOut_0_1 = (await pool_0_1.getOutputAmount(amountInDesired.wrapped))[0]
+          const amount2FromSwap = (await pool_1_2.getOutputAmount(expectedOut_0_1))[0]
+
+          const tx = await (await router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })).wait()
+
+          // track ending balances
+          const poolBalanceCurrent0 = await tokens[0].balanceOf(poolAddress)
+          const poolBalanceCurrent2 = await tokens[2].balanceOf(poolAddress)
+          const userBalanceCurrent0 = await tokens[0].balanceOf(wallet.address)
+          const userBalanceCurrent2 = await tokens[2].balanceOf(wallet.address)
+
+          // test balances are correct
+          expect(poolBalanceCurrent0.sub(poolBalancePrev0)).to.equal(amountInDesired.quotient.toString())
+          expect(poolBalanceCurrent2.sub(poolBalancePrev2)).to.equal(amountInDesired.quotient.toString())
+          expect(await tokens[0].balanceOf(router.address)).to.equal(0)
+          expect(await tokens[2].balanceOf(router.address)).to.equal(0)
+          expect(userBalancePrev0.sub(userBalanceCurrent0)).to.equal(toWei('2'))
+
+          // test correct amount of tokens pulled for tokenOut add liquidity
+          const amount2RemainingAfterSwap = amountInDesired.asFraction
+            .subtract(amount2FromSwap.asFraction)
+            .quotient.toString()
+          const amount2Pulled = userBalancePrev2.sub(userBalanceCurrent2).toString()
+          expect(amount2RemainingAfterSwap).to.equal(amount2Pulled)
+        })
       })
 
-      it('reverts if tokens are not approved to the router', async () => {
-        await tokens[0].approve(router.address, 0)
-        await expect(router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })).to.be.revertedWith('STF')
-      })
+      describe('add to existing position', async () => {
+        beforeEach('mint existing position', async () => {
+          const liquidityParams = {
+            token0: tokens[0].address,
+            token1: tokens[2].address,
+            fee: FeeAmount.MEDIUM,
+            tickLower: -60,
+            tickUpper: 60,
+            recipient: wallet.address,
+            amount0Desired: TOKEN_LIQUIDITY_AMOUNT,
+            amount1Desired: TOKEN_LIQUIDITY_AMOUNT,
+            amount0Min: 0,
+            amount1Min: 0,
+            deadline: 2 ** 32,
+          }
 
-      it('mints the correct position', async () => {
-        const [token_0, token_1] =
-          tokens[0].address < tokens[2].address ? [tokens[0], tokens[2]] : [tokens[2], tokens[0]]
-        const poolAddress = await factory.getPool(tokens[0].address, tokens[2].address, FeeAmount.MEDIUM)
-        const tokenId = 6
+          await nft.mint(liquidityParams)
+        })
+        beforeEach(async () => {
+          const addLiquidityOptions = {
+            tokenId: 6,
+            slippageTolerance,
+            deadline: 2 ** 32,
+          }
 
-        await expect(nft.positions(tokenId)).to.be.revertedWith(
-          "VM Exception while processing transaction: reverted with reason string 'Invalid token ID'"
-        )
-        await router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })
+          methodParameters = SwapRouter.swapAndAddCallParameters(
+            trade,
+            { slippageTolerance },
+            position,
+            addLiquidityOptions
+          )
+        })
 
-        const mintedPosition = await nft.positions(tokenId)
-        expect(mintedPosition.tickLower).to.equal(position.tickLower)
-        expect(mintedPosition.tickUpper).to.equal(position.tickUpper)
-        expect(mintedPosition.token0).to.equal(token_0.address)
-        expect(mintedPosition.token1).to.equal(token_1.address)
-        expect(mintedPosition.liquidity.toString()).to.equal(position.liquidity.toString())
-        expect(await nft.ownerOf(tokenId)).to.equal(wallet.address)
-      })
+        it('returns encoded calldata', async () => {
+          expect(methodParameters.calldata).to.equal(
+            '0xac9650d800000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002800000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000038000000000000000000000000000000000000000000000000000000000000003e0000000000000000000000000000000000000000000000000000000000000044000000000000000000000000000000000000000000000000000000000000005a00000000000000000000000000000000000000000000000000000000000000620000000000000000000000000000000000000000000000000000000000000014416548c67000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000de0b6b3a764000000000000000000000000000000000000000000000000000006c33ed4b59e17e4000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000420165878a594ca255338adfa4d48449f69242eb8f000bb85fc8d32690cc91d4c39d9d3abcbd16989f875707000bb8a513e6e4b8f2a923d98304ec87f64353c4d5c853000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044f2d5d56b000000000000000000000000a513e6e4b8f2a923d98304ec87f64353c4d5c853000000000000000000000000000000000000000000000000071d77def1c5e81c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044f2d5d56b0000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f0000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000024571ac8b00000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000024571ac8b0000000000000000000000000a513e6e4b8f2a923d98304ec87f64353c4d5c853000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000124b3a2af13000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000c4219f5d1700000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000de0b6b3a76400000000000000000000000000000000000000000000000000000de0b6b3a764000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044e90a182f0000000000000000000000000165878a594ca255338adfa4d48449f69242eb8f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044e90a182f000000000000000000000000a513e6e4b8f2a923d98304ec87f64353c4d5c853000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+          )
+        })
 
-      it('distributes token balances correctly', async () => {
-        const [token_0, token_1] =
-          tokens[0].address < tokens[2].address ? [tokens[0], tokens[2]] : [tokens[2], tokens[0]]
-        const poolAddress = await factory.getPool(tokens[0].address, tokens[2].address, FeeAmount.MEDIUM)
-        const tokenId = 6
+        it('reverts if tokens are not approved to the router', async () => {
+          await tokens[0].approve(router.address, 0)
+          await expect(router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })).to.be.revertedWith(
+            'STF'
+          )
+        })
 
-        // track previous balances
-        const poolBalancePrev0 = await tokens[0].balanceOf(poolAddress)
-        const poolBalancePrev2 = await tokens[2].balanceOf(poolAddress)
-        const userBalancePrev0 = await tokens[0].balanceOf(wallet.address)
-        const userBalancePrev2 = await tokens[2].balanceOf(wallet.address)
+        it('increases liquidity to the correct position', async () => {
+          const [token_0, token_1] =
+            tokens[0].address < tokens[2].address ? [tokens[0], tokens[2]] : [tokens[2], tokens[0]]
+          const poolAddress = await factory.getPool(tokens[0].address, tokens[2].address, FeeAmount.MEDIUM)
+          const tokenId = 6
 
-        // track amountOut from swap
-        const expectedOut_0_1 = (await pool_0_1.getOutputAmount(amountInDesired.wrapped))[0]
-        const amount2FromSwap = (await pool_1_2.getOutputAmount(expectedOut_0_1))[0]
+          const mintedPositionBefore = await nft.positions(tokenId)
 
-        const tx = await (await router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })).wait()
+          const liquidityBefore = mintedPositionBefore.liquidity
 
-        // track ending balances
-        const poolBalanceCurrent0 = await tokens[0].balanceOf(poolAddress)
-        const poolBalanceCurrent2 = await tokens[2].balanceOf(poolAddress)
-        const userBalanceCurrent0 = await tokens[0].balanceOf(wallet.address)
-        const userBalanceCurrent2 = await tokens[2].balanceOf(wallet.address)
+          await router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })
 
-        // test balances are correct
-        expect(poolBalanceCurrent0.sub(poolBalancePrev0)).to.equal(amountInDesired.quotient.toString())
-        expect(poolBalanceCurrent2.sub(poolBalancePrev2)).to.equal(amountInDesired.quotient.toString())
-        expect(await tokens[0].balanceOf(router.address)).to.equal(0)
-        expect(await tokens[2].balanceOf(router.address)).to.equal(0)
-        expect(userBalancePrev0.sub(userBalanceCurrent0)).to.equal(toWei('2'))
+          const mintedPosition = await nft.positions(tokenId)
+          expect(mintedPosition.tickLower).to.equal(position.tickLower)
+          expect(mintedPosition.tickUpper).to.equal(position.tickUpper)
+          expect(mintedPosition.token0).to.equal(token_0.address)
+          expect(mintedPosition.token1).to.equal(token_1.address)
+          expect(mintedPosition.liquidity.toString()).to.equal(
+            liquidityBefore.add(BigNumber.from(position.liquidity.toString()).toString())
+          )
+          expect(await nft.ownerOf(tokenId)).to.equal(wallet.address)
+        })
 
-        // test correct amount of tokens pulled for tokenOut add liquidity
-        const amount2RemainingAfterSwap = amountInDesired.asFraction
-          .subtract(amount2FromSwap.asFraction)
-          .quotient.toString()
-        const amount2Pulled = userBalancePrev2.sub(userBalanceCurrent2).toString()
-        expect(amount2RemainingAfterSwap).to.equal(amount2Pulled)
-      })
+        it('distributes token balances correctly', async () => {
+          const [token_0, token_1] =
+            tokens[0].address < tokens[2].address ? [tokens[0], tokens[2]] : [tokens[2], tokens[0]]
+          const poolAddress = await factory.getPool(tokens[0].address, tokens[2].address, FeeAmount.MEDIUM)
+          const tokenId = 6
 
-      it('potential events test', async () => {
-        const tx = await (await router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })).wait()
-        // const token0_logs = tx?.logs?.map(event => { if (event.address === tokens[2].address) return tokens[2].interface.parseLog(event)})
-        // token0_logs.forEach((log) => {
-        //   log ? console.log(log) : console.log('')
-        //   log ? console.log(log.args.value.toString()) : console.log('')
-        //
-        // })
-        //
-        // console.log(wallet.address)
+          // track previous balances
+          const poolBalancePrev0 = await tokens[0].balanceOf(poolAddress)
+          const poolBalancePrev2 = await tokens[2].balanceOf(poolAddress)
+          const userBalancePrev0 = await tokens[0].balanceOf(wallet.address)
+          const userBalancePrev2 = await tokens[2].balanceOf(wallet.address)
+
+          // track amountOut from swap
+          const expectedOut_0_1 = (await pool_0_1.getOutputAmount(amountInDesired.wrapped))[0]
+          const amount2FromSwap = (await pool_1_2.getOutputAmount(expectedOut_0_1))[0]
+
+          const tx = await (await router['multicall(bytes[])']([methodParameters.calldata], { value: 0 })).wait()
+
+          // track ending balances
+          const poolBalanceCurrent0 = await tokens[0].balanceOf(poolAddress)
+          const poolBalanceCurrent2 = await tokens[2].balanceOf(poolAddress)
+          const userBalanceCurrent0 = await tokens[0].balanceOf(wallet.address)
+          const userBalanceCurrent2 = await tokens[2].balanceOf(wallet.address)
+
+          // test balances are correct
+          expect(poolBalanceCurrent0.sub(poolBalancePrev0)).to.equal(amountInDesired.quotient.toString())
+          expect(poolBalanceCurrent2.sub(poolBalancePrev2)).to.equal(amountInDesired.quotient.toString())
+          expect(await tokens[0].balanceOf(router.address)).to.equal(0)
+          expect(await tokens[2].balanceOf(router.address)).to.equal(0)
+          expect(userBalancePrev0.sub(userBalanceCurrent0)).to.equal(toWei('2'))
+
+          // test correct amount of tokens pulled for tokenOut add liquidity
+          const amount2RemainingAfterSwap = amountInDesired.asFraction
+            .subtract(amount2FromSwap.asFraction)
+            .quotient.toString()
+          const amount2Pulled = userBalancePrev2.sub(userBalanceCurrent2).toString()
+          expect(amount2RemainingAfterSwap).to.equal(amount2Pulled)
+        })
       })
     })
 
