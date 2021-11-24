@@ -15,13 +15,11 @@ interface IV3SwapRouter is IUniswapV3SwapCallback {
         uint256 amountIn;
         uint256 amountOutMinimum;
         uint160 sqrtPriceLimitX96;
-        bool hasAlreadyPaid;
     }
 
     /// @notice Swaps `amountIn` of one token for as much as possible of another token
     /// @dev Setting `amountIn` to 0 will cause the contract to look up its own balance,
     /// and swap the entire amount, enabling contracts to send tokens before calling this function.
-    /// `hasAlreadyPaid` will be ignored and set to true in this case.
     /// @param params The parameters necessary for the swap, encoded as `ExactInputSingleParams` in calldata
     /// @return amountOut The amount of the received token
     function exactInputSingle(ExactInputSingleParams calldata params) external payable returns (uint256 amountOut);
@@ -31,13 +29,11 @@ interface IV3SwapRouter is IUniswapV3SwapCallback {
         address recipient;
         uint256 amountIn;
         uint256 amountOutMinimum;
-        bool hasAlreadyPaid;
     }
 
     /// @notice Swaps `amountIn` of one token for as much as possible of another along the specified path
     /// @dev Setting `amountIn` to 0 will cause the contract to look up its own balance,
     /// and swap the entire amount, enabling contracts to send tokens before calling this function.
-    /// `hasAlreadyPaid` will be ignored and set to true in this case.
     /// @param params The parameters necessary for the multi-hop swap, encoded as `ExactInputParams` in calldata
     /// @return amountOut The amount of the received token
     function exactInput(ExactInputParams calldata params) external payable returns (uint256 amountOut);

@@ -174,7 +174,6 @@ describe('SwapRouter', function () {
           recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
           amountIn,
           amountOutMinimum,
-          hasAlreadyPaid: false,
         }
 
         const data = [router.interface.encodeFunctionData('exactInput', [params])]
@@ -401,7 +400,6 @@ describe('SwapRouter', function () {
           amountIn,
           amountOutMinimum,
           sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
-          hasAlreadyPaid: false,
         }
 
         const data = [router.interface.encodeFunctionData('exactInputSingle', [params])]
@@ -878,7 +876,6 @@ describe('SwapRouter', function () {
           recipient: ADDRESS_THIS,
           amountIn: 102,
           amountOutMinimum: 0,
-          hasAlreadyPaid: false,
         }
 
         const functionSignature = 'sweepTokenWithFee(address,uint256,address,uint256,address)'
@@ -910,7 +907,6 @@ describe('SwapRouter', function () {
           recipient: ADDRESS_THIS,
           amountIn: 102,
           amountOutMinimum: 0,
-          hasAlreadyPaid: false,
         }
 
         const functionSignature = 'unwrapWETH9WithFee(uint256,address,uint256,address)'
@@ -975,12 +971,11 @@ describe('SwapRouter', function () {
 
         const value = inputIsWETH ? amountIn : 0
 
-        const params: [number, number, string[], string, boolean] = [
+        const params: [number, number, string[], string] = [
           amountIn,
           amountOutMinimum,
           tokens,
           outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
-          false,
         ]
 
         const data = [router.interface.encodeFunctionData('swapExactTokensForTokens', params)]
@@ -989,7 +984,7 @@ describe('SwapRouter', function () {
         }
 
         // ensure that the swap fails if the limit is any tighter
-        const paramsWithValue: [number, number, string[], string, boolean, { value: number }] = [...params, { value }]
+        const paramsWithValue: [number, number, string[], string, { value: number }] = [...params, { value }]
         const amountOut = await router.connect(trader).callStatic.swapExactTokensForTokens(...paramsWithValue)
         expect(amountOut.toNumber()).to.be.eq(amountOutMinimum)
 
@@ -1346,15 +1341,13 @@ describe('SwapRouter', function () {
       amountIn: number = 3,
       amountOutMinimum: number = 1,
       recipient: string,
-      skipAmountOutMinimumCheck: boolean = false,
-      hasAlreadyPaid: boolean = false
+      skipAmountOutMinimumCheck: boolean = false
     ): Promise<string[]> {
       const params = {
         path: encodePath(tokens, new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
         recipient,
         amountIn,
         amountOutMinimum,
-        hasAlreadyPaid,
       }
 
       const data = [router.interface.encodeFunctionData('exactInput', [params])]
@@ -1395,16 +1388,9 @@ describe('SwapRouter', function () {
       amountIn: number = 2,
       amountOutMinimum: number = 1,
       recipient: string,
-      skipAmountOutMinimumCheck: boolean = false,
-      hasAlreadyPaid = false
+      skipAmountOutMinimumCheck: boolean = false
     ): Promise<string[]> {
-      const params: [number, number, string[], string, boolean] = [
-        amountIn,
-        amountOutMinimum,
-        tokens,
-        recipient,
-        hasAlreadyPaid,
-      ]
+      const params: [number, number, string[], string] = [amountIn, amountOutMinimum, tokens, recipient]
 
       const data = [router.interface.encodeFunctionData('swapExactTokensForTokens', params)]
 
@@ -1548,48 +1534,6 @@ describe('SwapRouter', function () {
         const traderAfter = await getBalances(trader.address)
         expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(6))
         expect(traderAfter.token2).to.be.eq(traderBefore.token1.add(1))
-      })
-    })
-
-    describe('splitting', () => {
-      //       ↗ 2
-      // 0 → 1 → 2
-
-      // this split trade is ultimately neither an exact input nor an exact output
-      // we need to start with an exact output trade, as we need to know we're not going
-      // to end up with any amount of an intermediate token
-      it('exactOut + exactIn x 2', async () => {
-        const swapV3 = await exactOutputV3(
-          tokens.slice(0, 2).map((token) => token.address),
-          5,
-          7,
-          ADDRESS_THIS
-        )
-
-        const splitSwapV2 = await exactInputV2(
-          tokens.slice(1, 3).map((token) => token.address),
-          2,
-          1,
-          MSG_SENDER,
-          true,
-          true
-        )
-        const splitSwapV3 = await exactInputV3(
-          tokens.slice(1, 3).map((token) => token.address),
-          3,
-          1,
-          MSG_SENDER,
-          true,
-          true
-        )
-
-        const traderBefore = await getBalances(trader.address)
-
-        await router.connect(trader)['multicall(bytes[])']([...swapV3, ...splitSwapV2, ...splitSwapV3])
-
-        const traderAfter = await getBalances(trader.address)
-        expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(7))
-        expect(traderAfter.token2).to.be.eq(traderBefore.token1.add(2))
       })
     })
   })

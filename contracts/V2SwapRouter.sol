@@ -45,10 +45,10 @@ abstract contract V2SwapRouter is IV2SwapRouter, ConstantState, ImmutableState, 
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
-        address to,
-        bool hasAlreadyPaid
+        address to
     ) external payable override returns (uint256 amountOut) {
         // use amountIn == CONTRACT_BALANCE as a flag to swap the entire balance of the contract
+        bool hasAlreadyPaid;
         if (amountIn == CONTRACT_BALANCE) {
             hasAlreadyPaid = true;
             amountIn = IERC20(path[0]).balanceOf(address(this));

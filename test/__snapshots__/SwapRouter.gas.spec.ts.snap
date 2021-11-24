@@ -1,31 +1,35 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`SwapRouter gas tests #exactInput 0 -> 1 -> 2 1`] = `175668`;
+exports[`SwapRouter gas tests #exactInput 0 -> 1 -> 2 1`] = `175408`;
 
-exports[`SwapRouter gas tests #exactInput 0 -> 1 1`] = `110830`;
+exports[`SwapRouter gas tests #exactInput 0 -> 1 1`] = `110561`;
 
 exports[`SwapRouter gas tests #exactInput 0 -> 1 minimal 1`] = `98059`;
 
-exports[`SwapRouter gas tests #exactInput 0 -> WETH9 1`] = `127736`;
+exports[`SwapRouter gas tests #exactInput 0 -> WETH9 1`] = `127467`;
 
-exports[`SwapRouter gas tests #exactInput WETH9 -> 0 1`] = `109155`;
+exports[`SwapRouter gas tests #exactInput 2 trades (directly to sender) 1`] = `168901`;
 
-exports[`SwapRouter gas tests #exactInputSingle 0 -> 1 1`] = `110144`;
+exports[`SwapRouter gas tests #exactInput 2 trades (via router) 1`] = `178453`;
 
-exports[`SwapRouter gas tests #exactInputSingle 0 -> WETH9 1`] = `127050`;
+exports[`SwapRouter gas tests #exactInput WETH9 -> 0 1`] = `108886`;
 
-exports[`SwapRouter gas tests #exactInputSingle WETH9 -> 0 1`] = `108469`;
+exports[`SwapRouter gas tests #exactInputSingle 0 -> 1 1`] = `109842`;
 
-exports[`SwapRouter gas tests #exactOutput 0 -> 1 -> 2 1`] = `169297`;
+exports[`SwapRouter gas tests #exactInputSingle 0 -> WETH9 1`] = `126748`;
 
-exports[`SwapRouter gas tests #exactOutput 0 -> 1 1`] = `111686`;
+exports[`SwapRouter gas tests #exactInputSingle WETH9 -> 0 1`] = `108167`;
 
-exports[`SwapRouter gas tests #exactOutput 0 -> WETH9 1`] = `128604`;
+exports[`SwapRouter gas tests #exactOutput 0 -> 1 -> 2 1`] = `169337`;
 
-exports[`SwapRouter gas tests #exactOutput WETH9 -> 0 1`] = `119666`;
+exports[`SwapRouter gas tests #exactOutput 0 -> 1 1`] = `111717`;
 
-exports[`SwapRouter gas tests #exactOutputSingle 0 -> 1 1`] = `111865`;
+exports[`SwapRouter gas tests #exactOutput 0 -> WETH9 1`] = `128635`;
 
-exports[`SwapRouter gas tests #exactOutputSingle 0 -> WETH9 1`] = `128783`;
+exports[`SwapRouter gas tests #exactOutput WETH9 -> 0 1`] = `119719`;
 
-exports[`SwapRouter gas tests #exactOutputSingle WETH9 -> 0 1`] = `112632`;
+exports[`SwapRouter gas tests #exactOutputSingle 0 -> 1 1`] = `111874`;
+
+exports[`SwapRouter gas tests #exactOutputSingle 0 -> WETH9 1`] = `128792`;
+
+exports[`SwapRouter gas tests #exactOutputSingle WETH9 -> 0 1`] = `112663`;

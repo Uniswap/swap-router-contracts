@@ -109,6 +109,17 @@ describe('SwapRouter gas tests', function () {
     )
   }
 
+  function encodeSweep(token: string, amount: number) {
+    const functionSignature = 'sweepToken(address,uint256)'
+    return solidityPack(
+      ['bytes4', 'bytes'],
+      [
+        router.interface.getSighash(functionSignature),
+        defaultAbiCoder.encode((router.interface.functions as any)[functionSignature].inputs, [token, amount]),
+      ]
+    )
+  }
+
   before('create fixture loader', async () => {
     const wallets = await (ethers as any).getSigners()
     ;[wallet, trader] = wallets
@@ -135,7 +146,6 @@ describe('SwapRouter gas tests', function () {
       recipient: outputIsWETH9 ? ADDRESS_THIS : MSG_SENDER,
       amountIn,
       amountOutMinimum: outputIsWETH9 ? 0 : amountOutMinimum, // save on calldata
-      hasAlreadyPaid: false,
     }
 
     const data = [router.interface.encodeFunctionData('exactInput', [params])]
@@ -166,7 +176,6 @@ describe('SwapRouter gas tests', function () {
       amountIn,
       amountOutMinimum: outputIsWETH9 ? 0 : amountOutMinimum, // save on calldata
       sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
-      hasAlreadyPaid: false,
     }
 
     const data = [router.interface.encodeFunctionData('exactInputSingle', [params])]
@@ -314,6 +323,57 @@ describe('SwapRouter gas tests', function () {
           tokens[0].address.toLowerCase() < weth9.address.toLowerCase() ? 2 : 3
         )
       )
+    })
+
+    it('2 trades (via router)', async () => {
+      await weth9.connect(trader).deposit({ value: 3 })
+      await weth9.connect(trader).approve(router.address, constants.MaxUint256)
+      const swap0 = {
+        path: encodePath([weth9.address, tokens[0].address], [FeeAmount.MEDIUM]),
+        recipient: ADDRESS_THIS,
+        amountIn: 3,
+        amountOutMinimum: 0, // save on calldata
+      }
+
+      const swap1 = {
+        path: encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
+        recipient: ADDRESS_THIS,
+        amountIn: 3,
+        amountOutMinimum: 0, // save on calldata
+      }
+
+      const data = [
+        router.interface.encodeFunctionData('exactInput', [swap0]),
+        router.interface.encodeFunctionData('exactInput', [swap1]),
+        encodeSweep(tokens[0].address, 2),
+      ]
+
+      await snapshotGasCost(router.connect(trader)['multicall(uint256,bytes[])'](1, data))
+    })
+
+    it('2 trades (directly to sender)', async () => {
+      await weth9.connect(trader).deposit({ value: 3 })
+      await weth9.connect(trader).approve(router.address, constants.MaxUint256)
+      const swap0 = {
+        path: encodePath([weth9.address, tokens[0].address], [FeeAmount.MEDIUM]),
+        recipient: MSG_SENDER,
+        amountIn: 3,
+        amountOutMinimum: 1,
+      }
+
+      const swap1 = {
+        path: encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
+        recipient: MSG_SENDER,
+        amountIn: 3,
+        amountOutMinimum: 1,
+      }
+
+      const data = [
+        router.interface.encodeFunctionData('exactInput', [swap0]),
+        router.interface.encodeFunctionData('exactInput', [swap1]),
+      ]
+
+      await snapshotGasCost(router.connect(trader)['multicall(uint256,bytes[])'](1, data))
     })
   })
 
