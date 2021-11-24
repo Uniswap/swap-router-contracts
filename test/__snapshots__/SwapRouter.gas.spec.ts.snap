@@ -8,9 +8,9 @@ exports[`SwapRouter gas tests #exactInput 0 -> 1 minimal 1`] = `98059`;
 
 exports[`SwapRouter gas tests #exactInput 0 -> WETH9 1`] = `127467`;
 
-exports[`SwapRouter gas tests #exactInput 2 trades (directly to sender) 1`] = `168901`;
+exports[`SwapRouter gas tests #exactInput 2 trades (directly to sender) 1`] = `179101`;
 
-exports[`SwapRouter gas tests #exactInput 2 trades (via router) 1`] = `178453`;
+exports[`SwapRouter gas tests #exactInput 2 trades (via router) 1`] = `188653`;
 
 exports[`SwapRouter gas tests #exactInput WETH9 -> 0 1`] = `108886`;
 
