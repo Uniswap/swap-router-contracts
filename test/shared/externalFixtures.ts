@@ -65,12 +65,9 @@ export const v3RouterFixture: Fixture<{
     [factory.address, weth9.address, constants.AddressZero]
   )
 
-  const router = (await (await ethers.getContractFactory('MockTimeSwapRouter02')).deploy(
-    factoryV2.address,
-    factory.address,
-    nft.address,
-    weth9.address
-  )) as MockTimeSwapRouter02
+  const router = (await (
+    await ethers.getContractFactory('MockTimeSwapRouter02')
+  ).deploy(factoryV2.address, factory.address, nft.address, weth9.address)) as MockTimeSwapRouter02
 
   return { weth9, factoryV2, factory, nft, router }
 }

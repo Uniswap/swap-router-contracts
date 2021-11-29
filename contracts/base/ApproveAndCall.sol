@@ -10,8 +10,9 @@ import './ImmutableState.sol';
 
 abstract contract ApproveAndCall is IApproveAndCall, ImmutableState {
     function tryApprove(address token, uint256 amount) private returns (bool) {
-        (bool success, bytes memory data) =
-            token.call(abi.encodeWithSelector(IERC20.approve.selector, positionManager, amount));
+        (bool success, bytes memory data) = token.call(
+            abi.encodeWithSelector(IERC20.approve.selector, positionManager, amount)
+        );
         return success && (data.length == 0 || abi.decode(data, (bool)));
     }
 

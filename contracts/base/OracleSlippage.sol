@@ -35,8 +35,9 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState, Bl
             blockStartingTick = currentTick;
         } else {
             uint256 prevIndex = (uint256(observationIndex) + observationCardinality - 1) % observationCardinality;
-            (uint32 prevObservationTimestamp, int56 prevTickCumulative, , bool prevInitialized) =
-                pool.observations(prevIndex);
+            (uint32 prevObservationTimestamp, int56 prevTickCumulative, , bool prevInitialized) = pool.observations(
+                prevIndex
+            );
 
             require(prevInitialized, 'ONI');
 
@@ -130,10 +131,12 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState, Bl
     ) internal view returns (int256 averageSyntheticAverageTick, int256 averageSyntheticCurrentTick) {
         require(paths.length == amounts.length);
 
-        OracleLibrary.WeightedTickData[] memory weightedSyntheticAverageTicks =
-            new OracleLibrary.WeightedTickData[](paths.length);
-        OracleLibrary.WeightedTickData[] memory weightedSyntheticCurrentTicks =
-            new OracleLibrary.WeightedTickData[](paths.length);
+        OracleLibrary.WeightedTickData[] memory weightedSyntheticAverageTicks = new OracleLibrary.WeightedTickData[](
+            paths.length
+        );
+        OracleLibrary.WeightedTickData[] memory weightedSyntheticCurrentTicks = new OracleLibrary.WeightedTickData[](
+            paths.length
+        );
 
         for (uint256 i = 0; i < paths.length; i++) {
             (int256 syntheticAverageTick, int256 syntheticCurrentTick) = getSyntheticTicks(paths[i], secondsAgo);
@@ -164,8 +167,11 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState, Bl
         uint24 maximumTickDivergence,
         uint32 secondsAgo
     ) external view override {
-        (int256 averageSyntheticAverageTick, int256 averageSyntheticCurrentTick) =
-            getSyntheticTicks(paths, amounts, secondsAgo);
+        (int256 averageSyntheticAverageTick, int256 averageSyntheticCurrentTick) = getSyntheticTicks(
+            paths,
+            amounts,
+            secondsAgo
+        );
         require(averageSyntheticAverageTick - averageSyntheticCurrentTick < maximumTickDivergence, 'TD');
     }
 }
