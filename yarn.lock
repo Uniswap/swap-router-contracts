@@ -297,16 +297,16 @@
     "@babel/helper-validator-identifier" "^7.15.7"
     to-fast-properties "^2.0.0"
 
-"@emag3m/router-sdk@1.0.0-beta.5":
-  version "1.0.0-beta.5"
-  resolved "https://registry.yarnpkg.com/@emag3m/router-sdk/-/router-sdk-1.0.0-beta.5.tgz#2ff7adb69564030d4e3ce92cc4120889462dd698"
-  integrity sha512-088Tz6r4qFkZJaNnSGapmY+kUVYsh7NnL9bOa2Lv8rMBLSPoGnXxjF4+KiVzupYWZAotbB+cSP12SKc3N5sGAw==
+"@emag3m/router-sdk@1.0.0-beta.7":
+  version "1.0.0-beta.7"
+  resolved "https://registry.yarnpkg.com/@emag3m/router-sdk/-/router-sdk-1.0.0-beta.7.tgz#c51841e4887324526ff35c341ec95cf489f1c43f"
+  integrity sha512-5nKCg7nCYSIfjG7RRaTZntzUoJmp98j9wOGR/38oc7PXMz0ZjPO8TQ4yN6z/UAb8yZ2M7Ap3oBsKfJKBnqxB8A==
   dependencies:
     "@ethersproject/abi" "^5.5.0"
     "@uniswap/sdk-core" "^3.0.1"
-    "@uniswap/swap-router-contracts" "^1.0.0-beta.2"
+    "@uniswap/swap-router-contracts" "^1.0.0-beta.5"
     "@uniswap/v2-sdk" "^3.0.1"
-    "@uniswap/v3-sdk" "^3.6.2"
+    "@uniswap/v3-sdk" "^3.7.1"
 
 "@ensdomains/ens@^0.4.4":
   version "0.4.5"
@@ -1253,10 +1253,10 @@
     tiny-invariant "^1.1.0"
     toformat "^2.0.0"
 
-"@uniswap/swap-router-contracts@^1.0.0-beta.2":
-  version "1.0.0-beta.4"
-  resolved "https://registry.yarnpkg.com/@uniswap/swap-router-contracts/-/swap-router-contracts-1.0.0-beta.4.tgz#267758498b17044ef3e96fa43475617884eaab73"
-  integrity sha512-97TD47x4i+SFlZnO/gslEardRGLleWKLr+adhW5IQ7GwOlkO1NoKaR7ytqJ36j6HJeOPizOsQ3qCzA2JJF8z2g==
+"@uniswap/swap-router-contracts@^1.0.0-beta.5":
+  version "1.0.0-beta.5"
+  resolved "https://registry.yarnpkg.com/@uniswap/swap-router-contracts/-/swap-router-contracts-1.0.0-beta.5.tgz#ec5848b568dee38aed09f7c5a2184c9b3407e7a0"
+  integrity sha512-AogRSg8iFzDZzygbMNdRpO0yesuhiI/mMCVpRrPGlDRFxejnoa0BLD7dGFqTHis9nInenpvInE1YKaadCWsQ7g==
   dependencies:
     "@openzeppelin/contracts" "3.4.1-solc-0.7-2"
     "@uniswap/v2-core" "1.0.1"
@@ -1297,10 +1297,10 @@
     base64-sol "1.0.1"
     hardhat-watcher "^2.1.1"
 
-"@uniswap/v3-sdk@^3.6.2":
-  version "3.6.3"
-  resolved "https://registry.yarnpkg.com/@uniswap/v3-sdk/-/v3-sdk-3.6.3.tgz#f2fca86cfde1450976581028195fc0ee4b11036d"
-  integrity sha512-nepNTZMpM1uwLJAlQaUUEDMFrSujS1sOqyVD739zoPWsVHAUPvqVAKQN0GlgZcLXOqeCMKjO3lteaNHEXef1XA==
+"@uniswap/v3-sdk@^3.7.1":
+  version "3.7.1"
+  resolved "https://registry.yarnpkg.com/@uniswap/v3-sdk/-/v3-sdk-3.7.1.tgz#8a3740ff6302d8069e7ce4a38b7588721398048b"
+  integrity sha512-/0FBsrRijfAEOVO0ejCQX36MwaKzjKCaInUA1dNqFyDNZ5dthvv6jUhMADYuNXZnhN6NcSdIj6xhlc/cpgPm9Q==
   dependencies:
     "@ethersproject/abi" "^5.0.12"
     "@ethersproject/solidity" "^5.0.9"
@@ -5757,10 +5757,10 @@ json-schema-traverse@^0.4.1:
   resolved "https://registry.yarnpkg.com/json-schema-traverse/-/json-schema-traverse-0.4.1.tgz#69f6a87d9513ab8bb8fe63bdb0979c448e684660"
   integrity sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==
 
-json-schema@0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/json-schema/-/json-schema-0.4.0.tgz#f7de4cf6efab838ebaeb3236474cbba5a1930ab5"
-  integrity sha512-es94M3nTIfsEPisRafak+HDLfHXnKBhV3vU5eqPcS3flIWqcxJWgXHXiey3YrpaNsanY5ei1VoYEbOzijuq9BA==
+json-schema@0.2.3:
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/json-schema/-/json-schema-0.2.3.tgz#b480c892e59a2f05954ce727bd3f2a4e882f9e13"
+  integrity sha1-tIDIkuWaLwWVTOcnvT8qTogvnhM=
 
 json-stable-stringify-without-jsonify@^1.0.1:
   version "1.0.1"
