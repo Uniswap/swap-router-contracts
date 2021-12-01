@@ -8,6 +8,9 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '../interfaces/IApproveAndCall.sol';
 import './ImmutableState.sol';
 
+/// @title Approve and Call
+/// @notice Allows callers to approve the Uniswap V3 position manager from this contract,
+/// for any token, and then make calls into the position manager
 abstract contract ApproveAndCall is IApproveAndCall, ImmutableState {
     function tryApprove(address token, uint256 amount) private returns (bool) {
         (bool success, bytes memory data) =
