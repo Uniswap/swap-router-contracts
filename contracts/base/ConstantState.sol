@@ -8,8 +8,8 @@ abstract contract ConstantState {
     uint256 internal constant CONTRACT_BALANCE = 0;
 
     /// @dev Used as a flag for identifying msg.sender, saves gas by sending more 0 bytes
-    address internal constant MSG_SENDER = address(0);
+    address internal constant MSG_SENDER = address(1);
 
     /// @dev Used as a flag for identifying address(this), saves gas by sending more 0 bytes
-    address internal constant ADDRESS_THIS = address(1);
+    address internal constant ADDRESS_THIS = address(2);
 }
