@@ -38,9 +38,17 @@ export default {
     kovan: {
       url: `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`,
     },
+    arbitrumRinkeby: {
+      url: `https://rinkeby.arbitrum.io/rpc`,
+    },
     arbitrum: {
-      url: `http://localhost:8547`,
-      gas: 8000000,
+      url: `https://arb1.arbitrum.io/rpc`,
+    },
+    optimismKovan: {
+      url: `https://kovan.optimism.io`,
+    },
+    optimism: {
+      url: `https://mainnet.optimism.io`,
     },
   },
   etherscan: {
