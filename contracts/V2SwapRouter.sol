@@ -6,14 +6,14 @@ import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import './interfaces/IV2SwapRouter.sol';
-import './base/ConstantState.sol';
 import './base/ImmutableState.sol';
 import './base/PeripheryPaymentsWithFeeExtended.sol';
+import './libraries/Constants.sol';
 import './libraries/UniswapV2Library.sol';
 
 /// @title Uniswap V2 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V2
-abstract contract V2SwapRouter is IV2SwapRouter, ConstantState, ImmutableState, PeripheryPaymentsWithFeeExtended {
+abstract contract V2SwapRouter is IV2SwapRouter, ImmutableState, PeripheryPaymentsWithFeeExtended {
     using LowGasSafeMath for uint256;
 
     // supports fee-on-transfer tokens
@@ -47,9 +47,9 @@ abstract contract V2SwapRouter is IV2SwapRouter, ConstantState, ImmutableState, 
         address[] calldata path,
         address to
     ) external payable override returns (uint256 amountOut) {
-        // use amountIn == CONTRACT_BALANCE as a flag to swap the entire balance of the contract
+        // use amountIn == Constants.CONTRACT_BALANCE as a flag to swap the entire balance of the contract
         bool hasAlreadyPaid;
-        if (amountIn == CONTRACT_BALANCE) {
+        if (amountIn == Constants.CONTRACT_BALANCE) {
             hasAlreadyPaid = true;
             amountIn = IERC20(path[0]).balanceOf(address(this));
         }
@@ -62,8 +62,8 @@ abstract contract V2SwapRouter is IV2SwapRouter, ConstantState, ImmutableState, 
         );
 
         // find and replace to addresses
-        if (to == MSG_SENDER) to = msg.sender;
-        else if (to == ADDRESS_THIS) to = address(this);
+        if (to == Constants.MSG_SENDER) to = msg.sender;
+        else if (to == Constants.ADDRESS_THIS) to = address(this);
 
         uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
 
@@ -86,8 +86,8 @@ abstract contract V2SwapRouter is IV2SwapRouter, ConstantState, ImmutableState, 
         pay(path[0], msg.sender, UniswapV2Library.pairFor(factoryV2, path[0], path[1]), amountIn);
 
         // find and replace to addresses
-        if (to == MSG_SENDER) to = msg.sender;
-        else if (to == ADDRESS_THIS) to = address(this);
+        if (to == Constants.MSG_SENDER) to = msg.sender;
+        else if (to == Constants.ADDRESS_THIS) to = address(this);
 
         _swap(path, to);
     }

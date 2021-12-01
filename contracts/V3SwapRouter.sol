@@ -11,13 +11,13 @@ import '@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import './interfaces/IV3SwapRouter.sol';
-import './base/ConstantState.sol';
 import './base/PeripheryPaymentsWithFeeExtended.sol';
 import './base/OracleSlippage.sol';
+import './libraries/Constants.sol';
 
 /// @title Uniswap V3 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V3
-abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPaymentsWithFeeExtended, OracleSlippage {
+abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFeeExtended, OracleSlippage {
     using Path for bytes;
     using SafeCast for uint256;
 
@@ -81,8 +81,8 @@ abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPayment
         SwapCallbackData memory data
     ) private returns (uint256 amountOut) {
         // find and replace recipient addresses
-        if (recipient == MSG_SENDER) recipient = msg.sender;
-        else if (recipient == ADDRESS_THIS) recipient = address(this);
+        if (recipient == Constants.MSG_SENDER) recipient = msg.sender;
+        else if (recipient == Constants.ADDRESS_THIS) recipient = address(this);
 
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
 
@@ -109,9 +109,9 @@ abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPayment
         override
         returns (uint256 amountOut)
     {
-        // use amountIn == CONTRACT_BALANCE as a flag to swap the entire balance of the contract
+        // use amountIn == Constants.CONTRACT_BALANCE as a flag to swap the entire balance of the contract
         bool hasAlreadyPaid;
-        if (params.amountIn == CONTRACT_BALANCE) {
+        if (params.amountIn == Constants.CONTRACT_BALANCE) {
             hasAlreadyPaid = true;
             params.amountIn = IERC20(params.tokenIn).balanceOf(address(this));
         }
@@ -130,9 +130,9 @@ abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPayment
 
     /// @inheritdoc IV3SwapRouter
     function exactInput(ExactInputParams memory params) external payable override returns (uint256 amountOut) {
-        // use amountIn == CONTRACT_BALANCE as a flag to swap the entire balance of the contract
+        // use amountIn == Constants.CONTRACT_BALANCE as a flag to swap the entire balance of the contract
         bool hasAlreadyPaid;
-        if (params.amountIn == CONTRACT_BALANCE) {
+        if (params.amountIn == Constants.CONTRACT_BALANCE) {
             hasAlreadyPaid = true;
             (address tokenIn, , ) = params.path.decodeFirstPool();
             params.amountIn = IERC20(tokenIn).balanceOf(address(this));
@@ -175,8 +175,8 @@ abstract contract V3SwapRouter is IV3SwapRouter, ConstantState, PeripheryPayment
         SwapCallbackData memory data
     ) private returns (uint256 amountIn) {
         // find and replace recipient addresses
-        if (recipient == MSG_SENDER) recipient = msg.sender;
-        else if (recipient == ADDRESS_THIS) recipient = address(this);
+        if (recipient == Constants.MSG_SENDER) recipient = msg.sender;
+        else if (recipient == Constants.ADDRESS_THIS) recipient = address(this);
 
         (address tokenOut, address tokenIn, uint24 fee) = data.path.decodeFirstPool();
 
