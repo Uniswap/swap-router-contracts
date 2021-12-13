@@ -135,6 +135,46 @@ describe('ApproveAndCall', function () {
       })
     })
 
+    it('#mint and #increaseLiquidity', async () => {
+      await createPool(tokens[0].address, tokens[1].address)
+
+      // approve in advance
+      await router.approveMax(tokens[0].address)
+      await router.approveMax(tokens[1].address)
+
+      // send dummy amount of tokens to the pair in advance
+      const amount = 1000
+      await tokens[0].transfer(router.address, amount)
+      await tokens[1].transfer(router.address, amount)
+      expect((await tokens[0].balanceOf(router.address)).toNumber()).to.be.eq(amount)
+      expect((await tokens[1].balanceOf(router.address)).toNumber()).to.be.eq(amount)
+
+      // perform the mint
+      await router.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        fee: FeeAmount.MEDIUM,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: trader.address,
+        amount0Min: 0,
+        amount1Min: 0,
+      })
+
+      // send more tokens
+      await tokens[0].transfer(router.address, amount)
+      await tokens[1].transfer(router.address, amount)
+
+      // perform the increaseLiquidity
+      await router.increaseLiquidity({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tokenId: 2,
+        amount0Min: 0,
+        amount1Min: 0,
+      })
+    })
+
     describe('single-asset add', () => {
       beforeEach('create 0-1 pool', async () => {
         await createPool(tokens[0].address, tokens[1].address)

@@ -2,8 +2,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol';
 
 import '../interfaces/IApproveAndCall.sol';
 import './ImmutableState.sol';
@@ -21,47 +21,46 @@ abstract contract ApproveAndCall is IApproveAndCall, ImmutableState {
     /// @inheritdoc IApproveAndCall
     function getApprovalType(address token, uint256 amount) external override returns (ApprovalType) {
         // check existing approval
-        uint256 approval = IERC20(token).allowance(address(this), positionManager);
-        if (approval >= amount) return ApprovalType.NOT_REQUIRED;
+        if (IERC20(token).allowance(address(this), positionManager) >= amount) return ApprovalType.NOT_REQUIRED;
 
         // try type(uint256).max / type(uint256).max - 1
         if (tryApprove(token, type(uint256).max)) return ApprovalType.MAX;
         if (tryApprove(token, type(uint256).max - 1)) return ApprovalType.MAX_MINUS_ONE;
 
         // set approval to 0 (must succeed)
-        require(tryApprove(token, 0), 'A0');
+        require(tryApprove(token, 0));
 
         // try type(uint256).max / type(uint256).max - 1
         if (tryApprove(token, type(uint256).max)) return ApprovalType.ZERO_THEN_MAX;
         if (tryApprove(token, type(uint256).max - 1)) return ApprovalType.ZERO_THEN_MAX_MINUS_ONE;
 
-        revert('APP');
+        revert();
     }
 
     /// @inheritdoc IApproveAndCall
     function approveMax(address token) external payable override {
-        TransferHelper.safeApprove(token, positionManager, type(uint256).max);
+        require(tryApprove(token, type(uint256).max));
     }
 
     /// @inheritdoc IApproveAndCall
     function approveMaxMinusOne(address token) external payable override {
-        TransferHelper.safeApprove(token, positionManager, type(uint256).max - 1);
+        require(tryApprove(token, type(uint256).max - 1));
     }
 
     /// @inheritdoc IApproveAndCall
     function approveZeroThenMax(address token) external payable override {
-        TransferHelper.safeApprove(token, positionManager, 0);
-        TransferHelper.safeApprove(token, positionManager, type(uint256).max);
+        require(tryApprove(token, 0));
+        require(tryApprove(token, type(uint256).max));
     }
 
     /// @inheritdoc IApproveAndCall
     function approveZeroThenMaxMinusOne(address token) external payable override {
-        TransferHelper.safeApprove(token, positionManager, 0);
-        TransferHelper.safeApprove(token, positionManager, type(uint256).max - 1);
+        require(tryApprove(token, 0));
+        require(tryApprove(token, type(uint256).max - 1));
     }
 
     /// @inheritdoc IApproveAndCall
-    function callPositionManager(bytes calldata data) external payable override returns (bytes memory result) {
+    function callPositionManager(bytes memory data) public payable override returns (bytes memory result) {
         bool success;
         (success, result) = positionManager.call(data);
 
@@ -73,5 +72,55 @@ abstract contract ApproveAndCall is IApproveAndCall, ImmutableState {
             }
             revert(abi.decode(result, (string)));
         }
+    }
+
+    function balanceOf(address token) private view returns (uint256) {
+        return IERC20(token).balanceOf(address(this));
+    }
+
+    /// @inheritdoc IApproveAndCall
+    function mint(MintParams calldata params) external payable override returns (bytes memory result) {
+        return
+            callPositionManager(
+                abi.encodeWithSelector(
+                    INonfungiblePositionManager.mint.selector,
+                    INonfungiblePositionManager.MintParams({
+                        token0: params.token0,
+                        token1: params.token1,
+                        fee: params.fee,
+                        tickLower: params.tickLower,
+                        tickUpper: params.tickUpper,
+                        amount0Desired: balanceOf(params.token0),
+                        amount1Desired: balanceOf(params.token1),
+                        amount0Min: params.amount0Min,
+                        amount1Min: params.amount1Min,
+                        recipient: params.recipient,
+                        deadline: type(uint256).max // deadline should be checked via multicall
+                    })
+                )
+            );
+    }
+
+    /// @inheritdoc IApproveAndCall
+    function increaseLiquidity(IncreaseLiquidityParams calldata params)
+        external
+        payable
+        override
+        returns (bytes memory result)
+    {
+        return
+            callPositionManager(
+                abi.encodeWithSelector(
+                    INonfungiblePositionManager.increaseLiquidity.selector,
+                    INonfungiblePositionManager.IncreaseLiquidityParams({
+                        tokenId: params.tokenId,
+                        amount0Desired: balanceOf(params.token0),
+                        amount1Desired: balanceOf(params.token1),
+                        amount0Min: params.amount0Min,
+                        amount1Min: params.amount1Min,
+                        deadline: type(uint256).max // deadline should be checked via multicall
+                    })
+                )
+            );
     }
 }
