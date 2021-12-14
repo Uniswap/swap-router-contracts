@@ -25,11 +25,12 @@ describe('ApproveAndCall', function () {
   let trader: Wallet
 
   const swapRouterFixture: Fixture<{
+    factory: Contract
     router: MockTimeSwapRouter02
     nft: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
   }> = async (wallets, provider) => {
-    const { router, tokens, nft } = await completeFixture(wallets, provider)
+    const { factory, router, tokens, nft } = await completeFixture(wallets, provider)
 
     // approve & fund wallets
     for (const token of tokens) {
@@ -37,12 +38,14 @@ describe('ApproveAndCall', function () {
     }
 
     return {
+      factory,
       router,
       tokens,
       nft,
     }
   }
 
+  let factory: Contract
   let router: MockTimeSwapRouter02
   let nft: Contract
   let tokens: [TestERC20, TestERC20, TestERC20]
@@ -63,7 +66,7 @@ describe('ApproveAndCall', function () {
   })
 
   beforeEach('load fixture', async () => {
-    ;({ router, tokens, nft } = await loadFixture(swapRouterFixture))
+    ;({ factory, router, tokens, nft } = await loadFixture(swapRouterFixture))
   })
 
   describe('swap and add', () => {
@@ -133,6 +136,64 @@ describe('ApproveAndCall', function () {
           await router.approveZeroThenMaxMinusOne(tokens[0].address)
         })
       })
+    })
+
+    it('#mint and #increaseLiquidity', async () => {
+      await createPool(tokens[0].address, tokens[1].address)
+      const pool = await factory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+
+      // approve in advance
+      await router.approveMax(tokens[0].address)
+      await router.approveMax(tokens[1].address)
+
+      // send dummy amount of tokens to the pair in advance
+      const amount = 1000
+      await tokens[0].transfer(router.address, amount)
+      await tokens[1].transfer(router.address, amount)
+      expect((await tokens[0].balanceOf(router.address)).toNumber()).to.be.eq(amount)
+      expect((await tokens[1].balanceOf(router.address)).toNumber()).to.be.eq(amount)
+
+      let poolBalance0Before = await tokens[0].balanceOf(pool)
+      let poolBalance1Before = await tokens[1].balanceOf(pool)
+
+      // perform the mint
+      await router.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        fee: FeeAmount.MEDIUM,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: trader.address,
+        amount0Min: 0,
+        amount1Min: 0,
+      })
+
+      expect((await tokens[0].balanceOf(router.address)).toNumber()).to.be.eq(0)
+      expect((await tokens[1].balanceOf(router.address)).toNumber()).to.be.eq(0)
+      expect((await tokens[0].balanceOf(pool)).toNumber()).to.be.eq(poolBalance0Before.toNumber() + amount)
+      expect((await tokens[1].balanceOf(pool)).toNumber()).to.be.eq(poolBalance1Before.toNumber() + amount)
+
+      expect((await nft.balanceOf(trader.address)).toNumber()).to.be.eq(1)
+
+      // send more tokens
+      await tokens[0].transfer(router.address, amount)
+      await tokens[1].transfer(router.address, amount)
+
+      // perform the increaseLiquidity
+      await router.increaseLiquidity({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tokenId: 2,
+        amount0Min: 0,
+        amount1Min: 0,
+      })
+
+      expect((await tokens[0].balanceOf(router.address)).toNumber()).to.be.eq(0)
+      expect((await tokens[1].balanceOf(router.address)).toNumber()).to.be.eq(0)
+      expect((await tokens[0].balanceOf(pool)).toNumber()).to.be.eq(poolBalance0Before.toNumber() + amount * 2)
+      expect((await tokens[1].balanceOf(pool)).toNumber()).to.be.eq(poolBalance1Before.toNumber() + amount * 2)
+
+      expect((await nft.balanceOf(trader.address)).toNumber()).to.be.eq(1)
     })
 
     describe('single-asset add', () => {

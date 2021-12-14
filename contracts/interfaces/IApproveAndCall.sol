@@ -30,5 +30,34 @@ interface IApproveAndCall {
     /// @notice Calls the position manager with arbitrary calldata
     /// @param data Calldata to pass along to the position manager
     /// @return result The result from the call
-    function callPositionManager(bytes calldata data) external payable returns (bytes memory result);
+    function callPositionManager(bytes memory data) external payable returns (bytes memory result);
+
+    struct MintParams {
+        address token0;
+        address token1;
+        uint24 fee;
+        int24 tickLower;
+        int24 tickUpper;
+        uint256 amount0Min;
+        uint256 amount1Min;
+        address recipient;
+    }
+
+    /// @notice Calls the position manager's mint function
+    /// @param params Calldata to pass along to the position manager
+    /// @return result The result from the call
+    function mint(MintParams calldata params) external payable returns (bytes memory result);
+
+    struct IncreaseLiquidityParams {
+        address token0;
+        address token1;
+        uint256 tokenId;
+        uint256 amount0Min;
+        uint256 amount1Min;
+    }
+
+    /// @notice Calls the position manager's increaseLiquidity function
+    /// @param params Calldata to pass along to the position manager
+    /// @return result The result from the call
+    function increaseLiquidity(IncreaseLiquidityParams calldata params) external payable returns (bytes memory result);
 }
