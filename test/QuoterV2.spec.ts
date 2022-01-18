@@ -1,6 +1,6 @@
 import { Fixture } from 'ethereum-waffle'
 import { constants, Wallet, Contract } from 'ethers'
-import { ethers, waffle } from 'hardhat'
+import hre, { ethers, waffle } from 'hardhat'
 import { QuoterV2, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { FeeAmount, MaxUint128 } from './shared/constants'
