@@ -2,14 +2,14 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol';
 import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Callee.sol';
 import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
 import '../libraries/UniswapV2Library.sol';
 import '../interfaces/ISwapRouter02.sol';
 import '../interfaces/IFeeOnTransfer.sol';
-import '../interfaces/IERC20.sol';
-import '../interfaces/IWETH.sol';
+import '../base/ImmutableState.sol';
 
 /// @notice Determine if a token takes a fee on transfer by flash borrowing from the token/<base token> pool on V2.
 /// @notice Returns true if we detected a fee is taken on transfer.
@@ -21,11 +21,10 @@ import '../interfaces/IWETH.sol';
 /// @dev    in all circumstances.
 /// @dev 2/ It is possible that the token does not have any pools on V2 therefore we are not able to perform
 /// @dev    a flashloan to test the transfer.
-contract FeeOnTransfer is IFeeOnTransfer, IUniswapV2Callee, PeripheryImmutableState {
+contract FeeOnTransfer is IFeeOnTransfer, IUniswapV2Callee, ImmutableState {
     string internal constant FOT_REVERT_STRING = 'FOT';
-    bytes4 internal constant PAIR_TOKEN_0_SELECTOR = bytes4(keccak256('token0()'));
 
-    constructor(address _factory, address _WETH9) PeripheryImmutableState(_factory, _WETH9) {}
+    constructor(address _factoryV2, address _positionManager) ImmutableState(_factoryV2, _positionManager) {}
 
     function batchIsFeeOnTransfer(
         address[] calldata tokens,
@@ -60,11 +59,11 @@ contract FeeOnTransfer is IFeeOnTransfer, IUniswapV2Callee, PeripheryImmutableSt
             return false;
         }
 
-        address pairAddress = UniswapV2Library.pairFor(this.factory(), token, baseToken);
+        address pairAddress = UniswapV2Library.pairFor(this.factoryV2(), token, baseToken);
 
         // If the token/baseToken pair exists, get token0.
         // Must do low level call as try/catch does not support case where contract does not exist.
-        (, bytes memory returnData) = address(pairAddress).call(abi.encodeWithSelector(PAIR_TOKEN_0_SELECTOR));
+        (, bytes memory returnData) = address(pairAddress).call(abi.encodeWithSelector(IUniswapV2Pair.token0.selector));
 
         if (returnData.length == 0) {
             return false;
