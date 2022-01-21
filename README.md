@@ -48,3 +48,18 @@ contract MyContract {
 }
 
 ```
+
+## Tests
+
+Some tests use Hardhat mainnet forking and therefore require an archive node.
+Either create a `.env` file in the workspace root containing:
+
+```
+ARCHIVE_RPC_URL='...'
+```
+
+Or set the variable when running tests:
+
+```
+export ARCHIVE_RPC_URL='...' && npm run test
+```
