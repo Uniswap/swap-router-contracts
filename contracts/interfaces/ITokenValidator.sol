@@ -19,26 +19,29 @@ pragma abicoder v2;
 /// @dev These functions are not marked view because they rely on calling non-view functions and reverting
 /// to compute the result.
 interface ITokenValidator {
+    // Status.FOT: detected a fee is taken on transfer.
+    // Status.STF: transfer failed for the token.
+    // Status.UNKN: no issues found with the token.
     enum Status {UNKN, FOT, STF}
 
-    /// @notice Returns whether a token is fee on transfer or not
+    /// @notice Validates a token by detecting if its transferable or takes a fee on transfer
     /// @param token The address of the token to check for fee on transfer
     /// @param baseTokens The addresses of the tokens to try pairing with
     /// token when looking for a pool to flash loan from.
     /// @param amountToBorrow The amount to try flash borrowing from the pools
-    /// @return bool True if the token is fee on transfer
+    /// @return The status of the token
     function validate(
         address token,
         address[] calldata baseTokens,
         uint256 amountToBorrow
     ) external returns (Status);
 
-    /// @notice Returns whether each provided token is fee on transfer or not
+    /// @notice Validates each token by detecting if its transferable or takes a fee on transfer
     /// @param tokens The addresses of the tokens to check for fee on transfer
     /// @param baseTokens The addresses of the tokens to try pairing with
     /// token when looking for a pool to flash loan from.
     /// @param amountToBorrow The amount to try flash borrowing from the pools
-    /// @return bool True if the token is fee on transfer
+    /// @return The status of the token
     function batchValidate(
         address[] calldata tokens,
         address[] calldata baseTokens,
