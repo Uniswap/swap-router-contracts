@@ -16,7 +16,7 @@ import './IAddressTester.sol';
 contract AddressTester is IAddressTester {
     constructor() {}
 
-    function validate(address _addr) override public {
+    function validate(address _addr) public override {
         bytes32 a;
         bytes32 b;
         assembly {
