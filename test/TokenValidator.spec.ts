@@ -16,10 +16,12 @@ describe('TokenValidator', function () {
   // WETH9 and USDC
   const BASE_TOKENS = ['0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48']
   // Arbitrary amount to flash loan.
-  const AMOUNT_TO_BORROW = 100000000
+  const AMOUNT_TO_BORROW = 1000
 
   const FOT_TOKENS = [
-    '0x777E2ae845272a2F540ebf6a3D03734A5a8f618e', // RYOSHI
+    '0xa68dd8cb83097765263adad881af6eed479c4a33', // WTF
+    '0x8B3192f5eEBD8579568A2Ed41E6FEB402f93f73F', // SAITAMA
+    '0xA2b4C0Af19cC16a6CfAcCe81F192B024d625817D', // KISHU
   ]
 
   const BROKEN_TOKENS = [
@@ -27,7 +29,6 @@ describe('TokenValidator', function () {
   ]
 
   const NON_FOT_TOKENS = [
-    '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', // WBTC
     '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
     '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984', // UNI
     '0xc00e94Cb662C3520282E6f5717214004A7f26888', // COMP
@@ -46,7 +47,7 @@ describe('TokenValidator', function () {
         {
           forking: {
             jsonRpcUrl: process.env.ARCHIVE_RPC_URL,
-            blockNumber: 14256985,
+            blockNumber: 14024832,
           },
         },
       ],
@@ -78,7 +79,7 @@ describe('TokenValidator', function () {
     }
   })
 
-  it.only('succeeds to detect fot tokens', async () => {
+  it('succeeds to detect fot tokens', async () => {
     for (const token of FOT_TOKENS) {
       const isFot = await tokenValidator.callStatic.validate(token, [BASE_TOKENS[0]!], AMOUNT_TO_BORROW)
       expect(isFot).to.equal(Status.FOT)
@@ -129,7 +130,7 @@ describe('TokenValidator', function () {
   })
 
   it('succeeds to detect non fot tokens', async () => {
-    for (const token of [NON_FOT_TOKENS[0]]) {
+    for (const token of NON_FOT_TOKENS) {
       const isFot = await tokenValidator.callStatic.validate(token, BASE_TOKENS, AMOUNT_TO_BORROW)
       expect(isFot).to.equal(Status.UNKN)
     }
