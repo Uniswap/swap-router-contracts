@@ -10,6 +10,7 @@ import '../libraries/UniswapV2Library.sol';
 import '../interfaces/ISwapRouter02.sol';
 import '../interfaces/ITokenValidator.sol';
 import '../base/ImmutableState.sol';
+import 'hardhat/console.sol';
 
 /// @notice Validates tokens by flash borrowing from the token/<base token> pool on V2.
 /// @notice Returns
@@ -85,10 +86,11 @@ contract TokenValidator is ITokenValidator, IUniswapV2Callee, ImmutableState {
         uint256 balanceBeforeLoan = IERC20(token).balanceOf(address(this));
 
         IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
-
+        console.log('a');
         try
             pair.swap(amount0Out, amount1Out, address(this), abi.encode(balanceBeforeLoan, amountToBorrow))
         {} catch Error(string memory reason) {
+            console.log('b');
             if (isFotFailed(reason)) {
                 return Status.FOT;
             }
@@ -97,7 +99,12 @@ contract TokenValidator is ITokenValidator, IUniswapV2Callee, ImmutableState {
                 return Status.STF;
             }
 
+            console.log(reason);
+
             return Status.UNKN;
+        } catch (bytes memory reason) {
+            // catch failing assert()
+            console.logBytes(reason);
         }
 
         // Swap always reverts so should never reach.
@@ -108,10 +115,12 @@ contract TokenValidator is ITokenValidator, IUniswapV2Callee, ImmutableState {
         return keccak256(bytes(reason)) == keccak256(bytes(FOT_REVERT_STRING));
     }
 
-    function isTransferFailed(string memory reason) internal pure returns (bool) {
+    function isTransferFailed(string memory reason) internal returns (bool) {
         // We check the suffix of the revert string so we can support forks that
         // may have modified the prefix.
         string memory stf = STF_REVERT_STRING_SUFFIX;
+
+        console.log(reason);
 
         uint256 reasonLength = bytes(reason).length;
         uint256 suffixLength = bytes(stf).length;
@@ -137,6 +146,7 @@ contract TokenValidator is ITokenValidator, IUniswapV2Callee, ImmutableState {
         uint256,
         bytes calldata data
     ) external view override {
+        console.log('In callback');
         IUniswapV2Pair pair = IUniswapV2Pair(msg.sender);
         (address token0, address token1) = (pair.token0(), pair.token1());
 
