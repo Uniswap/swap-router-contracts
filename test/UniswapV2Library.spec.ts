@@ -9,7 +9,7 @@ describe('V2Library', function () {
     uniswapLibrary = (await factory.deploy()) as TestUniswapV2Library
   })
 
-  it('1111', async () => {
+  it('exact in', async () => {
     await uniswapLibrary.testEqualityAmountIn(
       '10000000000000000000000',
       '6060121762013965246271',
@@ -17,11 +17,11 @@ describe('V2Library', function () {
     )
   })
 
-  it('1111', async () => {
+  it('exact out', async () => {
     await uniswapLibrary.testEqualityAmountOut(
       '10000000000000000000000',
-      '1050501050035005305030525',
-      '2050502502052052050250252'
+      '6060121762013965246271',
+      '1845639706596254478341383'
     )
   })
 })

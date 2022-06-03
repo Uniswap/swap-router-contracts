@@ -10,6 +10,7 @@ import './base/ImmutableState.sol';
 import './base/PeripheryPaymentsWithFeeExtended.sol';
 import './libraries/Constants.sol';
 import './libraries/UniswapV2Library.sol';
+import 'hardhat/console.sol';
 
 /// @title Uniswap V2 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V2
@@ -32,9 +33,23 @@ abstract contract V2SwapRouter is IV2SwapRouter, ImmutableState, PeripheryPaymen
                     input == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
                 amountInput = IERC20(input).balanceOf(address(pair)).sub(reserveInput);
                 amountOutput = UniswapV2Library.getAmountOut(amountInput, reserveInput, reserveOutput);
+                console.log('reserve input');
+                console.logUint(reserveInput);
+                console.log('reserve output');
+                console.logUint(reserveOutput);
+                console.log('balance output');
+                console.logUint(IERC20(output).balanceOf(address(pair)));
             }
+            console.log('amountInput');
+            console.logUint(amountInput);
+            console.log('amountOutput');
+            console.logUint(amountOutput);
             (uint256 amount0Out, uint256 amount1Out) =
                 input == token0 ? (uint256(0), amountOutput) : (amountOutput, uint256(0));
+            console.log('amount0Out');
+            console.logUint(amount0Out);
+            console.log('amount1Out');
+            console.logUint(amount1Out);
             address to = i < path.length - 2 ? UniswapV2Library.pairFor(factoryV2, output, path[i + 2]) : _to;
             pair.swap(amount0Out, amount1Out, to, new bytes(0));
         }
@@ -84,7 +99,10 @@ abstract contract V2SwapRouter is IV2SwapRouter, ImmutableState, PeripheryPaymen
         require(amountIn <= amountInMax, 'Too much requested');
 
         pay(path[0], msg.sender, UniswapV2Library.pairFor(factoryV2, path[0], path[1]), amountIn);
-
+        console.log('amountOut specified');
+        console.log(amountOut);
+        console.log('precomputed amountIn:');
+        console.logUint(amountIn);
         // find and replace to addresses
         if (to == Constants.MSG_SENDER) to = msg.sender;
         else if (to == Constants.ADDRESS_THIS) to = address(this);
