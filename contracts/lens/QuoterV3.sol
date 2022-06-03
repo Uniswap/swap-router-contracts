@@ -174,6 +174,11 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         }
     }
 
+    /**
+        Path notes:
+        - a V3 pool is encoded as:
+        ___first token___(20 bytes) + ___fee___(3 bytes) + ___second token___(20 bytes)
+     */
     function quoteExactInput(bytes memory path, uint256 amountIn)
         public
         override
@@ -216,6 +221,62 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                 // @note amountIn will be the final output of the last swap in route
                 return (amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
             }
+        }
+    }
+
+    /**
+        I don't think we need a boolean param, instead we can just implement ontop of existing quoteExactInput
+        Since we are transforming V2 to V3 path
+
+        just this helps with testing independently
+     */
+    function quoteExactInput(bytes memory path, uint256 amountIn, bool interleaving)
+        public
+        override
+        returns (
+            uint256 amountOut,
+            uint160[] memory sqrtPriceX96AfterList,
+            uint32[] memory initializedTicksCrossedList,
+            uint256 gasEstimate
+        )
+    {
+        if (interleaving) {
+            // @note can check here that there are V2 pairs in the route, if not we can return regular for more efficiency
+
+            sqrtPriceX96AfterList = new uint160[](path.numPools());
+            initializedTicksCrossedList = new uint32[](path.numPools());
+            uint256 i = 0;
+            while (true) {
+                (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
+
+                // the outputs of prior swaps become the inputs to subsequent ones
+                (uint256 _amountOut, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
+                    quoteExactInputSingle(
+                        QuoteExactInputSingleParams({
+                            tokenIn: tokenIn, // @note pool-specific values that are different for each interation but not reassigned
+                            tokenOut: tokenOut,
+                            fee: fee,
+                            amountIn: amountIn,
+                            sqrtPriceLimitX96: 0 // @note looks like we can't specify a limit
+                        })
+                    );
+
+                sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
+                initializedTicksCrossedList[i] = _initializedTicksCrossed;
+                amountIn = _amountOut; // @note assigning output of this swap to input for next
+                gasEstimate += _gasEstimate;
+                i++;
+
+                // decide whether to continue or terminate
+                if (path.hasMultiplePools()) {
+                    path = path.skipToken(); // @note move pointer forward, changing path in place so .decodeFirstPool pulls the next pool
+                } else {
+                    // @note amountIn will be the final output of the last swap in route
+                    return (amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
+                }
+            }
+        } else {
+            return quoteExactInput(path, amountIn);
         }
     }
 }
