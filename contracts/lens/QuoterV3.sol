@@ -17,6 +17,8 @@ import '../libraries/PoolTicksCounter.sol';
 import '../libraries/UniswapV2Library.sol';
 import '../libraries/Path.sol';
 
+import 'hardhat/console.sol';
+
 /// @title Provides quotes for swaps
 /// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap
 /// @dev These functions are not gas efficient and should _not_ be called on chain. Instead, optimistically execute
@@ -174,10 +176,11 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         }
     }
 
-    function quoteExactInputSingleV2(uint256 amountIn, address tokenIn, address tokenOut) public view returns (
-        uint256 amountOut,
-        uint256 gasEstimate
-    ) {
+    function quoteExactInputSingleV2(
+        uint256 amountIn,
+        address tokenIn,
+        address tokenOut
+    ) public view returns (uint256 amountOut, uint256 gasEstimate) {
         uint256 gasBefore = gasleft();
         amountOut = this.getPairAmountOut(amountIn, tokenIn, tokenOut);
         return (amountOut, gasBefore - gasleft());
@@ -221,8 +224,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
             // @note I think we can use the Path library for this PF array too: consume with .toUint8() and .slice(1,1) to move forward
 
             // @note we are 1 var away from stack to deep LOL
-            // uint8 flag = path.decodeFirstProtocolFlag();
-            if (path.decodeFirstProtocolFlag() == 0) {
+            if (protocolFlags.decodeFirstProtocolFlag() == 0) {
                 // V2
                 (uint256 _amountOut, uint256 _gasEstimate) = quoteExactInputSingleV2(amountIn, tokenIn, tokenOut);
                 gasEstimate += _gasEstimate;
