@@ -24,6 +24,26 @@ const main = async () => {
     initializedTicksCrossedList,
     gasEstimate: gasEstimate.toString(),
   })
+
+  console.log('calling OG quoteExactInput')
+  const {
+    amountOut: amountOutOG,
+    sqrtPriceX96AfterList: sqrtPriceX96AfterListOG,
+    initializedTicksCrossedList: initializedTicksCrossedListOG,
+    gasEstimate: gasEstimateOG,
+  } = await quoterV3.callStatic['quoteExactInput(bytes,uint256)'](
+    '0xdac17f958d2ee523a2206206994597c13d831ec7000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000bb82260fac5e5542a773aa44fbcfedf7c193bc2c599000bb8a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    10000
+  )
+
+  console.log({
+    amountOut: amountOutOG.toString(),
+    sqrtPriceX96AfterListOG,
+    initializedTicksCrossedListOG,
+    gasEstimate: gasEstimateOG.toString(),
+  })
+
+  // observe that the last pool being V3 or V2 really determines the amountOut
 }
 
 main()
