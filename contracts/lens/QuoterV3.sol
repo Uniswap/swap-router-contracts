@@ -174,6 +174,15 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         }
     }
 
+    function quoteExactInputSingleV2(uint256 amountIn, address tokenIn, address tokenOut) public view returns (
+        uint256 amountOut,
+        uint256 gasEstimate
+    ) {
+        uint256 gasBefore = gasleft();
+        amountOut = this.getPairAmountOut(amountIn, tokenIn, tokenOut);
+        return (amountOut, gasBefore - gasleft());
+    }
+
     /**
         Path notes:
         - a V3 pool is encoded as:
@@ -215,7 +224,9 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
             // uint8 flag = path.decodeFirstProtocolFlag();
             if (path.decodeFirstProtocolFlag() == 0) {
                 // V2
-                amountIn = this.getPairAmountOut(amountIn, tokenIn, tokenOut);
+                (uint256 _amountOut, uint256 _gasEstimate) = quoteExactInputSingleV2(amountIn, tokenIn, tokenOut);
+                gasEstimate += _gasEstimate;
+                amountIn = _amountOut;
             } else {
                 // the outputs of prior swaps become the inputs to subsequent ones
                 (
