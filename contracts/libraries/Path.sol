@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.6.0;
 
-import './BytesLibNew.sol';
+import './BytesLib.sol';
 
 /// @title Functions for manipulating path data for multihop swaps
 library Path {
@@ -9,20 +9,13 @@ library Path {
 
     /// @dev The length of the bytes encoded address
     uint256 private constant ADDR_SIZE = 20;
-
-    /// @dev a flag for V2 or V3 differentiation
-    uint256 private constant PROTOCOL_FLAG = 1; // lets do 0 for V2 and 1 for V3?
-
-    /// @dev the length of a token address + flag for protocol
-    uint256 private constant TOKEN_SIZE = ADDR_SIZE + PROTOCOL_FLAG;
-
     /// @dev The length of the bytes encoded fee
     uint256 private constant FEE_SIZE = 3;
 
     /// @dev The offset of a single token address and pool fee
-    uint256 private constant NEXT_OFFSET = TOKEN_SIZE + FEE_SIZE;
+    uint256 private constant NEXT_OFFSET = ADDR_SIZE + FEE_SIZE;
     /// @dev The offset of an encoded pool key
-    uint256 private constant POP_OFFSET = NEXT_OFFSET + TOKEN_SIZE;
+    uint256 private constant POP_OFFSET = NEXT_OFFSET + ADDR_SIZE;
     /// @dev The minimum length of an encoding that contains 2 or more pools
     uint256 private constant MULTIPLE_POOLS_MIN_LENGTH = POP_OFFSET + NEXT_OFFSET;
 
@@ -38,7 +31,7 @@ library Path {
     /// @return The number of pools in the path
     function numPools(bytes memory path) internal pure returns (uint256) {
         // Ignore the first token address. From then on every fee and token offset indicates a pool.
-        return ((path.length - TOKEN_SIZE) / NEXT_OFFSET);
+        return ((path.length - ADDR_SIZE) / NEXT_OFFSET);
     }
 
     /// @notice Decodes the first pool in path
@@ -56,16 +49,8 @@ library Path {
         )
     {
         tokenA = path.toAddress(0);
-        // will be at byte 20
-        flagA = path.toUint8(ADDR_SIZE);
-        // byte 21
-        fee = path.toUint24(TOKEN_SIZE);
-        // bytes 22-24
+        fee = path.toUint24(ADDR_SIZE);
         tokenB = path.toAddress(NEXT_OFFSET);
-        // bytes 25-44
-        // TODO: is this right? we need to consume one more after the second address which is 20 + 1 + 3 + 20
-        flagA = path.toUint8(NEXT_OFFSET + ADDR_SIZE);
-        // byte 45
     }
 
     /// @notice Gets the segment corresponding to the first pool in the path
@@ -80,5 +65,16 @@ library Path {
     /// @return The remaining token + fee elements in the path
     function skipToken(bytes memory path) internal pure returns (bytes memory) {
         return path.slice(NEXT_OFFSET, path.length - NEXT_OFFSET);
+    }
+
+    // @dev functions for protocolFlag decoding
+    uint256 private constant PROTOCOL_FLAG_SIZE = 1;
+
+    function decodeFirstProtocolFlag(bytes memory protocolFlags) internal pure returns (bytes memory) {
+        return protocolFlags.toUint8(0);
+    }
+
+    function skipProtocolFlag(bytes memory protocolFlags) internal pure returns (bytes memory) {
+        return protocolFlags.slice(PROTOCOL_FLAG_SIZE, protocolFlags.length - PROTOCOL_FLAG_SIZE);
     }
 }

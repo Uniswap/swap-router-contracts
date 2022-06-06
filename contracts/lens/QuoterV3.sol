@@ -8,7 +8,6 @@ import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 import '@uniswap/v3-core/contracts/libraries/TickBitmap.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
-import '@uniswap/v3-periphery/contracts/libraries/Path.sol';
 import '@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol';
 import '@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol';
 import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
@@ -16,7 +15,7 @@ import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
 import '../interfaces/IQuoterV3.sol';
 import '../libraries/PoolTicksCounter.sol';
 import '../libraries/UniswapV2Library.sol';
-
+import '../libraries/Path.sol';
 
 /// @title Provides quotes for swaps
 /// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap
@@ -31,7 +30,11 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
     /// @dev Transient storage variable used to check a safety condition in exact output swaps.
     uint256 private amountOutCached;
 
-    constructor(address _factory, address _v2Factory, address _WETH9) PeripheryImmutableState(_factory, _WETH9) {
+    constructor(
+        address _factory,
+        address _v2Factory,
+        address _WETH9
+    ) PeripheryImmutableState(_factory, _WETH9) {
         v2Factory = _v2Factory;
     }
 
@@ -43,21 +46,18 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         return IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
     }
 
-    function getPair(
-        address tokenA,
-        address tokenB
-    ) external view returns (address pair) {
+    function getPair(address tokenA, address tokenB) external view returns (address pair) {
         return UniswapV2Library.pairFor(v2Factory, tokenA, tokenB);
     }
 
     // @note used for exactIn
     function getPairAmountOut(
-        uint amountIn,
+        uint256 amountIn,
         address tokenA,
         address tokenB
-    ) external view returns (uint) {
+    ) external view returns (uint256) {
         // reserveA & reserveB == reserveIn & reserveOut
-        (uint reserveA, uint reserveB) = UniswapV2Library.getReserves(v2Factory, tokenA, tokenB);
+        (uint256 reserveA, uint256 reserveB) = UniswapV2Library.getReserves(v2Factory, tokenA, tokenB);
         return UniswapV2Library.getAmountOut(amountIn, reserveA, reserveB);
     }
 
@@ -177,9 +177,21 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
     /**
         Path notes:
         - a V3 pool is encoded as:
-        ___first token___(20 bytes) + ___fee___(3 bytes) + ___second token___(20 bytes)
+        ___first pair___(20 bytes) + ___fee___(3 bytes) + ___second token___(20 bytes)
+
+        Approach for IL:
+        - We pass in a separate bytes array for the Protcols that each pool belongs to, where each index corresponds
+          to a pool or pair in the path array since intermediary tokens are not repeated. Ex:
+
+        (USDC fee [WETH) fee DAI], PF array: [1 (USDC-WETH as a V3 pool), 0 (WETH-DAI as a V2 pair)]
+
+        0 for V2, 1 for V3
      */
-    function quoteExactInput(bytes memory path, uint256 amountIn)
+    function quoteExactInput(
+        bytes memory path,
+        bytes memory protocolFlags,
+        uint256 amountIn
+    )
         public
         override
         returns (
@@ -192,9 +204,15 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         sqrtPriceX96AfterList = new uint160[](path.numPools()); // @note init list of the pool prices, in X96 format
         initializedTicksCrossedList = new uint32[](path.numPools());
 
-        uint256 i = 0;
+        // @dev path and protocol flags must be the same length
+        require(path.numPools() == protocolFlags.length);
+
+        uint256 i = 0; // @note that i = the current pool index
         while (true) {
             (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
+
+            // @note I think we can use the Path library for this PF array too: consume with .toUint8() and .slice(1,1) to move forward
+            uint256 protocolFlag = path.decodeFirstProtocolFlag();
 
             // the outputs of prior swaps become the inputs to subsequent ones
             (uint256 _amountOut, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
@@ -217,6 +235,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
             // decide whether to continue or terminate
             if (path.hasMultiplePools()) {
                 path = path.skipToken(); // @note move pointer forward, changing path in place so .decodeFirstPool pulls the next pool
+                protocolFlags = protocolFlags.skipProtocolFlag();
             } else {
                 // @note amountIn will be the final output of the last swap in route
                 return (amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
@@ -225,12 +244,9 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
     }
 
     /**
-        I don't think we need a boolean param, instead we can just implement ontop of existing quoteExactInput
-        Since we are transforming V2 to V3 path
-
-        just this helps with testing independently
+        ORIGINAL:
      */
-    function quoteExactInput(bytes memory path, uint256 amountIn, bool interleaving)
+    function quoteExactInput(bytes memory path, uint256 amountIn)
         public
         override
         returns (
@@ -240,43 +256,37 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
             uint256 gasEstimate
         )
     {
-        if (interleaving) {
-            // @note can check here that there are V2 pairs in the route, if not we can return regular for more efficiency
+        sqrtPriceX96AfterList = new uint160[](path.numPools());
+        initializedTicksCrossedList = new uint32[](path.numPools());
 
-            sqrtPriceX96AfterList = new uint160[](path.numPools());
-            initializedTicksCrossedList = new uint32[](path.numPools());
-            uint256 i = 0;
-            while (true) {
-                (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
+        uint256 i = 0;
+        while (true) {
+            (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
 
-                // the outputs of prior swaps become the inputs to subsequent ones
-                (uint256 _amountOut, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
-                    quoteExactInputSingle(
-                        QuoteExactInputSingleParams({
-                            tokenIn: tokenIn, // @note pool-specific values that are different for each interation but not reassigned
-                            tokenOut: tokenOut,
-                            fee: fee,
-                            amountIn: amountIn,
-                            sqrtPriceLimitX96: 0 // @note looks like we can't specify a limit
-                        })
-                    );
+            // the outputs of prior swaps become the inputs to subsequent ones
+            (uint256 _amountOut, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
+                quoteExactInputSingle(
+                    QuoteExactInputSingleParams({
+                        tokenIn: tokenIn,
+                        tokenOut: tokenOut,
+                        fee: fee,
+                        amountIn: amountIn,
+                        sqrtPriceLimitX96: 0
+                    })
+                );
 
-                sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
-                initializedTicksCrossedList[i] = _initializedTicksCrossed;
-                amountIn = _amountOut; // @note assigning output of this swap to input for next
-                gasEstimate += _gasEstimate;
-                i++;
+            sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
+            initializedTicksCrossedList[i] = _initializedTicksCrossed;
+            amountIn = _amountOut;
+            gasEstimate += _gasEstimate;
+            i++;
 
-                // decide whether to continue or terminate
-                if (path.hasMultiplePools()) {
-                    path = path.skipToken(); // @note move pointer forward, changing path in place so .decodeFirstPool pulls the next pool
-                } else {
-                    // @note amountIn will be the final output of the last swap in route
-                    return (amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
-                }
+            // decide whether to continue or terminate
+            if (path.hasMultiplePools()) {
+                path = path.skipToken();
+            } else {
+                return (amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
             }
-        } else {
-            return quoteExactInput(path, amountIn);
         }
     }
 }
