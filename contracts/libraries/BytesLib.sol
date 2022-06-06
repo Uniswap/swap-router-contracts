@@ -103,7 +103,7 @@ library BytesLib {
     function toUint8(bytes memory _bytes, uint256 _start) internal pure returns (uint8) {
         require(_start + 1 >= _start, 'toUint24_overflow');
         require(_bytes.length >= _start + 1, 'toUint24_outOfBounds');
-        uint24 tempUint;
+        uint8 tempUint;
 
         assembly {
             tempUint := mload(add(add(_bytes, 0x1), _start))

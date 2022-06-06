@@ -70,7 +70,7 @@ library Path {
     // @dev functions for protocolFlag decoding
     uint256 private constant PROTOCOL_FLAG_SIZE = 1;
 
-    function decodeFirstProtocolFlag(bytes memory protocolFlags) internal pure returns (bytes memory) {
+    function decodeFirstProtocolFlag(bytes memory protocolFlags) internal pure returns (uint8 flag) {
         return protocolFlags.toUint8(0);
     }
 

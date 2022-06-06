@@ -193,7 +193,6 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         uint256 amountIn
     )
         public
-        override
         returns (
             uint256 amountOut,
             uint160[] memory sqrtPriceX96AfterList,
@@ -205,31 +204,41 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         initializedTicksCrossedList = new uint32[](path.numPools());
 
         // @dev path and protocol flags must be the same length
-        require(path.numPools() == protocolFlags.length);
+        require(path.numPools() == protocolFlags.length, 'Length mismatch');
 
         uint256 i = 0; // @note that i = the current pool index
         while (true) {
             (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
-
             // @note I think we can use the Path library for this PF array too: consume with .toUint8() and .slice(1,1) to move forward
-            uint256 protocolFlag = path.decodeFirstProtocolFlag();
 
-            // the outputs of prior swaps become the inputs to subsequent ones
-            (uint256 _amountOut, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
-                quoteExactInputSingle(
-                    QuoteExactInputSingleParams({
-                        tokenIn: tokenIn, // @note pool-specific values that are different for each interation but not reassigned
-                        tokenOut: tokenOut,
-                        fee: fee,
-                        amountIn: amountIn,
-                        sqrtPriceLimitX96: 0 // @note looks like we can't specify a limit
-                    })
-                );
+            // @note we are 1 var away from stack to deep LOL
+            // uint8 flag = path.decodeFirstProtocolFlag();
+            if (path.decodeFirstProtocolFlag() == 0) {
+                // V2
+                amountIn = this.getPairAmountOut(amountIn, tokenIn, tokenOut);
+            } else {
+                // the outputs of prior swaps become the inputs to subsequent ones
+                (
+                    uint256 _amountOut,
+                    uint160 _sqrtPriceX96After,
+                    uint32 _initializedTicksCrossed,
+                    uint256 _gasEstimate
+                ) =
+                    quoteExactInputSingle(
+                        QuoteExactInputSingleParams({
+                            tokenIn: tokenIn, // @note pool-specific values that are different for each interation but not reassigned
+                            tokenOut: tokenOut,
+                            fee: fee,
+                            amountIn: amountIn,
+                            sqrtPriceLimitX96: 0 // @note looks like we can't specify a limit
+                        })
+                    );
 
-            sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
-            initializedTicksCrossedList[i] = _initializedTicksCrossed;
-            amountIn = _amountOut; // @note assigning output of this swap to input for next
-            gasEstimate += _gasEstimate;
+                sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
+                initializedTicksCrossedList[i] = _initializedTicksCrossed;
+                gasEstimate += _gasEstimate;
+                amountIn = _amountOut; // @note assigning output of this swap to input for next
+            }
             i++;
 
             // decide whether to continue or terminate
