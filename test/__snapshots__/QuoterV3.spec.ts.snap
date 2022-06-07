@@ -22,6 +22,30 @@ exports[`QuoterV3 quotes #quoteExactInput 2 -> 0 cross 2 where tick after is ini
 
 exports[`QuoterV3 quotes #quoteExactInput 2 -> 1 1`] = `97329`;
 
+exports[`QuoterV3 quotes #quoteExactInput all V3 parts 0 -> 2 cross 2 tick 1`] = `182320`;
+
+exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 0 -> 2 -> 1 1`] = `277147`;
+
+exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 0 -> 2 cross 0 tick, starting tick initialized 1`] = `123796`;
+
+exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 0 -> 2 cross 0 tick, starting tick not initialized 1`] = `100961`;
+
+exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 0 -> 2 cross 1 tick 1`] = `144723`;
+
+exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 0 -> 2 cross 2 tick 1`] = `182320`;
+
+exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 0 -> 2 cross 2 tick where after is initialized 1`] = `144761`;
+
+exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 2 -> 0 cross 0 tick, starting tick initialized 1`] = `97653`;
+
+exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 2 -> 0 cross 0 tick, starting tick not initialized 1`] = `93778`;
+
+exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 2 -> 0 cross 2 1`] = `175132`;
+
+exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 2 -> 0 cross 2 where tick after is initialized 1`] = `175140`;
+
+exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 2 -> 1 1`] = `97328`;
+
 exports[`QuoterV3 quotes #quoteExactInputSingle 0 -> 2 1`] = `182303`;
 
 exports[`QuoterV3 quotes #quoteExactInputSingle 2 -> 0 1`] = `175105`;
