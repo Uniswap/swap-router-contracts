@@ -22,6 +22,10 @@ exports[`QuoterV3 quotes #quoteExactInput 2 -> 0 cross 2 where tick after is ini
 
 exports[`QuoterV3 quotes #quoteExactInput 2 -> 1 1`] = `97329`;
 
+exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 1 -> 2 1`] = `18447`;
+
+exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 2 1`] = `10223`;
+
 exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 2 cross 2 tick 1`] = `10223`;
 
 exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 2 cross 2 tick 2`] = `10223`;
