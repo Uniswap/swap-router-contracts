@@ -7,9 +7,17 @@ import { FeeAmount, MaxUint128 } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
+import { v2FactoryFixture } from './shared/externalFixtures'
 import { encodePath, encodeProtocolFlags } from './shared/path'
-import { createPool, createPoolWithMultiplePositions, createPoolWithZeroTickInitialized } from './shared/quoter'
+import {
+  createPair,
+  createPool,
+  createPoolWithMultiplePositions,
+  createPoolWithZeroTickInitialized,
+} from './shared/quoter'
 import snapshotGasCost from './shared/snapshotGasCost'
+
+import { abi as PAIR_V2_ABI, bytecode as PAIR_V2_BYTECODE } from '@uniswap/v2-core/build/UniswapV2Pair.json'
 
 describe('QuoterV3', function () {
   this.timeout(40000)
@@ -18,6 +26,7 @@ describe('QuoterV3', function () {
 
   const swapRouterFixture: Fixture<{
     nft: Contract
+    factoryV2: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
     quoter: QuoterV3
   }> = async (wallets, provider) => {
@@ -37,11 +46,13 @@ describe('QuoterV3', function () {
     return {
       tokens,
       nft,
+      factoryV2,
       quoter,
     }
   }
 
   let nft: Contract
+  let factoryV2: Contract
   let tokens: [TestERC20, TestERC20, TestERC20]
   let quoter: QuoterV3
 
@@ -55,17 +66,55 @@ describe('QuoterV3', function () {
 
   // helper for getting weth and token balances
   beforeEach('load fixture', async () => {
-    ;({ tokens, nft, quoter } = await loadFixture(swapRouterFixture))
+    ;({ tokens, nft, factoryV2, quoter } = await loadFixture(swapRouterFixture))
   })
+
+  const addLiquidityV2 = async (
+    pairAddress: string,
+    token0: TestERC20,
+    token1: TestERC20,
+    amount0: string,
+    amount1: string
+  ) => {
+    const pair02 = new Contract(pairAddress, PAIR_V2_ABI, wallet)
+    expect(await pair02.callStatic.token0()).to.equal(token0.address)
+    expect(await pair02.callStatic.token1()).to.equal(token1.address)
+    // seed the pairs with liquidity
+    await token0.transfer(pairAddress, ethers.utils.parseEther(amount0))
+    await token1.transfer(pairAddress, ethers.utils.parseEther(amount1))
+
+    expect(await token0.balanceOf(pairAddress)).to.equal(ethers.utils.parseEther(amount0))
+    expect(await token1.balanceOf(pairAddress)).to.equal(ethers.utils.parseEther(amount1))
+
+    const res = await pair02.callStatic.getReserves()
+    console.log(res)
+    await pair02.mint(wallet.address)
+    console.log(await pair02.callStatic.getReserves())
+  }
 
   describe.only('quotes', () => {
     beforeEach(async () => {
       await createPool(nft, wallet, tokens[0].address, tokens[1].address)
       await createPool(nft, wallet, tokens[1].address, tokens[2].address)
       await createPoolWithMultiplePositions(nft, wallet, tokens[0].address, tokens[2].address)
+      /**
+       * Create V2 pairs
+       */
+      const pair01Address = await createPair(factoryV2, tokens[0].address, tokens[1].address) // 0 - 1
+      const pair12Address = await createPair(factoryV2, tokens[1].address, tokens[2].address) // 1 - 2
+      const pair02Address = await createPair(factoryV2, tokens[0].address, tokens[2].address) // 0 - 2
+
+      await addLiquidityV2(pair01Address, tokens[0], tokens[1], '1000000', '1000000')
+      await addLiquidityV2(pair12Address, tokens[1], tokens[2], '1000000', '1000000')
+      await addLiquidityV2(pair02Address, tokens[0], tokens[2], '1000000', '1000000')
+
+      // TODO: how do we interact with the created pairs? we have the address
+      // i dont think we deploy the pair contract using abi, we really just have to wrap it in the interface
+
+      // need to call pair.sync() to update reserves
     })
 
-    describe('#quoteExactInput original tests with new function but flags as V3 only', () => {
+    xdescribe('#quoteExactInput V3 only', () => {
       it('0 -> 2 cross 2 tick', async () => {
         const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate } = await quoter.callStatic[
           'quoteExactInput(bytes,bytes,uint256)'
@@ -219,6 +268,23 @@ describe('QuoterV3', function () {
         expect(initializedTicksCrossedList[0]).to.eq(2)
         expect(initializedTicksCrossedList[1]).to.eq(0)
         expect(amountOut).to.eq(9745)
+      })
+    })
+
+    describe('encodeProtocolFlags', () => {
+      it('should encode the protocol flags', async () => {
+        expect(encodeProtocolFlags(['V3', 'V2', 'V3', 'V3'])).to.equal('0x01000101')
+      })
+    })
+
+    describe('#quoteExactInput V2 only', () => {
+      it('0 -> 2 cross 2 tick', async () => {
+        const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate } = await quoter.callStatic[
+          'quoteExactInput(bytes,bytes,uint256)'
+        ](encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]), encodeProtocolFlags(['V2']), 10000)
+
+        await snapshotGasCost(gasEstimate)
+        console.log(amountOut)
       })
     })
   })
