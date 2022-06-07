@@ -176,11 +176,13 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         }
     }
 
+    /// @dev Fetch a quote for a V2 pair on chain
     function quoteExactInputSingleV2(
         uint256 amountIn,
         address tokenIn,
         address tokenOut
     ) public view returns (uint256 amountOut, uint256 gasEstimate) {
+        // @audit this gas estimation is not correct since it is just estimating an external view call
         uint256 gasBefore = gasleft();
         amountOut = this.getPairAmountOut(amountIn, tokenIn, tokenOut);
         return (amountOut, gasBefore - gasleft());
@@ -198,6 +200,8 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         (USDC fee [WETH) fee DAI], PF array: [1 (USDC-WETH as a V3 pool), 0 (WETH-DAI as a V2 pair)]
 
         0 for V2, 1 for V3
+
+        Note: we can support multiple V3 pools in the same route now since we are fetching V2 and V3 quotes on chain in a single call
      */
     function quoteExactInput(
         bytes memory path,

@@ -46,4 +46,4 @@ const main = async () => {
   // observe that the last pool being V3 or V2 really determines the amountOut
 }
 
-main()
+// main()
