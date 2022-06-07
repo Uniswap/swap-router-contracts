@@ -155,5 +155,6 @@ export async function createPair(v2Factory: Contract, tokenAddressA: string, tok
   // we can extract the pair address from the emitted event
   // always the 3rd element:         emit PairCreated(token0, token1, pair, allPairs.length);
   const pairAddress = receipt.events[0].args[2]
+  if (!pairAddress) throw new Error('pairAddress not found in txn receipt')
   return pairAddress
 }
