@@ -268,9 +268,11 @@ describe('QuoterV3', function () {
     })
 
     describe('encodeProtocolFlags', () => {
-      it('should encode the protocol flags', async () => {
+      it('should encode the protocol flags correctly', async () => {
         expect(encodeProtocolFlags(['V3', 'V2', 'V3', 'V3'])).to.equal('0x01000101')
       })
+
+      // TODO: add tests for invalid flag inputs
     })
 
     describe('#quoteExactInput V2 only', () => {
@@ -335,6 +337,10 @@ describe('QuoterV3', function () {
         expect(sqrtPriceX96AfterList.length).to.eq(2)
         // expect the v2 part to have 0 for sqrt price for now
         expect(sqrtPriceX96AfterList[0]).to.eq('0')
+        /**
+         * I think it's expected that the sqrtPriceAfter for the 2-1 V3 pool is different if the part before changed from V3 to V2
+         * since the V2 pair likely had a different output than the V3 pool, which was used as input to the final V3 pool.
+         */
         expect(sqrtPriceX96AfterList[1]).to.eq('80015611221493610844886183658') // @note this value is different from test above, compareTo: 80007846861567212939802016351
         // don't check V2 initializedTicksCrossList index
         expect(initializedTicksCrossedList[1]).to.eq(0)
