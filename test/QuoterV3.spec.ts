@@ -276,7 +276,7 @@ describe('QuoterV3', function () {
     })
 
     describe('#quoteExactInput V2 only', () => {
-      it('0 -V2-> 2', async () => {
+      it('0 -> 2', async () => {
         const { amountOut, gasEstimate } = await quoter.callStatic['quoteExactInput(bytes,bytes,uint256)'](
           encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
           encodeProtocolFlags(['V2']),
@@ -287,7 +287,7 @@ describe('QuoterV3', function () {
         expect(amountOut).to.eq(9969)
       })
 
-      it('0 -V2-> 1 -V2-> 2', async () => {
+      it('0 -> 1 -> 2', async () => {
         const { amountOut, gasEstimate } = await quoter.callStatic['quoteExactInput(bytes,bytes,uint256)'](
           encodePath([tokens[0].address, tokens[1].address, tokens[2].address], [FeeAmount.MEDIUM, FeeAmount.MEDIUM]),
           encodeProtocolFlags(['V2', 'V2']),
@@ -300,6 +300,16 @@ describe('QuoterV3', function () {
     })
 
     describe('#quoteExactInput V2+V3 mixed route', () => {
+      it('correctly reverts on path/protocolFlags length mismatch', async () => {
+        await expect(
+          quoter.callStatic['quoteExactInput(bytes,bytes,uint256)'](
+            encodePath([tokens[0].address, tokens[2].address, tokens[1].address], [FeeAmount.MEDIUM, FeeAmount.MEDIUM]),
+            encodeProtocolFlags(['V2']),
+            10000
+          )
+        ).to.be.revertedWith('Length mismatch')
+      })
+
       it('0 -V3-> 2 -V2-> 1', async () => {
         const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate } = await quoter.callStatic[
           'quoteExactInput(bytes,bytes,uint256)'
