@@ -24,6 +24,14 @@ exports[`QuoterV3 quotes #quoteExactInput 2 -> 1 1`] = `97329`;
 
 exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 2 cross 2 tick 1`] = `10223`;
 
+exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 2 cross 2 tick 2`] = `10223`;
+
+exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 2 cross 2 tick 3`] = `10223`;
+
+exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 2 cross 2 tick 4`] = `10223`;
+
+exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 2 cross 2 tick 5`] = `10223`;
+
 exports[`QuoterV3 quotes #quoteExactInput all V3 parts 0 -> 2 cross 2 tick 1`] = `182320`;
 
 exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 0 -> 2 -> 1 1`] = `277147`;

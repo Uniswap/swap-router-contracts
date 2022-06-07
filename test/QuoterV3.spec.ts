@@ -76,9 +76,9 @@ describe('QuoterV3', function () {
     amount0: string,
     amount1: string
   ) => {
-    const pair02 = new Contract(pairAddress, PAIR_V2_ABI, wallet)
-    expect(await pair02.callStatic.token0()).to.equal(token0.address)
-    expect(await pair02.callStatic.token1()).to.equal(token1.address)
+    const pair = new Contract(pairAddress, PAIR_V2_ABI, wallet)
+    expect(await pair.callStatic.token0()).to.equal(token0.address)
+    expect(await pair.callStatic.token1()).to.equal(token1.address)
     // seed the pairs with liquidity
     await token0.transfer(pairAddress, ethers.utils.parseEther(amount0))
     await token1.transfer(pairAddress, ethers.utils.parseEther(amount1))
@@ -86,10 +86,11 @@ describe('QuoterV3', function () {
     expect(await token0.balanceOf(pairAddress)).to.equal(ethers.utils.parseEther(amount0))
     expect(await token1.balanceOf(pairAddress)).to.equal(ethers.utils.parseEther(amount1))
 
-    const res = await pair02.callStatic.getReserves()
-    console.log(res)
-    await pair02.mint(wallet.address)
-    console.log(await pair02.callStatic.getReserves())
+    const res = await pair.callStatic.getReserves()
+    await pair.mint(wallet.address)
+    const [reserve0, reserve1] = await pair.callStatic.getReserves()
+    expect(reserve0).to.equal(ethers.utils.parseEther(amount0))
+    expect(reserve1).to.equal(ethers.utils.parseEther(amount1))
   }
 
   describe.only('quotes', () => {
@@ -107,11 +108,6 @@ describe('QuoterV3', function () {
       await addLiquidityV2(pair01Address, tokens[0], tokens[1], '1000000', '1000000')
       await addLiquidityV2(pair12Address, tokens[1], tokens[2], '1000000', '1000000')
       await addLiquidityV2(pair02Address, tokens[0], tokens[2], '1000000', '1000000')
-
-      // TODO: how do we interact with the created pairs? we have the address
-      // i dont think we deploy the pair contract using abi, we really just have to wrap it in the interface
-
-      // need to call pair.sync() to update reserves
     })
 
     xdescribe('#quoteExactInput V3 only', () => {
@@ -279,12 +275,15 @@ describe('QuoterV3', function () {
 
     describe('#quoteExactInput V2 only', () => {
       it('0 -> 2 cross 2 tick', async () => {
-        const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate } = await quoter.callStatic[
-          'quoteExactInput(bytes,bytes,uint256)'
-        ](encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]), encodeProtocolFlags(['V2']), 10000)
+        const { amountOut, gasEstimate } = await quoter.callStatic['quoteExactInput(bytes,bytes,uint256)'](
+          encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
+          encodeProtocolFlags(['V2']),
+          10000
+        )
 
         await snapshotGasCost(gasEstimate)
-        console.log(amountOut)
+        console.log(amountOut.toString())
+        expect(amountOut).to.eq(9969)
       })
     })
   })
