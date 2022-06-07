@@ -221,9 +221,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         uint256 i = 0; // @note that i = the current pool index
         while (true) {
             (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
-            // @note I think we can use the Path library for this PF array too: consume with .toUint8() and .slice(1,1) to move forward
-
-            // @note we are 1 var away from stack to deep LOL
+            // @note we are 1 var away from stack to deep so evaluating this inline
             if (protocolFlags.decodeFirstProtocolFlag() == 0) {
                 // V2
                 (uint256 _amountOut, uint256 _gasEstimate) = quoteExactInputSingleV2(amountIn, tokenIn, tokenOut);
@@ -239,7 +237,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                 ) =
                     quoteExactInputSingle(
                         QuoteExactInputSingleParams({
-                            tokenIn: tokenIn, // @note pool-specific values that are different for each interation but not reassigned
+                            tokenIn: tokenIn,
                             tokenOut: tokenOut,
                             fee: fee,
                             amountIn: amountIn,
@@ -256,7 +254,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
 
             // decide whether to continue or terminate
             if (path.hasMultiplePools()) {
-                path = path.skipToken(); // @note move pointer forward, changing path in place so .decodeFirstPool pulls the next pool
+                path = path.skipToken();
                 protocolFlags = protocolFlags.skipProtocolFlag();
             } else {
                 // @note amountIn will be the final output of the last swap in route
