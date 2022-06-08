@@ -52,15 +52,30 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         return UniswapV2Library.pairFor(v2Factory, tokenA, tokenB);
     }
 
-    // @note used for exactIn
+    /**
+        @dev used for exactIn
+        @notice Given an amountIn, fetch the reserves of the V2 pair and call getAmountOut
+     */
     function getPairAmountOut(
         uint256 amountIn,
-        address tokenA,
-        address tokenB
+        address tokenIn,
+        address tokenOut
     ) external view returns (uint256) {
-        // reserveA & reserveB == reserveIn & reserveOut
-        (uint256 reserveA, uint256 reserveB) = UniswapV2Library.getReserves(v2Factory, tokenA, tokenB);
-        return UniswapV2Library.getAmountOut(amountIn, reserveA, reserveB);
+        (uint256 reserveIn, uint256 reserveOut) = UniswapV2Library.getReserves(v2Factory, tokenIn, tokenOut);
+        return UniswapV2Library.getAmountOut(amountIn, reserveIn, reserveOut);
+    }
+
+    /**
+        @dev used for exactOut
+        @notice Given an amountOut, fetch the reserves of the V2 pair and call getAmountIn
+     */
+    function getPairAmountIn(
+        uint256 amountOut,
+        address tokenIn,
+        address tokenOut
+    ) external view returns (uint256) {
+        (uint256 reserveIn, uint256 reserveOut) = UniswapV2Library.getReserves(v2Factory, tokenIn, tokenOut);
+        return UniswapV2Library.getAmountIn(amountOut, reserveIn, reserveOut);
     }
 
     /// @inheritdoc IUniswapV3SwapCallback
@@ -176,7 +191,40 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         }
     }
 
-    /// @dev Fetch a quote for a V2 pair on chain
+    function quoteExactOutputSingle(QuoteExactOutputSingleParams memory params)
+        public
+        override
+        returns (
+            uint256 amountIn,
+            uint160 sqrtPriceX96After,
+            uint32 initializedTicksCrossed,
+            uint256 gasEstimate
+        )
+    {
+        bool zeroForOne = params.tokenIn < params.tokenOut;
+        IUniswapV3Pool pool = getPool(params.tokenIn, params.tokenOut, params.fee);
+
+        // if no price limit has been specified, cache the output amount for comparison in the swap callback
+        if (params.sqrtPriceLimitX96 == 0) amountOutCached = params.amount;
+        uint256 gasBefore = gasleft();
+        try
+            pool.swap(
+                address(this), // address(0) might cause issues with some tokens
+                zeroForOne,
+                -params.amount.toInt256(),
+                params.sqrtPriceLimitX96 == 0
+                    ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
+                    : params.sqrtPriceLimitX96,
+                abi.encodePacked(params.tokenOut, params.fee, params.tokenIn)
+            )
+        {} catch (bytes memory reason) {
+            gasEstimate = gasBefore - gasleft();
+            if (params.sqrtPriceLimitX96 == 0) delete amountOutCached; // clear cache
+            return handleRevert(reason, pool, gasEstimate);
+        }
+    }
+
+    /// @dev Fetch an exactin quote for a V2 pair on chain
     function quoteExactInputSingleV2(
         uint256 amountIn,
         address tokenIn,
@@ -186,6 +234,18 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         uint256 gasBefore = gasleft();
         amountOut = this.getPairAmountOut(amountIn, tokenIn, tokenOut);
         return (amountOut, gasBefore - gasleft());
+    }
+
+    /// @dev Fetch an exactOut quote for a V2 pair on chain
+    function quoteExactOutputSingleV2(
+        uint256 amountOut,
+        address tokenIn,
+        address tokenOut
+    ) public view returns (uint256 amountIn, uint256 gasEstimate) {
+        // @audit this gas estimation is not correct since it is just estimating an external view call
+        uint256 gasBefore = gasleft();
+        amountIn = this.getPairAmountIn(amountOut, tokenIn, tokenOut);
+        return (amountIn, gasBefore - gasleft());
     }
 
     /**
@@ -268,6 +328,64 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         }
     }
 
+    function quoteExactOutput(
+        bytes memory path,
+        bytes memory protocolFlags,
+        uint256 amountOut
+    )
+        public
+        override
+        returns (
+            uint256 amountIn,
+            uint160[] memory sqrtPriceX96AfterList,
+            uint32[] memory initializedTicksCrossedList,
+            uint256 gasEstimate
+        )
+    {
+        sqrtPriceX96AfterList = new uint160[](path.numPools());
+        initializedTicksCrossedList = new uint32[](path.numPools());
+
+        // @dev path and protocol flags must be the same length
+        require(path.numPools() == protocolFlags.length, 'Length mismatch');
+
+        uint256 i = 0;
+        while (true) {
+            (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
+
+            if (protocolFlags.decodeFirstProtocolFlag() == 0) {
+                (uint256 _amountIn, uint256 _gasEstimate) = quoteExactOutputSingleV2(amountOut, tokenIn, tokenOut);
+                gasEstimate += _gasEstimate;
+                amountOut = _amountIn;
+            } else {
+                // the inputs of prior swaps become the outputs of subsequent ones
+                (uint256 _amountIn, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
+                    quoteExactOutputSingle(
+                        QuoteExactOutputSingleParams({
+                            tokenIn: tokenIn,
+                            tokenOut: tokenOut,
+                            amount: amountOut,
+                            fee: fee,
+                            sqrtPriceLimitX96: 0
+                        })
+                    );
+
+                sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
+                initializedTicksCrossedList[i] = _initializedTicksCrossed;
+                amountOut = _amountIn;
+                gasEstimate += _gasEstimate;
+            }
+            i++;
+
+            // decide whether to continue or terminate
+            if (path.hasMultiplePools()) {
+                path = path.skipToken();
+                protocolFlags = protocolFlags.skipProtocolFlag();
+            } else {
+                return (amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
+            }
+        }
+    }
+
     /**
         ORIGINAL:
      */
@@ -311,6 +429,50 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                 path = path.skipToken();
             } else {
                 return (amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
+            }
+        }
+    }
+
+    function quoteExactOutput(bytes memory path, uint256 amountOut)
+        public
+        override
+        returns (
+            uint256 amountIn,
+            uint160[] memory sqrtPriceX96AfterList,
+            uint32[] memory initializedTicksCrossedList,
+            uint256 gasEstimate
+        )
+    {
+        sqrtPriceX96AfterList = new uint160[](path.numPools());
+        initializedTicksCrossedList = new uint32[](path.numPools());
+
+        uint256 i = 0;
+        while (true) {
+            (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
+
+            // the inputs of prior swaps become the outputs of subsequent ones
+            (uint256 _amountIn, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
+                quoteExactOutputSingle(
+                    QuoteExactOutputSingleParams({
+                        tokenIn: tokenIn,
+                        tokenOut: tokenOut,
+                        amount: amountOut,
+                        fee: fee,
+                        sqrtPriceLimitX96: 0
+                    })
+                );
+
+            sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
+            initializedTicksCrossedList[i] = _initializedTicksCrossed;
+            amountOut = _amountIn;
+            gasEstimate += _gasEstimate;
+            i++;
+
+            // decide whether to continue or terminate
+            if (path.hasMultiplePools()) {
+                path = path.skipToken();
+            } else {
+                return (amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
             }
         }
     }
