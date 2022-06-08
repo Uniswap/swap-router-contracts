@@ -110,7 +110,8 @@ describe('QuoterV3', function () {
       await addLiquidityV2(pair02Address, tokens[0], tokens[2], '1000000', '1000000')
     })
 
-    xdescribe('#quoteExactInput V3 only', () => {
+    /// @dev Test running the old suite on the new function but with protocolFlags only being V3[]
+    describe('#quoteExactInput V3 only', () => {
       it('0 -> 2 cross 2 tick', async () => {
         const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate } = await quoter.callStatic[
           'quoteExactInput(bytes,bytes,uint256)'
@@ -267,14 +268,7 @@ describe('QuoterV3', function () {
       })
     })
 
-    describe('encodeProtocolFlags', () => {
-      it('should encode the protocol flags correctly', async () => {
-        expect(encodeProtocolFlags(['V3', 'V2', 'V3', 'V3'])).to.equal('0x01000101')
-      })
-
-      // TODO: add tests for invalid flag inputs
-    })
-
+    /// @dev Test running the old suite on the new function but with protocolFlags only being V2[]
     describe('#quoteExactInput V2 only', () => {
       it('0 -> 2', async () => {
         const { amountOut, gasEstimate } = await quoter.callStatic['quoteExactInput(bytes,bytes,uint256)'](
@@ -300,10 +294,88 @@ describe('QuoterV3', function () {
       })
     })
 
+    /// @dev Test copied over from QuoterV2.spec.ts
+    describe('#quoteExactInputSingle V3', () => {
+      it('0 -> 2', async () => {
+        const {
+          amountOut: quote,
+          sqrtPriceX96After,
+          initializedTicksCrossed,
+          gasEstimate,
+        } = await quoter.callStatic.quoteExactInputSingle({
+          tokenIn: tokens[0].address,
+          tokenOut: tokens[2].address,
+          fee: FeeAmount.MEDIUM,
+          amountIn: 10000,
+          // -2%
+          sqrtPriceLimitX96: encodePriceSqrt(100, 102),
+        })
+
+        await snapshotGasCost(gasEstimate)
+        expect(initializedTicksCrossed).to.eq(2)
+        expect(quote).to.eq(9871)
+        expect(sqrtPriceX96After).to.eq('78461846509168490764501028180')
+      })
+
+      it('2 -> 0', async () => {
+        const {
+          amountOut: quote,
+          sqrtPriceX96After,
+          initializedTicksCrossed,
+          gasEstimate,
+        } = await quoter.callStatic.quoteExactInputSingle({
+          tokenIn: tokens[2].address,
+          tokenOut: tokens[0].address,
+          fee: FeeAmount.MEDIUM,
+          amountIn: 10000,
+          // +2%
+          sqrtPriceLimitX96: encodePriceSqrt(102, 100),
+        })
+
+        await snapshotGasCost(gasEstimate)
+        expect(initializedTicksCrossed).to.eq(2)
+        expect(quote).to.eq(9871)
+        expect(sqrtPriceX96After).to.eq('80001962924147897865541384515')
+      })
+    })
+
+    /// @dev Test the new function for fetching a single V2 pair quote on chain (exactIn)
+    describe('#quoteExactInputSingleV2', () => {
+      it('0 -> 2', async () => {
+        const amountIn = 10000
+        const tokenIn = tokens[0].address
+        const tokenOut = tokens[2].address
+        const { amountOut: quote, gasEstimate } = await quoter.callStatic.quoteExactInputSingleV2(
+          amountIn,
+          tokenIn,
+          tokenOut
+        )
+
+        await snapshotGasCost(gasEstimate)
+        expect(quote).to.eq(9969)
+      })
+
+      it('2 -> 0', async () => {
+        const amountIn = 10000
+        const tokenIn = tokens[2].address
+        const tokenOut = tokens[0].address
+        const { amountOut: quote, gasEstimate } = await quoter.callStatic.quoteExactInputSingleV2(
+          amountIn,
+          tokenIn,
+          tokenOut
+        )
+
+        await snapshotGasCost(gasEstimate)
+        expect(quote).to.eq(9969)
+      })
+    })
+
+    /// @dev Test running the old suite on the new function but with protocolFlags only being V3[]
     describe('#quoteExactOutput V3 only', () => {
       it('0 -> 2 cross 2 tick', async () => {
         const { amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate } = await quoter.callStatic[
           'quoteExactOutput(bytes,bytes,uint256)'
+          // @note why do we need to flip the order of the tokens in the path for exactOut?
         ](encodePath([tokens[2].address, tokens[0].address], [FeeAmount.MEDIUM]), encodeProtocolFlags(['V3']), 15000)
 
         await snapshotGasCost(gasEstimate)
@@ -449,6 +521,7 @@ describe('QuoterV3', function () {
       })
     })
 
+    /// @dev Test running the old suite on the new function but with protocolFlags only being V2[]
     describe('#quoteExactOutput V2 only', () => {
       it('0 -> 2', async () => {
         const { amountIn, gasEstimate } = await quoter.callStatic['quoteExactOutput(bytes,bytes,uint256)'](
@@ -473,17 +546,73 @@ describe('QuoterV3', function () {
       })
     })
 
-    describe('#quoteExactInput V2+V3 mixed route', () => {
-      it('correctly reverts on path/protocolFlags length mismatch', async () => {
-        await expect(
-          quoter.callStatic['quoteExactInput(bytes,bytes,uint256)'](
-            encodePath([tokens[0].address, tokens[2].address, tokens[1].address], [FeeAmount.MEDIUM, FeeAmount.MEDIUM]),
-            encodeProtocolFlags(['V2']),
-            10000
-          )
-        ).to.be.revertedWith('Length mismatch')
+    /// @dev Test copied over from QuoterV2.spec.ts
+    describe('#quoteExactOutputSingle V3', () => {
+      it('0 -> 1', async () => {
+        const {
+          amountIn,
+          sqrtPriceX96After,
+          initializedTicksCrossed,
+          gasEstimate,
+        } = await quoter.callStatic.quoteExactOutputSingle({
+          tokenIn: tokens[0].address,
+          tokenOut: tokens[1].address,
+          fee: FeeAmount.MEDIUM,
+          amount: MaxUint128,
+          sqrtPriceLimitX96: encodePriceSqrt(100, 102),
+        })
+
+        await snapshotGasCost(gasEstimate)
+        expect(amountIn).to.eq(9981)
+        expect(initializedTicksCrossed).to.eq(0)
+        expect(sqrtPriceX96After).to.eq('78447570448055484695608110440')
       })
 
+      it('1 -> 0', async () => {
+        const {
+          amountIn,
+          sqrtPriceX96After,
+          initializedTicksCrossed,
+          gasEstimate,
+        } = await quoter.callStatic.quoteExactOutputSingle({
+          tokenIn: tokens[1].address,
+          tokenOut: tokens[0].address,
+          fee: FeeAmount.MEDIUM,
+          amount: MaxUint128,
+          sqrtPriceLimitX96: encodePriceSqrt(102, 100),
+        })
+
+        await snapshotGasCost(gasEstimate)
+        expect(amountIn).to.eq(9981)
+        expect(initializedTicksCrossed).to.eq(0)
+        expect(sqrtPriceX96After).to.eq('80016521857016594389520272648')
+      })
+    })
+
+    /// @dev Test the new function for fetching a single V2 pair quote on chain (exactOut)
+    describe('#quoteExactOutputSingleV2', () => {
+      it('0 -> 1', async () => {
+        const amountOut = 10000
+        const tokenIn = tokens[0].address
+        const tokenOut = tokens[1].address
+        const { amountIn, gasEstimate } = await quoter.callStatic.quoteExactOutputSingleV2(amountOut, tokenIn, tokenOut)
+
+        expect(amountIn).to.eq(10031)
+      })
+
+      /// @dev I think V2 pairs are symetrical
+      it('1 -> 0', async () => {
+        const amountOut = 10000
+        const tokenIn = tokens[1].address
+        const tokenOut = tokens[0].address
+        const { amountIn, gasEstimate } = await quoter.callStatic.quoteExactOutputSingleV2(amountOut, tokenIn, tokenOut)
+
+        expect(amountIn).to.eq(10031)
+      })
+    })
+
+    /// @dev Test interleaving routes for exactIn
+    describe('#quoteExactInput V2+V3 mixed route', () => {
       it('0 -V3-> 2 -V2-> 1', async () => {
         const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate } = await quoter.callStatic[
           'quoteExactInput(bytes,bytes,uint256)'
@@ -530,6 +659,47 @@ describe('QuoterV3', function () {
         expect(initializedTicksCrossedList[1]).to.eq(0)
         expect(amountOut).to.eq(9841)
       })
+    })
+
+    /// @dev Test interleaving routes for exactOut
+    describe('#quoteExactOutput V2+V3 mixed route', () => {
+      it('0 -V3-> 2 -V2-> 1', async () => {
+        const { amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate } = await quoter.callStatic[
+          'quoteExactOutput(bytes,bytes,uint256)'
+        ](
+          encodePath([tokens[2].address, tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM, FeeAmount.MEDIUM]),
+          encodeProtocolFlags(['V3', 'V2']),
+          15000
+        )
+
+        // await snapshotGasCost(gasEstimate)
+        expect(sqrtPriceX96AfterList.length).to.eq(2)
+        expect(sqrtPriceX96AfterList[0]).to.eq('78055527257643669242286029831')
+        // expect the v2 part to have 0 for sqrt price for now
+        expect(sqrtPriceX96AfterList[1]).to.eq('0')
+        expect(initializedTicksCrossedList[0]).to.eq(2)
+        // don't check V2 initializedTicksCrossList index
+        expect(amountIn).to.eq(15319)
+      })
+    })
+
+    /// @dev Input validation testing
+    describe('encodeProtocolFlags', () => {
+      it('should encode the protocol flags correctly', async () => {
+        expect(encodeProtocolFlags(['V3', 'V2', 'V3', 'V3'])).to.equal('0x01000101')
+      })
+
+      // TODO: add tests for invalid flag inputs
+    })
+
+    it('correctly reverts on path/protocolFlags length mismatch', async () => {
+      await expect(
+        quoter.callStatic['quoteExactInput(bytes,bytes,uint256)'](
+          encodePath([tokens[0].address, tokens[2].address, tokens[1].address], [FeeAmount.MEDIUM, FeeAmount.MEDIUM]),
+          encodeProtocolFlags(['V2']),
+          10000
+        )
+      ).to.be.revertedWith('Length mismatch')
     })
   })
 })

@@ -80,6 +80,12 @@ exports[`QuoterV3 quotes #quoteExactInputSingle 0 -> 2 1`] = `182303`;
 
 exports[`QuoterV3 quotes #quoteExactInputSingle 2 -> 0 1`] = `175105`;
 
+exports[`QuoterV3 quotes #quoteExactInputSingleV2 0 -> 2 1`] = `10226`;
+
+exports[`QuoterV3 quotes #quoteExactInputSingleV2 2 -> 0 1`] = `10256`;
+
+exports[`QuoterV3 quotes #quoteExactOutput V2+V3 mixed route 0 -V3-> 2 -V2-> 1 1`] = `189919`;
+
 exports[`QuoterV3 quotes #quoteExactOutput V3 only 0 -> 2 -> 1 1`] = `281128`;
 
 exports[`QuoterV3 quotes #quoteExactOutput V3 only 0 -> 2 cross 0 tick starting tick initialized 1`] = `123351`;
@@ -99,3 +105,7 @@ exports[`QuoterV3 quotes #quoteExactOutput V3 only 2 -> 0 cross 2 ticks 1`] = `1
 exports[`QuoterV3 quotes #quoteExactOutput V3 only 2 -> 0 cross 2 where tick after is initialized 1`] = `179577`;
 
 exports[`QuoterV3 quotes #quoteExactOutput V3 only 2 -> 1 1`] = `97869`;
+
+exports[`QuoterV3 quotes #quoteExactOutputSingle V3 0 -> 1 1`] = `105200`;
+
+exports[`QuoterV3 quotes #quoteExactOutputSingle V3 1 -> 0 1`] = `98511`;
