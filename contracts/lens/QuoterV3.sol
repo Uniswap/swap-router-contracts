@@ -55,6 +55,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
     /**
         @dev used for exactIn
         @notice Given an amountIn, fetch the reserves of the V2 pair and call getAmountOut
+        @notice new addition
      */
     function getPairAmountOut(
         uint256 amountIn,
@@ -68,6 +69,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
     /**
         @dev used for exactOut
         @notice Given an amountOut, fetch the reserves of the V2 pair and call getAmountIn
+        @notice new addition
      */
     function getPairAmountIn(
         uint256 amountOut,
@@ -225,6 +227,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
     }
 
     /// @dev Fetch an exactin quote for a V2 pair on chain
+    /// @notice new addition
     function quoteExactInputSingleV2(
         uint256 amountIn,
         address tokenIn,
@@ -237,6 +240,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
     }
 
     /// @dev Fetch an exactOut quote for a V2 pair on chain
+    /// @notice new addition
     function quoteExactOutputSingleV2(
         uint256 amountOut,
         address tokenIn,
@@ -263,6 +267,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
 
         Note: we can support multiple V3 pools in the same route now since we are fetching V2 and V3 quotes on chain in a single call
      */
+    /// @notice new addition
     function quoteExactInput(
         bytes memory path,
         bytes memory protocolFlags,
@@ -328,6 +333,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         }
     }
 
+    /// @notice new addition
     function quoteExactOutput(
         bytes memory path,
         bytes memory protocolFlags,
@@ -386,9 +392,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         }
     }
 
-    /**
-        ORIGINAL:
-     */
+    /// @notice Original functions
     function quoteExactInput(bytes memory path, uint256 amountIn)
         public
         override
