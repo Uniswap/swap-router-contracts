@@ -209,6 +209,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         uint256 amountIn
     )
         public
+        override
         returns (
             uint256 amountOut,
             uint160[] memory sqrtPriceX96AfterList,
