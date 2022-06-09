@@ -67,7 +67,7 @@ library Path {
         return path.slice(NEXT_OFFSET, path.length - NEXT_OFFSET);
     }
 
-    // @dev functions for protocolFlag decoding
+    /// @dev functions for protocolFlag decoding
     uint256 private constant PROTOCOL_FLAG_SIZE = 1;
 
     function decodeFirstProtocolFlag(bytes memory protocolFlags) internal pure returns (uint8 flag) {
