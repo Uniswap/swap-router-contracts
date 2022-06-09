@@ -699,8 +699,16 @@ describe('QuoterV3', function () {
         expect(encodeProtocolFlags(['V3', 'V2', 'V3', 'V3'])).to.equal('0x01000101')
       })
 
-      it('should encode the protocol flags correctly', async () => {
+      it('encodes an empty array correctly', async () => {
         expect(encodeProtocolFlags([])).to.equal('0x')
+      })
+
+      it('encodes an all V2 array correctly', async () => {
+        expect(encodeProtocolFlags(['V2', 'V2', 'V2'])).to.equal('0x000000')
+      })
+
+      it('encodes an all V3 array correctly', async () => {
+        expect(encodeProtocolFlags(['V3', 'V3', 'V3'])).to.equal('0x010101')
       })
     })
 
