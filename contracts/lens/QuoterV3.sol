@@ -284,8 +284,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
             // @note we are 1 var away from stack to deep so evaluating this inline
             if (protocolFlags.decodeFirstProtocolFlag() == 0) {
                 // V2
-                uint256 _amountOut = quoteExactInputSingleV2(amountIn, tokenIn, tokenOut);
-                amountIn = _amountOut;
+                amountIn = quoteExactInputSingleV2(amountIn, tokenIn, tokenOut);
             } else if (protocolFlags.decodeFirstProtocolFlag() == 1) {
                 // the outputs of prior swaps become the inputs to subsequent ones
                 (
@@ -349,8 +348,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
             (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
 
             if (protocolFlags.decodeFirstProtocolFlag() == 0) {
-                uint256 _amountIn = quoteExactOutputSingleV2(amountOut, tokenIn, tokenOut);
-                amountOut = _amountIn;
+                amountOut = quoteExactOutputSingleV2(amountOut, tokenIn, tokenOut);
             } else if (protocolFlags.decodeFirstProtocolFlag() == 1) {
                 // the inputs of prior swaps become the outputs of subsequent ones
                 (uint256 _amountIn, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
