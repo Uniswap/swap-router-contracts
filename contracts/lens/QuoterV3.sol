@@ -290,7 +290,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                 // V2
                 uint256 _amountOut = quoteExactInputSingleV2(amountIn, tokenIn, tokenOut);
                 amountIn = _amountOut;
-            } else {
+            } else if (protocolFlags.decodeFirstProtocolFlag() == 1) {
                 // the outputs of prior swaps become the inputs to subsequent ones
                 (
                     uint256 _amountOut,
@@ -312,6 +312,8 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                 initializedTicksCrossedList[i] = _initializedTicksCrossed;
                 gasEstimate += _gasEstimate;
                 amountIn = _amountOut; // @note assigning output of this swap to input for next
+            } else {
+                revert('Invalid protocol value');
             }
             i++;
 
@@ -354,7 +356,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
             if (protocolFlags.decodeFirstProtocolFlag() == 0) {
                 uint256 _amountIn = quoteExactOutputSingleV2(amountOut, tokenIn, tokenOut);
                 amountOut = _amountIn;
-            } else {
+            } else if (protocolFlags.decodeFirstProtocolFlag() == 1) {
                 // the inputs of prior swaps become the outputs of subsequent ones
                 (uint256 _amountIn, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
                     quoteExactOutputSingle(
@@ -371,6 +373,8 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                 initializedTicksCrossedList[i] = _initializedTicksCrossed;
                 amountOut = _amountIn;
                 gasEstimate += _gasEstimate;
+            } else {
+                revert('Invalid protocol value');
             }
             i++;
 

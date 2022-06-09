@@ -370,20 +370,17 @@ describe('QuoterV3', function () {
       describe('+ with imbalanced pairs', () => {
         before(async () => {
           // imbalance the 1-2 pool with a much larger amount in 1
-          // started with 1_000_000 initial
-          await addLiquidityV2(pair12Address, tokens[1], tokens[2], '1000', '1000')
-          // 1: 2_000_000 , 2: 1_001_000
+          await addLiquidityV2(pair12Address, tokens[1], tokens[2], '1000000', '1000')
+          // reservesAfter: 1: 2_000_000 , 2: 1_001_000
         })
 
         it('1 -> 2', async () => {
-          /// @note weird but it seems like you can get a V2 quote for just about anything, even if the amount
-          // is more than both reserves. Makes sense because it's just a pure function
-          const amountIn = 10_000_000
+          const amountIn = 2_000_000
           const tokenIn = tokens[1].address
           const tokenOut = tokens[2].address
           const quote = await quoter.callStatic.quoteExactInputSingleV2(amountIn, tokenIn, tokenOut)
 
-          console.log(quote.toString())
+          expect(quote).to.eq(1993999)
         })
       })
     })
@@ -702,7 +699,9 @@ describe('QuoterV3', function () {
         expect(encodeProtocolFlags(['V3', 'V2', 'V3', 'V3'])).to.equal('0x01000101')
       })
 
-      // TODO: add tests for invalid flag inputs
+      it('should encode the protocol flags correctly', async () => {
+        expect(encodeProtocolFlags([])).to.equal('0x')
+      })
     })
 
     it('correctly reverts on path/protocolFlags length mismatch', async () => {
@@ -713,6 +712,26 @@ describe('QuoterV3', function () {
           10000
         )
       ).to.be.revertedWith('Length mismatch')
+    })
+
+    it('#quoteExactInput correctly reverts on an invalid protocolFlag value', async () => {
+      await expect(
+        quoter.callStatic['quoteExactInput(bytes,bytes,uint256)'](
+          encodePath([tokens[0].address, tokens[2].address, tokens[1].address], [FeeAmount.MEDIUM, FeeAmount.MEDIUM]),
+          '0x0103', // 01 = V3, 03 = invalid
+          10000
+        )
+      ).to.be.revertedWith('Invalid protocol value')
+    })
+
+    it('#quoteExactOutput correctly reverts on an invalid protocolFlag value', async () => {
+      await expect(
+        quoter.callStatic['quoteExactOutput(bytes,bytes,uint256)'](
+          encodePath([tokens[0].address, tokens[2].address, tokens[1].address], [FeeAmount.MEDIUM, FeeAmount.MEDIUM]),
+          '0x0103', // 01 = V3, 03 = invalid
+          10000
+        )
+      ).to.be.revertedWith('Invalid protocol value')
     })
   })
 })
