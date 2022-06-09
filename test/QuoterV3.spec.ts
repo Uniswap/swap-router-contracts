@@ -1,5 +1,5 @@
 import { Fixture } from 'ethereum-waffle'
-import { constants, Wallet, Contract } from 'ethers'
+import { constants, Wallet, Contract, BigNumber } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { QuoterV3, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
@@ -56,6 +56,8 @@ describe('QuoterV3', function () {
   let tokens: [TestERC20, TestERC20, TestERC20]
   let quoter: QuoterV3
 
+  let pair01Address, pair02Address, pair12Address: string
+
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
@@ -80,17 +82,23 @@ describe('QuoterV3', function () {
     expect(await pair.callStatic.token0()).to.equal(token0.address)
     expect(await pair.callStatic.token1()).to.equal(token1.address)
     // seed the pairs with liquidity
+
+    const [reserve0Before, reserve1Before]: [BigNumber, BigNumber] = await pair.callStatic.getReserves()
+
+    const token0BalanceBefore = await token0.balanceOf(pairAddress)
+    const token1BalanceBefore = await token1.balanceOf(pairAddress)
+
     await token0.transfer(pairAddress, ethers.utils.parseEther(amount0))
     await token1.transfer(pairAddress, ethers.utils.parseEther(amount1))
 
-    expect(await token0.balanceOf(pairAddress)).to.equal(ethers.utils.parseEther(amount0))
-    expect(await token1.balanceOf(pairAddress)).to.equal(ethers.utils.parseEther(amount1))
+    expect(await token0.balanceOf(pairAddress)).to.equal(token0BalanceBefore.add(ethers.utils.parseEther(amount0)))
+    expect(await token1.balanceOf(pairAddress)).to.equal(token1BalanceBefore.add(ethers.utils.parseEther(amount1)))
 
-    const res = await pair.callStatic.getReserves()
-    await pair.mint(wallet.address)
+    await pair.mint(wallet.address) // update the reserves
+
     const [reserve0, reserve1] = await pair.callStatic.getReserves()
-    expect(reserve0).to.equal(ethers.utils.parseEther(amount0))
-    expect(reserve1).to.equal(ethers.utils.parseEther(amount1))
+    expect(reserve0).to.equal(reserve0Before.add(ethers.utils.parseEther(amount0)))
+    expect(reserve1).to.equal(reserve1Before.add(ethers.utils.parseEther(amount1)))
   }
 
   describe.only('quotes', () => {
@@ -101,9 +109,9 @@ describe('QuoterV3', function () {
       /**
        * Create V2 pairs
        */
-      const pair01Address = await createPair(factoryV2, tokens[0].address, tokens[1].address) // 0 - 1
-      const pair12Address = await createPair(factoryV2, tokens[1].address, tokens[2].address) // 1 - 2
-      const pair02Address = await createPair(factoryV2, tokens[0].address, tokens[2].address) // 0 - 2
+      pair01Address = await createPair(factoryV2, tokens[0].address, tokens[1].address) // 0 - 1
+      pair12Address = await createPair(factoryV2, tokens[1].address, tokens[2].address) // 1 - 2
+      pair02Address = await createPair(factoryV2, tokens[0].address, tokens[2].address) // 0 - 2
 
       await addLiquidityV2(pair01Address, tokens[0], tokens[1], '1000000', '1000000')
       await addLiquidityV2(pair12Address, tokens[1], tokens[2], '1000000', '1000000')
@@ -345,13 +353,8 @@ describe('QuoterV3', function () {
         const amountIn = 10000
         const tokenIn = tokens[0].address
         const tokenOut = tokens[2].address
-        const { amountOut: quote, gasEstimate } = await quoter.callStatic.quoteExactInputSingleV2(
-          amountIn,
-          tokenIn,
-          tokenOut
-        )
+        const quote = await quoter.callStatic.quoteExactInputSingleV2(amountIn, tokenIn, tokenOut)
 
-        await snapshotGasCost(gasEstimate)
         expect(quote).to.eq(9969)
       })
 
@@ -359,14 +362,29 @@ describe('QuoterV3', function () {
         const amountIn = 10000
         const tokenIn = tokens[2].address
         const tokenOut = tokens[0].address
-        const { amountOut: quote, gasEstimate } = await quoter.callStatic.quoteExactInputSingleV2(
-          amountIn,
-          tokenIn,
-          tokenOut
-        )
+        const quote = await quoter.callStatic.quoteExactInputSingleV2(amountIn, tokenIn, tokenOut)
 
-        await snapshotGasCost(gasEstimate)
         expect(quote).to.eq(9969)
+      })
+
+      describe('+ with imbalanced pairs', () => {
+        before(async () => {
+          // imbalance the 1-2 pool with a much larger amount in 1
+          // started with 1_000_000 initial
+          await addLiquidityV2(pair12Address, tokens[1], tokens[2], '1000', '1000')
+          // 1: 2_000_000 , 2: 1_001_000
+        })
+
+        it('1 -> 2', async () => {
+          /// @note weird but it seems like you can get a V2 quote for just about anything, even if the amount
+          // is more than both reserves. Makes sense because it's just a pure function
+          const amountIn = 10_000_000
+          const tokenIn = tokens[1].address
+          const tokenOut = tokens[2].address
+          const quote = await quoter.callStatic.quoteExactInputSingleV2(amountIn, tokenIn, tokenOut)
+
+          console.log(quote.toString())
+        })
       })
     })
 
@@ -595,7 +613,7 @@ describe('QuoterV3', function () {
         const amountOut = 10000
         const tokenIn = tokens[0].address
         const tokenOut = tokens[1].address
-        const { amountIn, gasEstimate } = await quoter.callStatic.quoteExactOutputSingleV2(amountOut, tokenIn, tokenOut)
+        const amountIn = await quoter.callStatic.quoteExactOutputSingleV2(amountOut, tokenIn, tokenOut)
 
         expect(amountIn).to.eq(10031)
       })
@@ -605,7 +623,7 @@ describe('QuoterV3', function () {
         const amountOut = 10000
         const tokenIn = tokens[1].address
         const tokenOut = tokens[0].address
-        const { amountIn, gasEstimate } = await quoter.callStatic.quoteExactOutputSingleV2(amountOut, tokenIn, tokenOut)
+        const amountIn = await quoter.callStatic.quoteExactOutputSingleV2(amountOut, tokenIn, tokenOut)
 
         expect(amountIn).to.eq(10031)
       })
@@ -642,11 +660,6 @@ describe('QuoterV3', function () {
         )
 
         await snapshotGasCost(gasEstimate)
-        // console.log({
-        //   amountOut: amountOut.toString(),
-        //   sqrtPriceX96AfterList: sqrtPriceX96AfterList.map((x) => x.toString()),
-        //   initializedTicksCrossedList,
-        // })
         expect(sqrtPriceX96AfterList.length).to.eq(2)
         // expect the v2 part to have 0 for sqrt price for now
         expect(sqrtPriceX96AfterList[0]).to.eq('0')

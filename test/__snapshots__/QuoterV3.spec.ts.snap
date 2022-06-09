@@ -1,90 +1,34 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`QuoterV3 quotes #quoteExactInput 0 -> 2 -> 1 1`] = `277146`;
+exports[`QuoterV3 quotes #quoteExactInput V2+V3 mixed route 0 -V2-> 2 -V3-> 1 1`] = `97339`;
 
-exports[`QuoterV3 quotes #quoteExactInput 0 -> 2 cross 0 tick, starting tick initialized 1`] = `123797`;
+exports[`QuoterV3 quotes #quoteExactInput V2+V3 mixed route 0 -V3-> 2 -V2-> 1 1`] = `186702`;
 
-exports[`QuoterV3 quotes #quoteExactInput 0 -> 2 cross 0 tick, starting tick not initialized 1`] = `100962`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 -> 1 1`] = `281528`;
 
-exports[`QuoterV3 quotes #quoteExactInput 0 -> 2 cross 1 tick 1`] = `144724`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 0 tick, starting tick initialized 1`] = `123796`;
 
-exports[`QuoterV3 quotes #quoteExactInput 0 -> 2 cross 2 tick 1`] = `182321`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 0 tick, starting tick not initialized 1`] = `104837`;
 
-exports[`QuoterV3 quotes #quoteExactInput 0 -> 2 cross 2 tick where after is initialized 1`] = `144762`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 1 tick 1`] = `149104`;
 
-exports[`QuoterV3 quotes #quoteExactInput 2 -> 0 cross 0 tick, starting tick initialized 1`] = `97654`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 2 tick 1`] = `186701`;
 
-exports[`QuoterV3 quotes #quoteExactInput 2 -> 0 cross 0 tick, starting tick not initialized 1`] = `93779`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 2 tick where after is initialized 1`] = `149142`;
 
-exports[`QuoterV3 quotes #quoteExactInput 2 -> 0 cross 2 1`] = `175133`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 0 tick, starting tick initialized 1`] = `97653`;
 
-exports[`QuoterV3 quotes #quoteExactInput 2 -> 0 cross 2 where tick after is initialized 1`] = `175141`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 0 tick, starting tick not initialized 1`] = `97653`;
 
-exports[`QuoterV3 quotes #quoteExactInput 2 -> 1 1`] = `97329`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 2 1`] = `179513`;
 
-exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 1 -> 2 1`] = `18447`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 2 where tick after is initialized 1`] = `179521`;
 
-exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 2 1`] = `10223`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 1 1`] = `97328`;
 
-exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 2 cross 2 tick 1`] = `10223`;
+exports[`QuoterV3 quotes #quoteExactInputSingle V3 0 -> 2 1`] = `186684`;
 
-exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 2 cross 2 tick 2`] = `10223`;
-
-exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 2 cross 2 tick 3`] = `10223`;
-
-exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 2 cross 2 tick 4`] = `10223`;
-
-exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -> 2 cross 2 tick 5`] = `10223`;
-
-exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -V2-> 1 -V2-> 2 1`] = `18447`;
-
-exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -V2-> 2 1`] = `10223`;
-
-exports[`QuoterV3 quotes #quoteExactInput V2 only 0 -V2-> 2 cross 2 tick 1`] = `10223`;
-
-exports[`QuoterV3 quotes #quoteExactInput V2+V3 mixed route 0 -> 2 -> 1 1`] = `196956`;
-
-exports[`QuoterV3 quotes #quoteExactInput V2+V3 mixed route 0 -> 2 -> 1 2`] = `196956`;
-
-exports[`QuoterV3 quotes #quoteExactInput V2+V3 mixed route 0 -> 2 -> 1 3`] = `196956`;
-
-exports[`QuoterV3 quotes #quoteExactInput V2+V3 mixed route 0 -V2-> 2 -V3-> 1 1`] = `107562`;
-
-exports[`QuoterV3 quotes #quoteExactInput V2+V3 mixed route 0 -V3-> 2 -V2-> 1 1`] = `196956`;
-
-exports[`QuoterV3 quotes #quoteExactInput all V3 parts 0 -> 2 cross 2 tick 1`] = `182320`;
-
-exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 0 -> 2 -> 1 1`] = `277147`;
-
-exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 0 -> 2 cross 0 tick, starting tick initialized 1`] = `123796`;
-
-exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 0 -> 2 cross 0 tick, starting tick not initialized 1`] = `100961`;
-
-exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 0 -> 2 cross 1 tick 1`] = `144723`;
-
-exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 0 -> 2 cross 2 tick 1`] = `182320`;
-
-exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 0 -> 2 cross 2 tick where after is initialized 1`] = `144761`;
-
-exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 2 -> 0 cross 0 tick, starting tick initialized 1`] = `97653`;
-
-exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 2 -> 0 cross 0 tick, starting tick not initialized 1`] = `93778`;
-
-exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 2 -> 0 cross 2 1`] = `175132`;
-
-exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 2 -> 0 cross 2 where tick after is initialized 1`] = `175140`;
-
-exports[`QuoterV3 quotes #quoteExactInput original tests with new function but flags as V3 only 2 -> 1 1`] = `97328`;
-
-exports[`QuoterV3 quotes #quoteExactInputSingle 0 -> 2 1`] = `182303`;
-
-exports[`QuoterV3 quotes #quoteExactInputSingle 2 -> 0 1`] = `175105`;
-
-exports[`QuoterV3 quotes #quoteExactInputSingleV2 0 -> 2 1`] = `10226`;
-
-exports[`QuoterV3 quotes #quoteExactInputSingleV2 2 -> 0 1`] = `10256`;
-
-exports[`QuoterV3 quotes #quoteExactOutput V2+V3 mixed route 0 -V3-> 2 -V2-> 1 1`] = `189919`;
+exports[`QuoterV3 quotes #quoteExactInputSingle V3 2 -> 0 1`] = `179486`;
 
 exports[`QuoterV3 quotes #quoteExactOutput V3 only 0 -> 2 -> 1 1`] = `281128`;
 
