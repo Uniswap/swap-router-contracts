@@ -232,11 +232,8 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         uint256 amountIn,
         address tokenIn,
         address tokenOut
-    ) public view returns (uint256 amountOut, uint256 gasEstimate) {
-        // @audit this gas estimation is not correct since it is just estimating an external view call
-        uint256 gasBefore = gasleft();
+    ) public view returns (uint256 amountOut) {
         amountOut = this.getPairAmountOut(amountIn, tokenIn, tokenOut);
-        return (amountOut, gasBefore - gasleft());
     }
 
     /// @dev Fetch an exactOut quote for a V2 pair on chain
@@ -245,11 +242,8 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         uint256 amountOut,
         address tokenIn,
         address tokenOut
-    ) public view returns (uint256 amountIn, uint256 gasEstimate) {
-        // @audit this gas estimation is not correct since it is just estimating an external view call
-        uint256 gasBefore = gasleft();
+    ) public view returns (uint256 amountIn) {
         amountIn = this.getPairAmountIn(amountOut, tokenIn, tokenOut);
-        return (amountIn, gasBefore - gasleft());
     }
 
     /**
@@ -294,8 +288,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
             // @note we are 1 var away from stack to deep so evaluating this inline
             if (protocolFlags.decodeFirstProtocolFlag() == 0) {
                 // V2
-                (uint256 _amountOut, uint256 _gasEstimate) = quoteExactInputSingleV2(amountIn, tokenIn, tokenOut);
-                gasEstimate += _gasEstimate;
+                uint256 _amountOut = quoteExactInputSingleV2(amountIn, tokenIn, tokenOut);
                 amountIn = _amountOut;
             } else {
                 // the outputs of prior swaps become the inputs to subsequent ones
@@ -359,8 +352,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
             (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
 
             if (protocolFlags.decodeFirstProtocolFlag() == 0) {
-                (uint256 _amountIn, uint256 _gasEstimate) = quoteExactOutputSingleV2(amountOut, tokenIn, tokenOut);
-                gasEstimate += _gasEstimate;
+                uint256 _amountIn = quoteExactOutputSingleV2(amountOut, tokenIn, tokenOut);
                 amountOut = _amountIn;
             } else {
                 // the inputs of prior swaps become the outputs of subsequent ones
