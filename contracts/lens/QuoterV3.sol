@@ -57,7 +57,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         uint256 amountIn,
         address tokenIn,
         address tokenOut
-    ) external view returns (uint256) {
+    ) private view returns (uint256) {
         (uint256 reserveIn, uint256 reserveOut) = UniswapV2Library.getReserves(v2Factory, tokenIn, tokenOut);
         return UniswapV2Library.getAmountOut(amountIn, reserveIn, reserveOut);
     }
@@ -71,7 +71,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         uint256 amountOut,
         address tokenIn,
         address tokenOut
-    ) external view returns (uint256) {
+    ) private view returns (uint256) {
         (uint256 reserveIn, uint256 reserveOut) = UniswapV2Library.getReserves(v2Factory, tokenIn, tokenOut);
         return UniswapV2Library.getAmountIn(amountOut, reserveIn, reserveOut);
     }
@@ -229,7 +229,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         address tokenIn,
         address tokenOut
     ) public view returns (uint256 amountOut) {
-        amountOut = this.getPairAmountOut(amountIn, tokenIn, tokenOut);
+        amountOut = getPairAmountOut(amountIn, tokenIn, tokenOut);
     }
 
     /// @dev Fetch an exactOut quote for a V2 pair on chain
@@ -239,7 +239,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         address tokenIn,
         address tokenOut
     ) public view returns (uint256 amountIn) {
-        amountIn = this.getPairAmountIn(amountOut, tokenIn, tokenOut);
+        amountIn = getPairAmountIn(amountOut, tokenIn, tokenOut);
     }
 
     /**
