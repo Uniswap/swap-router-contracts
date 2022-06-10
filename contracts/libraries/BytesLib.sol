@@ -99,7 +99,7 @@ library BytesLib {
         return tempUint;
     }
 
-    /// @dev Added functionality to return one byte (for protocol flag)
+    /// @dev Added functionality to return one byte
     function toUint8(bytes memory _bytes, uint256 _start) internal pure returns (uint8) {
         require(_start + 1 >= _start, 'toUint24_overflow');
         require(_bytes.length >= _start + 1, 'toUint24_outOfBounds');

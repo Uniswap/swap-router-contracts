@@ -4,6 +4,8 @@ pragma solidity >=0.6.0;
 import './BytesLib.sol';
 
 /// @title Functions for manipulating path data for multihop swaps
+/// @dev A version of the Path library living in v3-periphery but with support for
+///      interleaving routes.
 library Path {
     using BytesLib for bytes;
 
@@ -67,7 +69,7 @@ library Path {
         return path.slice(NEXT_OFFSET, path.length - NEXT_OFFSET);
     }
 
-    /// @dev functions for protocolFlag decoding
+    /// @dev Functions for interleaving route support
     uint256 private constant PROTOCOL_FLAG_SIZE = 1;
 
     function decodeFirstProtocolFlag(bytes memory protocolFlags) internal pure returns (uint8 flag) {
