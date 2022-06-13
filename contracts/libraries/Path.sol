@@ -72,10 +72,16 @@ library Path {
     /// @dev Functions for interleaving route support
     uint256 private constant PROTOCOL_FLAG_SIZE = 1;
 
+    /// @notice Gets the protocol flag for the first pool/pair in the path
+    /// @param protocolFlags The bytes encoded protocol flags
+    /// @return The protocol flag for the first pool/pair in the path
     function decodeFirstProtocolFlag(bytes memory protocolFlags) internal pure returns (uint8 flag) {
         return protocolFlags.toUint8(0);
     }
 
+    /// @notice Skips a protocol flag from the buffer and returns the remainder
+    /// @param protocolFlags The bytes encoded protocol flags
+    /// @return The remaining protocol flags in the bytes array
     function skipProtocolFlag(bytes memory protocolFlags) internal pure returns (bytes memory) {
         return protocolFlags.slice(PROTOCOL_FLAG_SIZE, protocolFlags.length - PROTOCOL_FLAG_SIZE);
     }
