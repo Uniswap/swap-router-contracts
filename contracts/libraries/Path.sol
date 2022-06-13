@@ -69,7 +69,7 @@ library Path {
         return path.slice(NEXT_OFFSET, path.length - NEXT_OFFSET);
     }
 
-    /// @dev Functions for interleaving route support
+    /// @dev The length of the bytes encoded protocol flag
     uint256 private constant PROTOCOL_FLAG_SIZE = 1;
 
     /// @notice Gets the protocol flag for the first pool/pair in the path
