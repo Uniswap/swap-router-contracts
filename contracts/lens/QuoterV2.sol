@@ -2,6 +2,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import 'hardhat/console.sol';
+
 import '@uniswap/v3-periphery/contracts/base/PeripheryImmutableState.sol';
 import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
 import '@uniswap/v3-core/contracts/libraries/TickMath.sol';

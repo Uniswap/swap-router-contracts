@@ -45,6 +45,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         address tokenB,
         uint24 fee
     ) private view returns (IUniswapV3Pool) {
+        console.log(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
         return IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
     }
 
@@ -87,10 +88,20 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
         CallbackValidation.verifyCallback(factory, tokenIn, tokenOut, fee);
 
+        console.log('tokenIn < tokenOut ', tokenIn < tokenOut);
+        console.log('tokenOut < tokenIn ', tokenOut < tokenIn);
+
+        console.log('amount0Delta > 0 ', amount0Delta > 0);
+
         (bool isExactInput, uint256 amountToPay, uint256 amountReceived) =
             amount0Delta > 0
                 ? (tokenIn < tokenOut, uint256(amount0Delta), uint256(-amount1Delta))
                 : (tokenOut < tokenIn, uint256(amount1Delta), uint256(-amount0Delta));
+
+        console.log('uniswapV3SwapCallback');
+        console.log('isExactInput ', isExactInput);
+        console.log('amountToPay ', amountToPay);
+        console.log('amountReceived ', amountReceived);
 
         IUniswapV3Pool pool = getPool(tokenIn, tokenOut, fee);
         (uint160 sqrtPriceX96After, int24 tickAfter, , , , , ) = pool.slot0();
@@ -282,6 +293,10 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         uint256 i = 0;
         while (true) {
             (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
+            console.log('tokenIn ', tokenIn);
+            console.log('tokenOut ', tokenOut);
+            console.log('fee ', fee);
+
             // @note we are 1 var away from stack to deep so evaluating this inline
             if (protocolFlags.decodeFirstProtocolFlag() == 0) {
                 // V2
