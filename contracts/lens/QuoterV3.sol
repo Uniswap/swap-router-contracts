@@ -59,6 +59,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         address tokenOut
     ) private view returns (uint256) {
         (uint256 reserveIn, uint256 reserveOut) = UniswapV2Library.getReserves(v2Factory, tokenIn, tokenOut);
+        console.log('reserveIn: ', reserveIn, ' reserveOut: ', reserveOut);
         return UniswapV2Library.getAmountOut(amountIn, reserveIn, reserveOut);
     }
 
@@ -284,8 +285,11 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
             // @note we are 1 var away from stack to deep so evaluating this inline
             if (protocolFlags.decodeFirstProtocolFlag() == 0) {
                 // V2
+                console.log('calling quoteExactInputSingleV2 with ', amountIn, tokenIn, tokenOut);
                 amountIn = quoteExactInputSingleV2(amountIn, tokenIn, tokenOut);
+                console.log('quoteExactInputSingleV2 returned ', amountIn);
             } else if (protocolFlags.decodeFirstProtocolFlag() == 1) {
+                console.log('calling quoteExactInputSingle with ', amountIn, tokenIn, tokenOut);
                 // the outputs of prior swaps become the inputs to subsequent ones
                 (
                     uint256 _amountOut,
@@ -302,7 +306,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                             sqrtPriceLimitX96: 0
                         })
                     );
-
+                console.log('got amountOut: ', _amountOut);
                 sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
                 initializedTicksCrossedList[i] = _initializedTicksCrossed;
                 gasEstimate += _gasEstimate;
@@ -317,6 +321,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                 path = path.skipToken();
                 protocolFlags = protocolFlags.skipProtocolFlag();
             } else {
+                console.log('finished, returning amountOut: ', amountIn);
                 return (amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
             }
         }

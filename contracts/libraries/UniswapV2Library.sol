@@ -4,6 +4,8 @@ pragma solidity >=0.5.0;
 import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
 import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
 
+import 'hardhat/console.sol';
+
 library UniswapV2Library {
     using LowGasSafeMath for uint256;
 
@@ -42,6 +44,7 @@ library UniswapV2Library {
         address tokenB
     ) internal view returns (uint256 reserveA, uint256 reserveB) {
         (address token0, ) = sortTokens(tokenA, tokenB);
+        console.log('pair address ', pairFor(factory, tokenA, tokenB));
         (uint256 reserve0, uint256 reserve1, ) = IUniswapV2Pair(pairFor(factory, tokenA, tokenB)).getReserves();
         (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
     }
@@ -51,12 +54,13 @@ library UniswapV2Library {
         uint256 amountIn,
         uint256 reserveIn,
         uint256 reserveOut
-    ) internal pure returns (uint256 amountOut) {
+    ) internal view returns (uint256 amountOut) {
         require(amountIn > 0, 'INSUFFICIENT_INPUT_AMOUNT');
         require(reserveIn > 0 && reserveOut > 0);
         uint256 amountInWithFee = amountIn.mul(997);
         uint256 numerator = amountInWithFee.mul(reserveOut);
         uint256 denominator = reserveIn.mul(1000).add(amountInWithFee);
+        console.log('numerator: ', numerator, 'denominator: ', denominator);
         amountOut = numerator / denominator;
     }
 
