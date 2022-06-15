@@ -17,8 +17,6 @@ import '../libraries/PoolTicksCounter.sol';
 import '../libraries/UniswapV2Library.sol';
 import '../libraries/Path.sol';
 
-import 'hardhat/console.sol';
-
 /// @title Provides quotes for swaps
 /// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap
 /// @dev These functions are not gas efficient and should _not_ be called on chain. Instead, optimistically execute
@@ -93,8 +91,6 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
 
         IUniswapV3Pool pool = getPool(tokenIn, tokenOut, fee);
         (uint160 sqrtPriceX96After, int24 tickAfter, , , , , ) = pool.slot0();
-
-        console.log('amountReceived: ', amountReceived);
 
         if (isExactInput) {
             assembly {
@@ -173,14 +169,6 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
     {
         bool zeroForOne = params.tokenIn < params.tokenOut;
         IUniswapV3Pool pool = getPool(params.tokenIn, params.tokenOut, params.fee);
-
-        {
-            (uint160 sqrtPriceX96Before, int24 tickBefore, , , , , ) = pool.slot0();
-            console.log('sqrtPriceX96Before: ', sqrtPriceX96Before);
-            console.log('abs tickBefore: ', uint24(tickBefore * -1));
-            uint160 liquidityBefore = pool.liquidity();
-            console.log('liquidityBefore: ', liquidityBefore);
-        }
 
         uint256 gasBefore = gasleft();
         try
@@ -297,7 +285,6 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                 amountIn = quoteExactInputSingleV2(amountIn, tokenIn, tokenOut);
             } else if (protocolFlags.decodeFirstProtocolFlag() == 1) {
                 // the outputs of prior swaps become the inputs to subsequent ones
-                console.log('calling quoteExactInputSingle with amountIn: ', amountIn);
                 (
                     uint256 _amountOut,
                     uint160 _sqrtPriceX96After,
@@ -313,7 +300,6 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                             sqrtPriceLimitX96: 0
                         })
                     );
-                console.log('got _amoutOut back from quoteExactInputSingle: ', _amountOut);
                 sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
                 initializedTicksCrossedList[i] = _initializedTicksCrossed;
                 gasEstimate += _gasEstimate;
@@ -328,7 +314,6 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                 path = path.skipToken();
                 protocolFlags = protocolFlags.skipProtocolFlag();
             } else {
-                console.log('quoteExactInput returning: ', amountIn);
                 return (amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
             }
         }

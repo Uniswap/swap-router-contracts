@@ -3,8 +3,9 @@ import { BigNumber } from 'ethers'
 import { QuoterV3 } from '../typechain'
 
 import { JsonRpcSigner } from '@ethersproject/providers'
-import { ethers } from 'hardhat'
+import hre, { ethers } from 'hardhat'
 import { encodeProtocolFlags } from './shared/path'
+import { expandTo18Decimals } from './shared/expandTo18Decimals'
 
 const V3_FACTORY = '0x1F98431c8aD98523631AE4a59f267346ea31F984'
 const V2_FACTORY = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
@@ -24,36 +25,25 @@ describe.only('QuoterV3 integration tests', () => {
     console.log('quoterV3.address: ', quoterV3.address)
   })
 
+  /**
+   * Values only valid at block 14390000, we should not be running a local node of hardhat to test against, but rather using
+   * the jest-environment-hardhat plugin. TODO
+   */
+
   it('quotes V3-V2 correctly', async () => {
     const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate } = await quoterV3.callStatic[
       'quoteExactInput(bytes,bytes,uint256)'
-    ](UNI_V3_3000_WETH_V2_DAI, encodeProtocolFlags(['V3', 'V2']), 10000)
+    ](UNI_V3_3000_WETH_V2_DAI, encodeProtocolFlags(['V3', 'V2']), expandTo18Decimals(10000))
     console.log(amountOut.toString())
     expect(amountOut).eq(BigNumber.from('80675538331724434694636'))
     expect(sqrtPriceX96AfterList[0].eq(BigNumber.from('0x0e83f285cb58c4cca14fb78b'))).to.be.true
-    /**
-     * Values only valid at block 14390000
-     */
   })
 
-  xit('TODO: quotes V3 percision correctly using the onChainQuoterV2', async () => {
+  it('quotes only V3 correctly', async () => {
     const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate } = await quoterV3.callStatic[
       'quoteExactInput(bytes,bytes,uint256)'
-    ](UNI_V3_3000_WETH_V2_DAI, encodeProtocolFlags(['V3', 'V2']), '0x21e19e0c9bab2400000')
+    ](UNI_V3_3000_WETH, encodeProtocolFlags(['V3']), expandTo18Decimals(10000))
     console.log(amountOut.toString())
-    expect(amountOut).eq(BigNumber.from('80675538331724434694636'))
-    expect(sqrtPriceX96AfterList[0].eq(BigNumber.from('0x0e83f285cb58c4cca14fb78b'))).to.be.true
-    /**
-     * Values only valid at block 14390000
-     */
-  })
-
-  xit('quotes only V3 correctly', async () => {
-    const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate } = await quoterV3.callStatic[
-      'quoteExactInput(bytes,bytes,uint256)'
-    ](UNI_V3_3000_WETH, encodeProtocolFlags(['V3']), '0x21e19e0c9bab2400000')
-    console.log(amountOut.toString())
-    console.log(sqrtPriceX96AfterList)
-    expect(amountOut).eq(BigNumber.from(9996))
+    expect(amountOut.eq(BigNumber.from('32215526370828998898'))).to.be.true
   })
 })
