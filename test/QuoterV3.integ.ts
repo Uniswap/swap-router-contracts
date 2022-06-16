@@ -59,7 +59,7 @@ describe.only('QuoterV3 integration tests', () => {
 
   describe('quotes stablecoin only paths correctly', () => {
     /// @dev the amount must be expanded to the decimals of the first token in the path
-    it.only('V3-V2 stablecoin path with 6 decimal in start of path', async () => {
+    it('V3-V2 stablecoin path with 6 decimal in start of path', async () => {
       const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate } = await quoterV3.callStatic[
         'quoteExactInput(bytes,bytes,uint256)'
       ](USDT_V3_500_DAI_V2_USDC, encodeProtocolFlags(['V3', 'V2']), expandToNDecimals(10000, 6))
@@ -69,7 +69,7 @@ describe.only('QuoterV3 integration tests', () => {
       expect(sqrtPriceX96AfterList[0].eq(BigNumber.from('0x10c6727487c45717095f'))).to.be.true
     })
 
-    it.only('V3-V2 stablecoin path with 6 decimal in middle of path', async () => {
+    it('V3-V2 stablecoin path with 6 decimal in middle of path', async () => {
       const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate } = await quoterV3.callStatic[
         'quoteExactInput(bytes,bytes,uint256)'
       ](DAI_V3_100_USDC_V2_USDT, encodeProtocolFlags(['V3', 'V2']), expandTo18Decimals(10000))
@@ -90,7 +90,7 @@ describe.only('QuoterV3 integration tests', () => {
       expect(amountOut).eq(BigNumber.from('2035189623576328665'))
     })
 
-    it.only('quotes V2 (6 decimal stablecoin) -V2 correctly', async () => {
+    it('quotes V2 (6 decimal stablecoin) -V2 correctly', async () => {
       const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate } = await quoterV3.callStatic[
         'quoteExactInput(bytes,bytes,uint256)'
       ](USDC_V2_UNI_V2_WETH, encodeProtocolFlags(['V2', 'V2']), expandToNDecimals(10000, 6))
