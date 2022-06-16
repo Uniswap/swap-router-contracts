@@ -57,6 +57,11 @@ describe.only('QuoterV3 integration tests', () => {
    * the jest-environment-hardhat plugin. TODO
    */
 
+  /**
+   * Also, current findings is that the QuoterV3 contract functions must be called with an amount value expanded to the number
+   * of decimals of the first token in the path.
+   */
+
   describe('quotes stablecoin only paths correctly', () => {
     /// @dev the amount must be expanded to the decimals of the first token in the path
     it('V3-V2 stablecoin path with 6 decimal in start of path', async () => {
