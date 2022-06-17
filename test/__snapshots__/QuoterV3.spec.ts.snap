@@ -1,0 +1,55 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`QuoterV3 quotes #quoteExactInput V2+V3 mixed route 0 -V2-> 2 -V3-> 1 1`] = `97339`;
+
+exports[`QuoterV3 quotes #quoteExactInput V2+V3 mixed route 0 -V3-> 2 -V2-> 1 1`] = `186702`;
+
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 -> 1 1`] = `281528`;
+
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 0 tick, starting tick initialized 1`] = `123796`;
+
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 0 tick, starting tick not initialized 1`] = `104837`;
+
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 1 tick 1`] = `149104`;
+
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 2 tick 1`] = `186701`;
+
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 2 tick where after is initialized 1`] = `149142`;
+
+exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 0 tick, starting tick initialized 1`] = `97653`;
+
+exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 0 tick, starting tick not initialized 1`] = `97653`;
+
+exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 2 1`] = `179513`;
+
+exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 2 where tick after is initialized 1`] = `179521`;
+
+exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 1 1`] = `97328`;
+
+exports[`QuoterV3 quotes #quoteExactInputSingle V3 0 -> 2 1`] = `186684`;
+
+exports[`QuoterV3 quotes #quoteExactInputSingle V3 2 -> 0 1`] = `179486`;
+
+exports[`QuoterV3 quotes #quoteExactOutput V3 only 0 -> 2 -> 1 1`] = `281128`;
+
+exports[`QuoterV3 quotes #quoteExactOutput V3 only 0 -> 2 cross 0 tick starting tick initialized 1`] = `123351`;
+
+exports[`QuoterV3 quotes #quoteExactOutput V3 only 0 -> 2 cross 0 tick starting tick not initialized 1`] = `104412`;
+
+exports[`QuoterV3 quotes #quoteExactOutput V3 only 0 -> 2 cross 1 tick 1`] = `148390`;
+
+exports[`QuoterV3 quotes #quoteExactOutput V3 only 0 -> 2 cross 2 tick 1`] = `185743`;
+
+exports[`QuoterV3 quotes #quoteExactOutput V3 only 0 -> 2 cross 2 where tick after is initialized 1`] = `148428`;
+
+exports[`QuoterV3 quotes #quoteExactOutput V3 only 2 -> 0 cross 1 tick 1`] = `142237`;
+
+exports[`QuoterV3 quotes #quoteExactOutput V3 only 2 -> 0 cross 2 ticks 1`] = `179583`;
+
+exports[`QuoterV3 quotes #quoteExactOutput V3 only 2 -> 0 cross 2 where tick after is initialized 1`] = `179577`;
+
+exports[`QuoterV3 quotes #quoteExactOutput V3 only 2 -> 1 1`] = `97869`;
+
+exports[`QuoterV3 quotes #quoteExactOutputSingle V3 0 -> 1 1`] = `105200`;
+
+exports[`QuoterV3 quotes #quoteExactOutputSingle V3 1 -> 0 1`] = `98511`;
