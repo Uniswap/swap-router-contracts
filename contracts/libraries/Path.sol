@@ -13,6 +13,8 @@ library Path {
     uint256 private constant ADDR_SIZE = 20;
     /// @dev The length of the bytes encoded fee
     uint256 private constant FEE_SIZE = 3;
+    /// @dev The length of the bytes encoded protocol flag
+    uint256 private constant PROTOCOL_FLAG_SIZE = 1;
 
     /// @dev The offset of a single token address and pool fee
     uint256 private constant NEXT_OFFSET = ADDR_SIZE + FEE_SIZE;
@@ -69,12 +71,9 @@ library Path {
         return path.slice(NEXT_OFFSET, path.length - NEXT_OFFSET);
     }
 
-    /// @dev The length of the bytes encoded protocol flag
-    uint256 private constant PROTOCOL_FLAG_SIZE = 1;
-
     /// @notice Gets the protocol flag for the first pool/pair in the path
     /// @param protocolFlags The bytes encoded protocol flags
-    /// @return The protocol flag for the first pool/pair in the path
+    /// @return flag The protocol flag for the first pool/pair in the path
     function decodeFirstProtocolFlag(bytes memory protocolFlags) internal pure returns (uint8 flag) {
         return protocolFlags.toUint8(0);
     }
