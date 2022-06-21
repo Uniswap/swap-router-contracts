@@ -42,7 +42,7 @@ const DAI_V3_3000_UNI_V2_USDT_V3_3000_WETH = encodePath([DAI, UNI, USDT, WETH], 
 // (use two V2 pools)
 const DAI_V3_3000_UNI_V2_USDT_V2_WETH = encodePath([DAI, UNI, USDT, WETH], [FeeAmount.MEDIUM, 0, 0])
 
-describe.only('QuoterV3 integration tests', () => {
+describe('QuoterV3 integration tests', () => {
   let quoterV3: QuoterV3
   let alice: JsonRpcSigner
 
