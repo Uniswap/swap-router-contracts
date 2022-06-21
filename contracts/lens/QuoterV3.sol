@@ -246,6 +246,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         ___first pair___(20 bytes) + ___fee___(3 bytes) + ___second token___(20 bytes)
 
         token0_fee_FLAG_token1_fee_FLAG_token2
+        - V2 pair will have a fee of 000000 (enforce in sdk), but its value is never used
 
         Approach for IL:
         - We pass in a separate bytes array for the Protcols that each pool belongs to, where each index corresponds
@@ -374,95 +375,6 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
             if (path.hasMultiplePools()) {
                 path = path.skipToken();
                 protocolFlags = protocolFlags.skipProtocolFlag();
-            } else {
-                return (amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
-            }
-        }
-    }
-
-    /// @notice Original functions
-    function quoteExactInput(bytes memory path, uint256 amountIn)
-        public
-        override
-        returns (
-            uint256 amountOut,
-            uint160[] memory sqrtPriceX96AfterList,
-            uint32[] memory initializedTicksCrossedList,
-            uint256 gasEstimate
-        )
-    {
-        sqrtPriceX96AfterList = new uint160[](path.numPools());
-        initializedTicksCrossedList = new uint32[](path.numPools());
-
-        uint256 i = 0;
-        while (true) {
-            (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
-
-            // the outputs of prior swaps become the inputs to subsequent ones
-            (uint256 _amountOut, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
-                quoteExactInputSingle(
-                    QuoteExactInputSingleParams({
-                        tokenIn: tokenIn,
-                        tokenOut: tokenOut,
-                        fee: fee,
-                        amountIn: amountIn,
-                        sqrtPriceLimitX96: 0
-                    })
-                );
-
-            sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
-            initializedTicksCrossedList[i] = _initializedTicksCrossed;
-            amountIn = _amountOut;
-            gasEstimate += _gasEstimate;
-            i++;
-
-            // decide whether to continue or terminate
-            if (path.hasMultiplePools()) {
-                path = path.skipToken();
-            } else {
-                return (amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
-            }
-        }
-    }
-
-    function quoteExactOutput(bytes memory path, uint256 amountOut)
-        public
-        override
-        returns (
-            uint256 amountIn,
-            uint160[] memory sqrtPriceX96AfterList,
-            uint32[] memory initializedTicksCrossedList,
-            uint256 gasEstimate
-        )
-    {
-        sqrtPriceX96AfterList = new uint160[](path.numPools());
-        initializedTicksCrossedList = new uint32[](path.numPools());
-
-        uint256 i = 0;
-        while (true) {
-            (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
-
-            // the inputs of prior swaps become the outputs of subsequent ones
-            (uint256 _amountIn, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
-                quoteExactOutputSingle(
-                    QuoteExactOutputSingleParams({
-                        tokenIn: tokenIn,
-                        tokenOut: tokenOut,
-                        amount: amountOut,
-                        fee: fee,
-                        sqrtPriceLimitX96: 0
-                    })
-                );
-
-            sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
-            initializedTicksCrossedList[i] = _initializedTicksCrossed;
-            amountOut = _amountIn;
-            gasEstimate += _gasEstimate;
-            i++;
-
-            // decide whether to continue or terminate
-            if (path.hasMultiplePools()) {
-                path = path.skipToken();
             } else {
                 return (amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
             }

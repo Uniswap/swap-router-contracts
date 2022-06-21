@@ -4,6 +4,8 @@ pragma solidity >=0.6.0;
 import './BytesLib.sol';
 
 /// @title Functions for manipulating path data for multihop swaps
+/// @dev A version of the Path library living in v3-periphery but with support for
+///      interleaving routes.
 library Path {
     using BytesLib for bytes;
 
@@ -11,6 +13,8 @@ library Path {
     uint256 private constant ADDR_SIZE = 20;
     /// @dev The length of the bytes encoded fee
     uint256 private constant FEE_SIZE = 3;
+    /// @dev The length of the bytes encoded protocol flag
+    uint256 private constant PROTOCOL_FLAG_SIZE = 1;
 
     /// @dev The offset of a single token address and pool fee
     uint256 private constant NEXT_OFFSET = ADDR_SIZE + FEE_SIZE;
@@ -67,13 +71,16 @@ library Path {
         return path.slice(NEXT_OFFSET, path.length - NEXT_OFFSET);
     }
 
-    /// @dev functions for protocolFlag decoding
-    uint256 private constant PROTOCOL_FLAG_SIZE = 1;
-
+    /// @notice Gets the protocol flag for the first pool/pair in the path
+    /// @param protocolFlags The bytes encoded protocol flags
+    /// @return flag The protocol flag for the first pool/pair in the path
     function decodeFirstProtocolFlag(bytes memory protocolFlags) internal pure returns (uint8 flag) {
         return protocolFlags.toUint8(0);
     }
 
+    /// @notice Skips a protocol flag from the buffer and returns the remainder
+    /// @param protocolFlags The bytes encoded protocol flags
+    /// @return The remaining protocol flags in the bytes array
     function skipProtocolFlag(bytes memory protocolFlags) internal pure returns (bytes memory) {
         return protocolFlags.slice(PROTOCOL_FLAG_SIZE, protocolFlags.length - PROTOCOL_FLAG_SIZE);
     }
