@@ -17,8 +17,6 @@ import '../libraries/PoolTicksCounter.sol';
 import '../libraries/UniswapV2Library.sol';
 import '../libraries/Path.sol';
 
-import 'hardhat/console.sol';
-
 /// @title Provides quotes for swaps
 /// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap
 /// @dev These functions are not gas efficient and should _not_ be called on chain. Instead, optimistically execute
@@ -247,6 +245,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         - a V3 pool is encoded as:
         ___first pair___(20 bytes) + ___fee___(3 bytes) + ___second token___(20 bytes)
 
+        token0_fee_FLAG_token1_fee_FLAG_token2
         - V2 pair will have a fee of 000000 (enforce in sdk), but its value is never used
 
         Approach for IL:
@@ -304,7 +303,6 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                             sqrtPriceLimitX96: 0
                         })
                     );
-
                 sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
                 initializedTicksCrossedList[i] = _initializedTicksCrossed;
                 gasEstimate += _gasEstimate;

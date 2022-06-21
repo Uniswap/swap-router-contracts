@@ -101,7 +101,7 @@ describe('QuoterV3', function () {
     expect(reserve1).to.equal(reserve1Before.add(ethers.utils.parseEther(amount1)))
   }
 
-  describe.only('quotes', () => {
+  describe('quotes', () => {
     beforeEach(async () => {
       await createPool(nft, wallet, tokens[0].address, tokens[1].address)
       await createPool(nft, wallet, tokens[1].address, tokens[2].address)
