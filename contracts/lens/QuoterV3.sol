@@ -17,8 +17,6 @@ import '../interfaces/IQuoterV3.sol';
 import '../libraries/PoolTicksCounter.sol';
 import '../libraries/UniswapV2Library.sol';
 
-import 'hardhat/console.sol';
-
 /// @title Provides quotes for swaps
 /// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap
 /// @dev These functions are not gas efficient and should _not_ be called on chain. Instead, optimistically execute
@@ -253,15 +251,8 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         - a V3 pool is encoded as:
         ___first pair___(20 bytes) + ___fee___(3 bytes) + ___second token___(20 bytes)
 
-        - V2 pair will have a fee of 000000 (enforce in sdk), but its value is never used
-
-        Approach for IL:
-        - We pass in a separate bytes array for the Protcols that each pool belongs to, where each index corresponds
-          to a pool or pair in the path array since intermediary tokens are not repeated. Ex:
-
-        (USDC fee [WETH) fee DAI], PF array: [1 (USDC-WETH as a V3 pool), 0 (WETH-DAI as a V2 pair)]
-
-        0 for V2, 1 for V3
+        For V2 pairs, we set the fee to 0x8388608, which is greater than the max fee allowed by the v3 factory
+        that way, bit masking 100000000000000000000000 with anything but that results in 0
 
         Note: we can support multiple V3 pools in the same route now since we are fetching V2 and V3 quotes on chain in a single call
      */
