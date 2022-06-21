@@ -1579,6 +1579,40 @@ describe.only('SwapRouter', function () {
 
         expect(quoterAmountOut.eq(routerAmountOut)).to.be.true
       })
+
+      it('exactIn 0 -V2-> 1 -V3-> 2', async () => {
+        const swapV2 = await exactInputV2(
+          tokens.slice(0, 2).map((token) => token.address),
+          10,
+          9,
+          ADDRESS_THIS
+        )
+
+        const swapV3 = await exactInputV3(
+          tokens.slice(1, 3).map((token) => token.address),
+          CONTRACT_BALANCE,
+          7,
+          MSG_SENDER,
+          true
+        )
+
+        const traderBefore = await getBalances(trader.address)
+        await router.connect(trader)['multicall(bytes[])']([...swapV2, ...swapV3])
+        const traderAfter = await getBalances(trader.address)
+
+        expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(10))
+        expect(traderAfter.token2).to.be.eq(traderBefore.token2.add(7))
+
+        const routerAmountOut = traderAfter.token2.sub(traderBefore.token2)
+
+        // expect to equal quoter output
+        const { amountOut: quoterAmountOut } = await quoter.callStatic['quoteExactInput(bytes,bytes,uint256)'](
+          encodePath([tokens[0].address, tokens[1].address, tokens[2].address], [0, FeeAmount.MEDIUM]),
+          encodeProtocolFlags(['V2', 'V3']),
+          10
+        )
+        expect(quoterAmountOut.eq(routerAmountOut)).to.be.true
+      })
     })
   })
 })
