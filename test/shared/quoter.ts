@@ -1,5 +1,5 @@
 import { Wallet, Contract } from 'ethers'
-import { FeeAmount, TICK_SPACINGS } from './constants'
+import { FeeAmount, MAX_V3_TICK_SPACING, TICK_SPACINGS, V3_MAX_FEE } from './constants'
 import { encodePriceSqrt } from './encodePriceSqrt'
 import { getMaxTick, getMinTick } from './ticks'
 

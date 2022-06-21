@@ -53,3 +53,5 @@ exports[`QuoterV3 quotes #quoteExactOutput V3 only 2 -> 1 1`] = `97870`;
 exports[`QuoterV3 quotes #quoteExactOutputSingle V3 0 -> 1 1`] = `105200`;
 
 exports[`QuoterV3 quotes #quoteExactOutputSingle V3 1 -> 0 1`] = `98511`;
+
+exports[`QuoterV3 quotes testing bit masking for protocol selection should route v3 for max fee 1`] = `104481`;

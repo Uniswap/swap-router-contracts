@@ -3,7 +3,7 @@ import { constants, Wallet, Contract, BigNumber } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { QuoterV3, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
-import { FeeAmount, MaxUint128, V2_FEE } from './shared/constants'
+import { FeeAmount, MaxUint128, V2_FEE, V3_MAX_FEE } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
@@ -668,6 +668,23 @@ describe.only('QuoterV3', function () {
         expect(initializedTicksCrossedList[0]).to.eq(2)
         // don't check V2 initializedTicksCrossList index
         expect(amountIn).to.eq(15319)
+      })
+    })
+
+    describe('testing bit masking for protocol selection', () => {
+      it('when given the max v3 fee, should still route v3 and revert because pool DNE', async () => {
+        /**
+         * @dev this is the max fee that can be set on a V3 pool per the factory
+         *      in this environment this pool does not exist, and thus the call should revert
+         *      - however, if the bitmask fails to catch this and routes it to V2, it will succeed.
+         *        thus, we expect it to be reverted.
+         */
+        await expect(
+          quoter.callStatic['quoteExactInput(bytes,uint256)'](
+            encodePath([tokens[0].address, tokens[1].address], [V3_MAX_FEE]),
+            10000
+          )
+        ).to.be.reverted
       })
     })
   })
