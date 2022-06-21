@@ -8,6 +8,7 @@ import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 import '@uniswap/v3-core/contracts/libraries/TickBitmap.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
+import '@uniswap/v3-periphery/contracts/libraries/Path.sol';
 import '@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol';
 import '@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol';
 import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
@@ -15,7 +16,6 @@ import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
 import '../interfaces/IQuoterV3.sol';
 import '../libraries/PoolTicksCounter.sol';
 import '../libraries/UniswapV2Library.sol';
-import '../libraries/Path.sol';
 
 import 'hardhat/console.sol';
 
@@ -242,6 +242,12 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         amountIn = getPairAmountIn(amountOut, tokenIn, tokenOut);
     }
 
+    uint24 private flagBitmask = 1 << 23; // for masking with 24 bit (3 bytes) fee
+
+    // max fee: 000011110100001001000000 (24 bits)
+    // mask:    100000000000000000000000
+    //          100000000000000000000000 = 8388608 in decimal
+
     /**
         Path notes:
         - a V3 pool is encoded as:
@@ -260,11 +266,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         Note: we can support multiple V3 pools in the same route now since we are fetching V2 and V3 quotes on chain in a single call
      */
     /// @notice new addition
-    function quoteExactInput(
-        bytes memory path,
-        bytes memory protocolFlags,
-        uint256 amountIn
-    )
+    function quoteExactInput(bytes memory path, uint256 amountIn)
         public
         override
         returns (
@@ -277,17 +279,14 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         sqrtPriceX96AfterList = new uint160[](path.numPools());
         initializedTicksCrossedList = new uint32[](path.numPools());
 
-        // @dev path and protocol flags must be the same length
-        require(path.numPools() == protocolFlags.length, 'Length mismatch');
-
         uint256 i = 0;
         while (true) {
             (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
-            // @note we are 1 var away from stack to deep so evaluating this inline
-            if (protocolFlags.decodeFirstProtocolFlag() == 0) {
+
+            if (fee & flagBitmask != 0) {
                 // V2
                 amountIn = quoteExactInputSingleV2(amountIn, tokenIn, tokenOut);
-            } else if (protocolFlags.decodeFirstProtocolFlag() == 1) {
+            } else {
                 // the outputs of prior swaps become the inputs to subsequent ones
                 (
                     uint256 _amountOut,
@@ -309,15 +308,12 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                 initializedTicksCrossedList[i] = _initializedTicksCrossed;
                 gasEstimate += _gasEstimate;
                 amountIn = _amountOut;
-            } else {
-                revert('Invalid protocol value');
             }
             i++;
 
             // decide whether to continue or terminate
             if (path.hasMultiplePools()) {
                 path = path.skipToken();
-                protocolFlags = protocolFlags.skipProtocolFlag();
             } else {
                 return (amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
             }
@@ -325,11 +321,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
     }
 
     /// @notice new addition
-    function quoteExactOutput(
-        bytes memory path,
-        bytes memory protocolFlags,
-        uint256 amountOut
-    )
+    function quoteExactOutput(bytes memory path, uint256 amountOut)
         public
         override
         returns (
@@ -342,16 +334,13 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         sqrtPriceX96AfterList = new uint160[](path.numPools());
         initializedTicksCrossedList = new uint32[](path.numPools());
 
-        // @dev path and protocol flags must be the same length
-        require(path.numPools() == protocolFlags.length, 'Length mismatch');
-
         uint256 i = 0;
         while (true) {
             (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
 
-            if (protocolFlags.decodeFirstProtocolFlag() == 0) {
+            if (fee & flagBitmask != 0) {
                 amountOut = quoteExactOutputSingleV2(amountOut, tokenIn, tokenOut);
-            } else if (protocolFlags.decodeFirstProtocolFlag() == 1) {
+            } else {
                 // the inputs of prior swaps become the outputs of subsequent ones
                 (uint256 _amountIn, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
                     quoteExactOutputSingle(
@@ -368,15 +357,12 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                 initializedTicksCrossedList[i] = _initializedTicksCrossed;
                 amountOut = _amountIn;
                 gasEstimate += _gasEstimate;
-            } else {
-                revert('Invalid protocol value');
             }
             i++;
 
             // decide whether to continue or terminate
             if (path.hasMultiplePools()) {
                 path = path.skipToken();
-                protocolFlags = protocolFlags.skipProtocolFlag();
             } else {
                 return (amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
             }

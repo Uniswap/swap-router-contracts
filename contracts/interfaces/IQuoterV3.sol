@@ -10,17 +10,12 @@ pragma abicoder v2;
 interface IQuoterV3 {
     /// @notice Returns the amount out received for a given exact input swap without executing the swap
     /// @param path The path of the swap, i.e. each token pair and the pool fee
-    /// @param protocolFlags 1:1 with the number of pools/pairs in the path determining the protocol
     /// @param amountIn The amount of the first token to swap
     /// @return amountOut The amount of the last token that would be received
     /// @return sqrtPriceX96AfterList List of the sqrt price after the swap for each pool in the path
     /// @return initializedTicksCrossedList List of the initialized ticks that the swap crossed for each pool in the path
     /// @return gasEstimate The estimate of the gas that the swap consumes
-    function quoteExactInput(
-        bytes memory path,
-        bytes memory protocolFlags,
-        uint256 amountIn
-    )
+    function quoteExactInput(bytes memory path, uint256 amountIn)
         external
         returns (
             uint256 amountOut,
@@ -59,17 +54,12 @@ interface IQuoterV3 {
 
     /// @notice Returns the amount in required for a given exact output swap without executing the swap
     /// @param path The path of the swap, i.e. each token pair and the pool fee. Path must be provided in reverse order
-    /// @param protocolFlags 1:1 with the number of pools/pairs in the path determining the protocol
     /// @param amountOut The amount of the last token to receive
     /// @return amountIn The amount of first token required to be paid
     /// @return sqrtPriceX96AfterList List of the sqrt price after the swap for each pool in the path
     /// @return initializedTicksCrossedList List of the initialized ticks that the swap crossed for each pool in the path
     /// @return gasEstimate The estimate of the gas that the swap consumes
-    function quoteExactOutput(
-        bytes memory path,
-        bytes memory protocolFlags,
-        uint256 amountOut
-    )
+    function quoteExactOutput(bytes memory path, uint256 amountOut)
         external
         returns (
             uint256 amountIn,
