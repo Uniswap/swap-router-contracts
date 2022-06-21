@@ -59,13 +59,3 @@ export function decodePath(path: string): [string[], number[]] {
 
   return [tokens, fees]
 }
-
-type ProtocolType = 'V2' | 'V3'
-
-export function encodeProtocolFlags(flags: ProtocolType[]) {
-  let encoded = '0x'
-  flags.map((flag: ProtocolType) => {
-    encoded += flag === 'V2' ? '00' : '01'
-  })
-  return encoded
-}

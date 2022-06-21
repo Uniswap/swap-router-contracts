@@ -8,6 +8,10 @@ export enum FeeAmount {
   HIGH = 10000,
 }
 
+export const V3_MAX_FEE = 999999 // < 1000000
+export const MAX_V3_TICK_SPACING = 16383 // < 16384
+export const V2_FEE = 8388608 // 1 << 23
+
 export const TICK_SPACINGS: { [amount in FeeAmount]: number } = {
   [FeeAmount.LOW]: 10,
   [FeeAmount.MEDIUM]: 60,
