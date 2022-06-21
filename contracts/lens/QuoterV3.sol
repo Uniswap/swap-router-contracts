@@ -245,6 +245,8 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         - a V3 pool is encoded as:
         ___first pair___(20 bytes) + ___fee___(3 bytes) + ___second token___(20 bytes)
 
+        token0_fee_FLAG_token1_fee_FLAG_token2
+
         Approach for IL:
         - We pass in a separate bytes array for the Protcols that each pool belongs to, where each index corresponds
           to a pool or pair in the path array since intermediary tokens are not repeated. Ex:
