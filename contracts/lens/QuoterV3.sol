@@ -294,7 +294,6 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                             sqrtPriceLimitX96: 0
                         })
                     );
-
                 sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
                 initializedTicksCrossedList[i] = _initializedTicksCrossed;
                 gasEstimate += _gasEstimate;
