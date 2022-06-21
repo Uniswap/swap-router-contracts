@@ -19,7 +19,7 @@ import snapshotGasCost from './shared/snapshotGasCost'
 
 import { abi as PAIR_V2_ABI, bytecode as PAIR_V2_BYTECODE } from '@uniswap/v2-core/build/UniswapV2Pair.json'
 
-describe.only('QuoterV3', function () {
+describe('QuoterV3', function () {
   this.timeout(40000)
   let wallet: Wallet
   let trader: Wallet

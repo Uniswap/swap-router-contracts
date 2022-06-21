@@ -7,11 +7,11 @@ import { ethers, waffle } from 'hardhat'
 import { IUniswapV2Pair, IWETH9, MockTimeSwapRouter02, QuoterV3, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { computePoolAddress } from './shared/computePoolAddress'
-import { ADDRESS_THIS, CONTRACT_BALANCE, FeeAmount, MSG_SENDER, TICK_SPACINGS } from './shared/constants'
+import { ADDRESS_THIS, CONTRACT_BALANCE, FeeAmount, MSG_SENDER, TICK_SPACINGS, V2_FEE } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
-import { encodePath, encodeProtocolFlags } from './shared/path'
+import { encodePath } from './shared/path'
 import { getMaxTick, getMinTick } from './shared/ticks'
 
 describe.only('SwapRouter', function () {
@@ -1571,9 +1571,8 @@ describe.only('SwapRouter', function () {
         const routerAmountOut = traderAfter.token2.sub(traderBefore.token2)
 
         // expect to equal quoter output
-        const { amountOut: quoterAmountOut } = await quoter.callStatic['quoteExactInput(bytes,bytes,uint256)'](
-          encodePath([tokens[0].address, tokens[1].address, tokens[2].address], [FeeAmount.MEDIUM, 0]),
-          encodeProtocolFlags(['V3', 'V2']),
+        const { amountOut: quoterAmountOut } = await quoter.callStatic['quoteExactInput(bytes,uint256)'](
+          encodePath([tokens[0].address, tokens[1].address, tokens[2].address], [FeeAmount.MEDIUM, V2_FEE]),
           10
         )
 
@@ -1606,9 +1605,8 @@ describe.only('SwapRouter', function () {
         const routerAmountOut = traderAfter.token2.sub(traderBefore.token2)
 
         // expect to equal quoter output
-        const { amountOut: quoterAmountOut } = await quoter.callStatic['quoteExactInput(bytes,bytes,uint256)'](
-          encodePath([tokens[0].address, tokens[1].address, tokens[2].address], [0, FeeAmount.MEDIUM]),
-          encodeProtocolFlags(['V2', 'V3']),
+        const { amountOut: quoterAmountOut } = await quoter.callStatic['quoteExactInput(bytes,uint256)'](
+          encodePath([tokens[0].address, tokens[1].address, tokens[2].address], [V2_FEE, FeeAmount.MEDIUM]),
           10
         )
         expect(quoterAmountOut.eq(routerAmountOut)).to.be.true
