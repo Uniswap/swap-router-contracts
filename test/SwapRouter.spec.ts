@@ -1613,7 +1613,7 @@ describe.only('SwapRouter', function () {
       })
 
       /**
-       * @dev there is no support for passing in CONTRACT_BALANCE to swapTokensForExactTokens
+       * @dev there is no support for passing in CONTRACT_BALANCE to exactOut (exactOutput / swapTokensForExactTokens)
        */
     })
   })
