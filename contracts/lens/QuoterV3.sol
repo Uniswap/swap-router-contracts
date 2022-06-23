@@ -25,7 +25,8 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
     using Path for bytes;
     using SafeCast for uint256;
     using PoolTicksCounter for IUniswapV3Pool;
-    address public v2Factory;
+    address public immutable v2Factory;
+    uint24 private constant flagBitmask = 1 << 23;
 
     /// @dev Transient storage variable used to check a safety condition in exact output swaps.
     uint256 private amountOutCached;
@@ -46,11 +47,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         return IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
     }
 
-    /**
-        @dev used for exactIn
-        @notice Given an amountIn, fetch the reserves of the V2 pair and call getAmountOut
-        @notice new addition
-     */
+    /// @dev Given an amountIn, fetch the reserves of the V2 pair and call getAmountOut
     function getPairAmountOut(
         uint256 amountIn,
         address tokenIn,
@@ -58,20 +55,6 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
     ) private view returns (uint256) {
         (uint256 reserveIn, uint256 reserveOut) = UniswapV2Library.getReserves(v2Factory, tokenIn, tokenOut);
         return UniswapV2Library.getAmountOut(amountIn, reserveIn, reserveOut);
-    }
-
-    /**
-        @dev used for exactOut
-        @notice Given an amountOut, fetch the reserves of the V2 pair and call getAmountIn
-        @notice new addition
-     */
-    function getPairAmountIn(
-        uint256 amountOut,
-        address tokenIn,
-        address tokenOut
-    ) private view returns (uint256) {
-        (uint256 reserveIn, uint256 reserveOut) = UniswapV2Library.getReserves(v2Factory, tokenIn, tokenOut);
-        return UniswapV2Library.getAmountIn(amountOut, reserveIn, reserveOut);
     }
 
     /// @inheritdoc IUniswapV3SwapCallback
@@ -101,15 +84,9 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                 revert(ptr, 96)
             }
         } else {
-            // if the cache has been populated, ensure that the full output amount has been received
-            if (amountOutCached != 0) require(amountReceived == amountOutCached);
-            assembly {
-                let ptr := mload(0x40)
-                mstore(ptr, amountToPay)
-                mstore(add(ptr, 0x20), sqrtPriceX96After)
-                mstore(add(ptr, 0x40), tickAfter)
-                revert(ptr, 96)
-            }
+            /// since we don't support exactOutput, revert here
+            /// @dev confirmed by modified test case to revert with reason correctly
+            revert('Exact output quote not supported');
         }
     }
 
@@ -187,41 +164,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         }
     }
 
-    function quoteExactOutputSingle(QuoteExactOutputSingleParams memory params)
-        public
-        override
-        returns (
-            uint256 amountIn,
-            uint160 sqrtPriceX96After,
-            uint32 initializedTicksCrossed,
-            uint256 gasEstimate
-        )
-    {
-        bool zeroForOne = params.tokenIn < params.tokenOut;
-        IUniswapV3Pool pool = getPool(params.tokenIn, params.tokenOut, params.fee);
-
-        // if no price limit has been specified, cache the output amount for comparison in the swap callback
-        if (params.sqrtPriceLimitX96 == 0) amountOutCached = params.amount;
-        uint256 gasBefore = gasleft();
-        try
-            pool.swap(
-                address(this), // address(0) might cause issues with some tokens
-                zeroForOne,
-                -params.amount.toInt256(),
-                params.sqrtPriceLimitX96 == 0
-                    ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
-                    : params.sqrtPriceLimitX96,
-                abi.encodePacked(params.tokenOut, params.fee, params.tokenIn)
-            )
-        {} catch (bytes memory reason) {
-            gasEstimate = gasBefore - gasleft();
-            if (params.sqrtPriceLimitX96 == 0) delete amountOutCached; // clear cache
-            return handleRevert(reason, pool, gasEstimate);
-        }
-    }
-
-    /// @dev Fetch an exactin quote for a V2 pair on chain
-    /// @notice new addition
+    /// @dev Fetch an exactIn quote for a V2 pair on chain
     function quoteExactInputSingleV2(
         uint256 amountIn,
         address tokenIn,
@@ -230,33 +173,9 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         amountOut = getPairAmountOut(amountIn, tokenIn, tokenOut);
     }
 
-    /// @dev Fetch an exactOut quote for a V2 pair on chain
-    /// @notice new addition
-    function quoteExactOutputSingleV2(
-        uint256 amountOut,
-        address tokenIn,
-        address tokenOut
-    ) public view returns (uint256 amountIn) {
-        amountIn = getPairAmountIn(amountOut, tokenIn, tokenOut);
-    }
-
-    uint24 private flagBitmask = 1 << 23; // for masking with 24 bit (3 bytes) fee
-
-    // max fee: 000011110100001001000000 (24 bits)
-    // mask:    100000000000000000000000
-    //          100000000000000000000000 = 8388608 in decimal
-
-    /**
-        Path notes:
-        - a V3 pool is encoded as:
-        ___first pair___(20 bytes) + ___fee___(3 bytes) + ___second token___(20 bytes)
-
-        For V2 pairs, we set the fee to 0x8388608, which is greater than the max fee allowed by the v3 factory
-        that way, bit masking 100000000000000000000000 with anything but that results in 0
-
-        Note: we can support multiple V3 pools in the same route now since we are fetching V2 and V3 quotes on chain in a single call
-     */
-    /// @notice new addition
+    // max V3 fee: 000011110100001001000000 (24 bits)
+    // mask:       100000000000000000000000
+    //             100000000000000000000000 = 8388608 in decimal
     function quoteExactInput(bytes memory path, uint256 amountIn)
         public
         override
@@ -275,10 +194,9 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
             (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
 
             if (fee & flagBitmask != 0) {
-                // V2
                 amountIn = quoteExactInputSingleV2(amountIn, tokenIn, tokenOut);
             } else {
-                // the outputs of prior swaps become the inputs to subsequent ones
+                /// the outputs of prior swaps become the inputs to subsequent ones
                 (
                     uint256 _amountOut,
                     uint160 _sqrtPriceX96After,
@@ -301,60 +219,11 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
             }
             i++;
 
-            // decide whether to continue or terminate
+            /// decide whether to continue or terminate
             if (path.hasMultiplePools()) {
                 path = path.skipToken();
             } else {
                 return (amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
-            }
-        }
-    }
-
-    /// @notice new addition
-    function quoteExactOutput(bytes memory path, uint256 amountOut)
-        public
-        override
-        returns (
-            uint256 amountIn,
-            uint160[] memory sqrtPriceX96AfterList,
-            uint32[] memory initializedTicksCrossedList,
-            uint256 gasEstimate
-        )
-    {
-        sqrtPriceX96AfterList = new uint160[](path.numPools());
-        initializedTicksCrossedList = new uint32[](path.numPools());
-
-        uint256 i = 0;
-        while (true) {
-            (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
-
-            if (fee & flagBitmask != 0) {
-                amountOut = quoteExactOutputSingleV2(amountOut, tokenIn, tokenOut);
-            } else {
-                // the inputs of prior swaps become the outputs of subsequent ones
-                (uint256 _amountIn, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
-                    quoteExactOutputSingle(
-                        QuoteExactOutputSingleParams({
-                            tokenIn: tokenIn,
-                            tokenOut: tokenOut,
-                            amount: amountOut,
-                            fee: fee,
-                            sqrtPriceLimitX96: 0
-                        })
-                    );
-
-                sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
-                initializedTicksCrossedList[i] = _initializedTicksCrossed;
-                amountOut = _amountIn;
-                gasEstimate += _gasEstimate;
-            }
-            i++;
-
-            // decide whether to continue or terminate
-            if (path.hasMultiplePools()) {
-                path = path.skipToken();
-            } else {
-                return (amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
             }
         }
     }
