@@ -1,57 +1,27 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`QuoterV3 quotes #quoteExactInput V2+V3 mixed route 0 -V2-> 2 -V3-> 1 1`] = `97339`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 -> 1 1`] = `284005`;
 
-exports[`QuoterV3 quotes #quoteExactInput V2+V3 mixed route 0 -V3-> 2 -V2-> 1 1`] = `186701`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 0 tick, starting tick initialized 1`] = `123786`;
 
-exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 -> 1 1`] = `284027`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 0 tick, starting tick not initialized 1`] = `104827`;
 
-exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 0 tick, starting tick initialized 1`] = `123797`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 1 tick 1`] = `149094`;
 
-exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 0 tick, starting tick not initialized 1`] = `104838`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 2 tick 1`] = `186691`;
 
-exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 1 tick 1`] = `149105`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 2 tick where after is initialized 1`] = `149132`;
 
-exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 2 tick 1`] = `186702`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 0 tick, starting tick initialized 1`] = `97643`;
 
-exports[`QuoterV3 quotes #quoteExactInput V3 only 0 -> 2 cross 2 tick where after is initialized 1`] = `149143`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 0 tick, starting tick not initialized 1`] = `97643`;
 
-exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 0 tick, starting tick initialized 1`] = `97654`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 2 1`] = `179503`;
 
-exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 0 tick, starting tick not initialized 1`] = `97654`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 2 where tick after is initialized 1`] = `179511`;
 
-exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 2 1`] = `179514`;
+exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 1 1`] = `97318`;
 
-exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 0 cross 2 where tick after is initialized 1`] = `179522`;
+exports[`QuoterV3 quotes #quoteExactInputSingle V3 0 -> 2 1`] = `186673`;
 
-exports[`QuoterV3 quotes #quoteExactInput V3 only 2 -> 1 1`] = `97329`;
-
-exports[`QuoterV3 quotes #quoteExactInputSingle V3 0 -> 2 1`] = `186684`;
-
-exports[`QuoterV3 quotes #quoteExactInputSingle V3 2 -> 0 1`] = `179486`;
-
-exports[`QuoterV3 quotes #quoteExactOutput V3 only 0 -> 2 -> 1 1`] = `283627`;
-
-exports[`QuoterV3 quotes #quoteExactOutput V3 only 0 -> 2 cross 0 tick starting tick initialized 1`] = `123352`;
-
-exports[`QuoterV3 quotes #quoteExactOutput V3 only 0 -> 2 cross 0 tick starting tick not initialized 1`] = `104413`;
-
-exports[`QuoterV3 quotes #quoteExactOutput V3 only 0 -> 2 cross 1 tick 1`] = `148391`;
-
-exports[`QuoterV3 quotes #quoteExactOutput V3 only 0 -> 2 cross 2 tick 1`] = `185744`;
-
-exports[`QuoterV3 quotes #quoteExactOutput V3 only 0 -> 2 cross 2 where tick after is initialized 1`] = `148429`;
-
-exports[`QuoterV3 quotes #quoteExactOutput V3 only 2 -> 0 cross 1 tick 1`] = `142238`;
-
-exports[`QuoterV3 quotes #quoteExactOutput V3 only 2 -> 0 cross 2 ticks 1`] = `179584`;
-
-exports[`QuoterV3 quotes #quoteExactOutput V3 only 2 -> 0 cross 2 where tick after is initialized 1`] = `179578`;
-
-exports[`QuoterV3 quotes #quoteExactOutput V3 only 2 -> 1 1`] = `97870`;
-
-exports[`QuoterV3 quotes #quoteExactOutputSingle V3 0 -> 1 1`] = `105200`;
-
-exports[`QuoterV3 quotes #quoteExactOutputSingle V3 1 -> 0 1`] = `98511`;
-
-exports[`QuoterV3 quotes testing bit masking for protocol selection should route v3 for max fee 1`] = `104481`;
+exports[`QuoterV3 quotes #quoteExactInputSingle V3 2 -> 0 1`] = `179475`;
