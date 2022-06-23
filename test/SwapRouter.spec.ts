@@ -1611,10 +1611,6 @@ describe.only('SwapRouter', function () {
         )
         expect(quoterAmountOut.eq(routerAmountOut)).to.be.true
       })
-
-      /**
-       * @dev there is no support for passing in CONTRACT_BALANCE to exactOut (exactOutput / swapTokensForExactTokens)
-       */
     })
   })
 })

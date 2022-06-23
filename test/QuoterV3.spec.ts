@@ -18,7 +18,7 @@ import snapshotGasCost from './shared/snapshotGasCost'
 
 import { abi as PAIR_V2_ABI } from '@uniswap/v2-core/build/UniswapV2Pair.json'
 
-const V3_MAX_FEE = 999999 // 1_000_000 - 1 since < 1_000_000
+const V3_MAX_FEE = 999999 // = 1_000_000 - 1 since must be < 1_000_000
 
 describe.only('QuoterV3', function () {
   this.timeout(40000)
@@ -107,12 +107,10 @@ describe.only('QuoterV3', function () {
       await createPool(nft, wallet, tokens[0].address, tokens[1].address)
       await createPool(nft, wallet, tokens[1].address, tokens[2].address)
       await createPoolWithMultiplePositions(nft, wallet, tokens[0].address, tokens[2].address)
-      /**
-       * Create V2 pairs
-       */
-      pair01Address = await createPair(factoryV2, tokens[0].address, tokens[1].address) // 0 - 1
-      pair12Address = await createPair(factoryV2, tokens[1].address, tokens[2].address) // 1 - 2
-      pair02Address = await createPair(factoryV2, tokens[0].address, tokens[2].address) // 0 - 2
+      /// @dev Create V2 Pairs
+      pair01Address = await createPair(factoryV2, tokens[0].address, tokens[1].address)
+      pair12Address = await createPair(factoryV2, tokens[1].address, tokens[2].address)
+      pair02Address = await createPair(factoryV2, tokens[0].address, tokens[2].address)
 
       await addLiquidityV2(pair01Address, tokens[0], tokens[1], '1000000', '1000000')
       await addLiquidityV2(pair12Address, tokens[1], tokens[2], '1000000', '1000000')
@@ -364,9 +362,7 @@ describe.only('QuoterV3', function () {
 
       describe('+ with imbalanced pairs', () => {
         before(async () => {
-          // imbalance the 1-2 pool with a much larger amount in 1
           await addLiquidityV2(pair12Address, tokens[1], tokens[2], '1000000', '1000')
-          // reservesAfter: 1: 2_000_000 , 2: 1_001_000
         })
 
         it('1 -> 2', async () => {
@@ -383,10 +379,10 @@ describe.only('QuoterV3', function () {
     describe('testing bit masking for protocol selection', () => {
       it('when given the max v3 fee, should still route v3 and revert because pool DNE', async () => {
         /**
-         * @define this is the max fee that can be set on a V3 pool per the factory
-         *      in this environment this pool does not exist, and thus the call should revert
-         *      - however, if the bitmask fails to catch this and routes it to V2, it will succeed.
-         *        thus, we expect it to be reverted.
+         * @define 999999 is the max fee that can be set on a V3 pool per the factory
+         *        in this environment this pool does not exist, and thus the call should revert
+         *      - however, if the bitmask fails to catch this the call will succeed and route to V2
+         *      - thus, we expect it to be reverted.
          */
         await expect(
           quoter.callStatic['quoteExactInput(bytes,uint256)'](
