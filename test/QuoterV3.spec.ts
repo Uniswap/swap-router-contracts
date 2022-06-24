@@ -378,12 +378,10 @@ describe.only('QuoterV3', function () {
 
     describe('testing bit masking for protocol selection', () => {
       it('when given the max v3 fee, should still route v3 and revert because pool DNE', async () => {
-        /**
-         * @define 999999 is the max fee that can be set on a V3 pool per the factory
-         *        in this environment this pool does not exist, and thus the call should revert
-         *      - however, if the bitmask fails to catch this the call will succeed and route to V2
-         *      - thus, we expect it to be reverted.
-         */
+        /// @define 999999 is the max fee that can be set on a V3 pool per the factory
+        ///       in this environment this pool does not exist, and thus the call should revert
+        ///     - however, if the bitmask fails to catch this the call will succeed and route to V2
+        ///     - thus, we expect it to be reverted.
         await expect(
           quoter.callStatic['quoteExactInput(bytes,uint256)'](
             encodePath([tokens[0].address, tokens[1].address], [V3_MAX_FEE]),
