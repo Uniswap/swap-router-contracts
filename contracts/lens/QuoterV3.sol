@@ -26,6 +26,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
     using SafeCast for uint256;
     using PoolTicksCounter for IUniswapV3Pool;
     address public immutable v2Factory;
+    /// @dev Value to bit mask with path fee to determine if V2 or V3 route
     uint24 private constant flagBitmask = 1 << 23;
 
     /// @dev Transient storage variable used to check a safety condition in exact output swaps.
