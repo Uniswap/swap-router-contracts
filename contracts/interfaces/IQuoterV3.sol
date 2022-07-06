@@ -3,7 +3,7 @@ pragma solidity >=0.7.5;
 pragma abicoder v2;
 
 /// @title QuoterV3 Interface
-/// @notice Supports quoting the calculated amounts from exact input or exact output swaps.
+/// @notice Supports quoting the calculated amounts for exact input swaps. Is specialized for routes containing a mix of V2 and V3 liquidity.
 /// @notice For each pool also tells you the number of initialized ticks crossed and the sqrt price of the pool after the swap.
 /// @dev These functions are not marked view because they rely on calling non-view functions and reverting
 /// to compute the result. They are also not gas efficient and should not be called on-chain.
@@ -51,4 +51,8 @@ interface IQuoterV3 {
             uint32 initializedTicksCrossed,
             uint256 gasEstimate
         );
+
+    /// @dev ExactOutput swaps are not supported by this new Quoter which is specialized for supporting routes
+    ///      crossing both V2 liquidity pairs and V3 pools.
+    /// @deprecated quoteExactOutputSingle and exactOutput. Use QuoterV2 instead.
 }

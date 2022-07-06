@@ -14,7 +14,7 @@ import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
 import { getMaxTick, getMinTick } from './shared/ticks'
 
-describe.only('SwapRouter', function () {
+describe('SwapRouter', function () {
   this.timeout(40000)
   let wallet: Wallet
   let trader: Wallet
@@ -1331,7 +1331,7 @@ describe.only('SwapRouter', function () {
     })
   })
 
-  describe.only('swaps - v2 + v3', () => {
+  describe('swaps - v2 + v3', () => {
     beforeEach('create 0-1 and 1-2 pools', async () => {
       await createV3Pool(tokens[0].address, tokens[1].address)
       await createV3Pool(tokens[1].address, tokens[2].address)
@@ -1543,7 +1543,7 @@ describe.only('SwapRouter', function () {
       })
     })
 
-    describe.only('interleaving', () => {
+    describe('interleaving', () => {
       // 0 -V3-> 1 -V2-> 2
       it('exactIn 0 -V3-> 1 -V2-> 2', async () => {
         const swapV3 = await exactInputV3(

@@ -27,7 +27,9 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
     using PoolTicksCounter for IUniswapV3Pool;
     address public immutable v2Factory;
     /// @dev Value to bit mask with path fee to determine if V2 or V3 route
-    uint24 private constant flagBitmask = 1 << 23;
+    // max V3 fee: 000011110100001001000000 (24 bits)
+    // mask:       1 << 23 = 100000000000000000000000 = decimal value 8388608
+    uint24 private constant flagBitmask = 8388608;
 
     /// @dev Transient storage variable used to check a safety condition in exact output swaps.
     uint256 private amountOutCached;
@@ -135,6 +137,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         return (amount, sqrtPriceX96After, initializedTicksCrossed, gasEstimate);
     }
 
+    /// @dev Fetch an exactIn quote for a V3 Pool on chain
     function quoteExactInputSingle(QuoteExactInputSingleParams memory params)
         public
         override
@@ -174,9 +177,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         amountOut = getPairAmountOut(amountIn, tokenIn, tokenOut);
     }
 
-    // max V3 fee: 000011110100001001000000 (24 bits)
-    // mask:       100000000000000000000000
-    //             100000000000000000000000 = 8388608 in decimal
+    /// @dev Get the quote for an exactIn swap between an array of V2 and/or V3 pools
     function quoteExactInput(bytes memory path, uint256 amountIn)
         public
         override
