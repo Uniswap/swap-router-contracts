@@ -45,19 +45,52 @@ const DAI_V3_3000_UNI_V2_USDT_V3_3000_WETH = encodePath(
 // (use two V2 pools)
 const DAI_V3_3000_UNI_V2_USDT_V2_WETH = encodePath([DAI, UNI, USDT, WETH], [FeeAmount.MEDIUM, V2_FEE, V2_FEE])
 
-xdescribe('QuoterV3 integration tests', () => {
+describe('QuoterV3 integration tests', function () {
   let quoterV3: QuoterV3
   let alice: JsonRpcSigner
 
-  before(async () => {
+  before(async function () {
+    if (!process.env.ARCHIVE_RPC_URL) {
+      this.skip()
+    }
+
+    await hre.network.provider.request({
+      method: 'hardhat_reset',
+      params: [
+        {
+          forking: {
+            jsonRpcUrl: process.env.ARCHIVE_RPC_URL,
+            blockNumber: 14390000,
+          },
+        },
+      ],
+    })
+
     const QuoterV3Factory = await ethers.getContractFactory('QuoterV3')
     quoterV3 = (await QuoterV3Factory.deploy(V3_FACTORY, V2_FACTORY, WETH)) as QuoterV3
   })
 
+  after(async () => {
+    // Disable mainnet forking to avoid effecting other tests.
+    await hre.network.provider.request({
+      method: 'hardhat_reset',
+      params: [],
+    })
+  })
+
   /**
-   * Values only valid at block 14390000, we should not be running a local node of hardhat to test against, but rather using
-   * the jest-environment-hardhat plugin. TODO
+   * Test values only valid at block 14390000
    */
+  it('sets block number correctly', async () => {
+    const blockNumber = BigNumber.from(
+      await hre.network.provider.request({
+        method: 'eth_blockNumber',
+        params: [],
+      })
+    )
+    /// @dev +1 so 14390001 since we just requested
+    expect(blockNumber.eq(14390001)).to.be.true
+  })
 
   describe('quotes stablecoin only paths correctly', () => {
     /// @dev the amount must be expanded to the decimals of the first token in the path
