@@ -17,8 +17,9 @@ import '../interfaces/IQuoterV3.sol';
 import '../libraries/PoolTicksCounter.sol';
 import '../libraries/UniswapV2Library.sol';
 
-/// @title Provides quotes for swaps
-/// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap
+/// @title Provides on chain quotes for V3, V2, and MixedRoute exact input swaps
+/// @notice Allows getting the expected amount out for a given swap without executing the swap
+/// @notice Does not support exact output swaps since using the contract balance between exactOut swaps is not supported
 /// @dev These functions are not gas efficient and should _not_ be called on chain. Instead, optimistically execute
 /// the swap and check the amounts in the callback.
 contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState {
@@ -76,13 +77,13 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                 : (tokenOut < tokenIn, uint256(-amount0Delta));
 
         IUniswapV3Pool pool = getPool(tokenIn, tokenOut, fee);
-        (uint160 sqrtPriceX96After, int24 tickAfter, , , , , ) = pool.slot0();
+        (uint160 v3SqrtPriceX96After, int24 tickAfter, , , , , ) = pool.slot0();
 
         if (isExactInput) {
             assembly {
                 let ptr := mload(0x40)
                 mstore(ptr, amountReceived)
-                mstore(add(ptr, 0x20), sqrtPriceX96After)
+                mstore(add(ptr, 0x20), v3SqrtPriceX96After)
                 mstore(add(ptr, 0x40), tickAfter)
                 revert(ptr, 96)
             }
@@ -99,7 +100,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         pure
         returns (
             uint256 amount,
-            uint160 sqrtPriceX96After,
+            uint160 v3SqrtPriceX96After,
             int24 tickAfter
         )
     {
@@ -113,39 +114,39 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         return abi.decode(reason, (uint256, uint160, int24));
     }
 
-    function handleRevert(
+    function handleV3Revert(
         bytes memory reason,
         IUniswapV3Pool pool,
-        uint256 gasEstimate
+        uint256 v3GasEstimate
     )
         private
         view
         returns (
             uint256 amount,
-            uint160 sqrtPriceX96After,
-            uint32 initializedTicksCrossed,
+            uint160 v3SqrtPriceX96After,
+            uint32 v3InitializedTicksCrossed,
             uint256
         )
     {
         int24 tickBefore;
         int24 tickAfter;
         (, tickBefore, , , , , ) = pool.slot0();
-        (amount, sqrtPriceX96After, tickAfter) = parseRevertReason(reason);
+        (amount, v3SqrtPriceX96After, tickAfter) = parseRevertReason(reason);
 
-        initializedTicksCrossed = pool.countInitializedTicksCrossed(tickBefore, tickAfter);
+        v3InitializedTicksCrossed = pool.countInitializedTicksCrossed(tickBefore, tickAfter);
 
-        return (amount, sqrtPriceX96After, initializedTicksCrossed, gasEstimate);
+        return (amount, v3SqrtPriceX96After, v3InitializedTicksCrossed, v3GasEstimate);
     }
 
     /// @dev Fetch an exactIn quote for a V3 Pool on chain
-    function quoteExactInputSingle(QuoteExactInputSingleParams memory params)
+    function quoteExactInputSingleV3(QuoteExactInputSingleV3Params memory params)
         public
         override
         returns (
             uint256 amountOut,
-            uint160 sqrtPriceX96After,
-            uint32 initializedTicksCrossed,
-            uint256 gasEstimate
+            uint160 v3SqrtPriceX96After,
+            uint32 v3InitializedTicksCrossed,
+            uint256 v3GasEstimate
         )
     {
         bool zeroForOne = params.tokenIn < params.tokenOut;
@@ -163,18 +164,18 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                 abi.encodePacked(params.tokenIn, params.fee, params.tokenOut)
             )
         {} catch (bytes memory reason) {
-            gasEstimate = gasBefore - gasleft();
-            return handleRevert(reason, pool, gasEstimate);
+            v3GasEstimate = gasBefore - gasleft();
+            return handleV3Revert(reason, pool, v3GasEstimate);
         }
     }
 
     /// @dev Fetch an exactIn quote for a V2 pair on chain
-    function quoteExactInputSingleV2(
-        uint256 amountIn,
-        address tokenIn,
-        address tokenOut
-    ) public view returns (uint256 amountOut) {
-        amountOut = getPairAmountOut(amountIn, tokenIn, tokenOut);
+    function quoteExactInputSingleV2(QuoteExactInputSingleV2Params memory params)
+        public
+        view
+        returns (uint256 amountOut)
+    {
+        amountOut = getPairAmountOut(params.amountIn, params.tokenIn, params.tokenOut);
     }
 
     /// @dev Get the quote for an exactIn swap between an array of V2 and/or V3 pools
@@ -183,30 +184,32 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
         override
         returns (
             uint256 amountOut,
-            uint160[] memory sqrtPriceX96AfterList,
-            uint32[] memory initializedTicksCrossedList,
-            uint256 gasEstimate
+            uint160[] memory v3SqrtPriceX96AfterList,
+            uint32[] memory v3InitializedTicksCrossedList,
+            uint256 v3gasEstimate
         )
     {
-        sqrtPriceX96AfterList = new uint160[](path.numPools());
-        initializedTicksCrossedList = new uint32[](path.numPools());
+        v3SqrtPriceX96AfterList = new uint160[](path.numPools());
+        v3InitializedTicksCrossedList = new uint32[](path.numPools());
 
         uint256 i = 0;
         while (true) {
             (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
 
             if (fee & flagBitmask != 0) {
-                amountIn = quoteExactInputSingleV2(amountIn, tokenIn, tokenOut);
+                amountIn = quoteExactInputSingleV2(
+                    QuoteExactInputSingleV2Params({tokenIn: tokenIn, tokenOut: tokenOut, amountIn: amountIn})
+                );
             } else {
                 /// the outputs of prior swaps become the inputs to subsequent ones
                 (
                     uint256 _amountOut,
-                    uint160 _sqrtPriceX96After,
-                    uint32 _initializedTicksCrossed,
-                    uint256 _gasEstimate
+                    uint160 _v3SqrtPriceX96After,
+                    uint32 _v3InitializedTicksCrossed,
+                    uint256 _v3GasEstimate
                 ) =
-                    quoteExactInputSingle(
-                        QuoteExactInputSingleParams({
+                    quoteExactInputSingleV3(
+                        QuoteExactInputSingleV3Params({
                             tokenIn: tokenIn,
                             tokenOut: tokenOut,
                             fee: fee,
@@ -214,9 +217,9 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
                             sqrtPriceLimitX96: 0
                         })
                     );
-                sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
-                initializedTicksCrossedList[i] = _initializedTicksCrossed;
-                gasEstimate += _gasEstimate;
+                v3SqrtPriceX96AfterList[i] = _v3SqrtPriceX96After;
+                v3InitializedTicksCrossedList[i] = _v3InitializedTicksCrossed;
+                v3gasEstimate += _v3GasEstimate;
                 amountIn = _amountOut;
             }
             i++;
@@ -225,7 +228,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
             if (path.hasMultiplePools()) {
                 path = path.skipToken();
             } else {
-                return (amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
+                return (amountIn, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList, v3gasEstimate);
             }
         }
     }

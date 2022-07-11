@@ -24,12 +24,18 @@ interface IQuoterV3 {
             uint256 gasEstimate
         );
 
-    struct QuoteExactInputSingleParams {
+    struct QuoteExactInputSingleV3Params {
         address tokenIn;
         address tokenOut;
         uint256 amountIn;
         uint24 fee;
         uint160 sqrtPriceLimitX96;
+    }
+
+    struct QuoteExactInputSingleV2Params {
+        address tokenIn;
+        address tokenOut;
+        uint256 amountIn;
     }
 
     /// @notice Returns the amount out received for a given exact input but for a swap of a single pool
@@ -43,7 +49,7 @@ interface IQuoterV3 {
     /// @return sqrtPriceX96After The sqrt price of the pool after the swap
     /// @return initializedTicksCrossed The number of initialized ticks that the swap crossed
     /// @return gasEstimate The estimate of the gas that the swap consumes
-    function quoteExactInputSingle(QuoteExactInputSingleParams memory params)
+    function quoteExactInputSingleV3(QuoteExactInputSingleV3Params memory params)
         external
         returns (
             uint256 amountOut,

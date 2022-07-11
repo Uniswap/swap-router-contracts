@@ -52,7 +52,6 @@ describe('QuoterV3 integration tests', () => {
   before(async () => {
     const QuoterV3Factory = await ethers.getContractFactory('QuoterV3')
     quoterV3 = (await QuoterV3Factory.deploy(V3_FACTORY, V2_FACTORY, WETH)) as QuoterV3
-    console.log('quoterV3.address: ', quoterV3.address)
   })
 
   /**
@@ -67,7 +66,6 @@ describe('QuoterV3 integration tests', () => {
         'quoteExactInput(bytes,uint256)'
       ](USDT_V3_500_DAI_V2_USDC, expandToNDecimals(10000, 6))
 
-      console.log(amountOut.toString())
       expect(amountOut).eq(BigNumber.from('9966336832'))
       expect(sqrtPriceX96AfterList[0].eq(BigNumber.from('0x10c6727487c45717095f'))).to.be.true
     })
@@ -77,7 +75,6 @@ describe('QuoterV3 integration tests', () => {
         'quoteExactInput(bytes,uint256)'
       ](DAI_V3_100_USDC_V2_USDT, expandTo18Decimals(10000))
 
-      console.log(amountOut.toString())
       expect(amountOut).eq(BigNumber.from('9959354898'))
       expect(sqrtPriceX96AfterList[0].eq(BigNumber.from('0x10c715093f77e3073634'))).to.be.true
     })
@@ -89,7 +86,6 @@ describe('QuoterV3 integration tests', () => {
         'quoteExactInput(bytes,uint256)'
       ](DAI_V2_UNI_V2_WETH, expandTo18Decimals(10000))
 
-      console.log(amountOut.toString())
       expect(amountOut).eq(BigNumber.from('2035189623576328665'))
     })
 
@@ -99,7 +95,6 @@ describe('QuoterV3 integration tests', () => {
         expandToNDecimals(10000, 6)
       )
 
-      console.log(amountOut.toString())
       expect(amountOut).eq(BigNumber.from('1989381322826753150'))
     })
   })
@@ -109,7 +104,6 @@ describe('QuoterV3 integration tests', () => {
       'quoteExactInput(bytes,uint256)'
     ](USDC_V3_3000_UNI_V2_WETH, expandToNDecimals(10000, 6))
 
-    console.log(amountOut.toString())
     expect(amountOut).eq(BigNumber.from('3801923847986895918')) // 3.801923847986895918
     expect(sqrtPriceX96AfterList[0].eq(BigNumber.from('0x3110863ba621ac3915fd'))).to.be.true
   })
@@ -128,7 +122,6 @@ describe('QuoterV3 integration tests', () => {
       'quoteExactInput(bytes,uint256)'
     ](DAI_V3_3000_UNI_V2_USDT_V3_3000_WETH, expandTo18Decimals(10000))
 
-    console.log(amountOut.toString())
     expect(amountOut).eq(BigNumber.from('886596560223108447'))
     expect(sqrtPriceX96AfterList[0].eq(BigNumber.from('0xfffd8963efd1fc6a506488495d951d5263988d25'))).to.be.true
     expect(sqrtPriceX96AfterList[2].eq(BigNumber.from('0x034b624fce51aba62a4722'))).to.be.true
@@ -147,7 +140,7 @@ describe('QuoterV3 integration tests', () => {
     const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoterV3.callStatic[
       'quoteExactInput(bytes,uint256)'
     ](UNI_V3_3000_WETH, expandTo18Decimals(10000))
-    console.log(amountOut.toString())
+
     expect(amountOut.eq(BigNumber.from('32215526370828998898'))).to.be.true
   })
 })

@@ -20,7 +20,7 @@ import { abi as PAIR_V2_ABI } from '@uniswap/v2-core/build/UniswapV2Pair.json'
 
 const V3_MAX_FEE = 999999 // = 1_000_000 - 1 since must be < 1_000_000
 
-describe.only('QuoterV3', function () {
+describe('QuoterV3', function () {
   this.timeout(40000)
   let wallet: Wallet
   let trader: Wallet
@@ -303,7 +303,7 @@ describe.only('QuoterV3', function () {
           sqrtPriceX96After,
           initializedTicksCrossed,
           gasEstimate,
-        } = await quoter.callStatic.quoteExactInputSingle({
+        } = await quoter.callStatic.quoteExactInputSingleV3({
           tokenIn: tokens[0].address,
           tokenOut: tokens[2].address,
           fee: FeeAmount.MEDIUM,
@@ -324,7 +324,7 @@ describe.only('QuoterV3', function () {
           sqrtPriceX96After,
           initializedTicksCrossed,
           gasEstimate,
-        } = await quoter.callStatic.quoteExactInputSingle({
+        } = await quoter.callStatic.quoteExactInputSingleV3({
           tokenIn: tokens[2].address,
           tokenOut: tokens[0].address,
           fee: FeeAmount.MEDIUM,
@@ -346,7 +346,7 @@ describe.only('QuoterV3', function () {
         const amountIn = 10000
         const tokenIn = tokens[0].address
         const tokenOut = tokens[2].address
-        const quote = await quoter.callStatic.quoteExactInputSingleV2(amountIn, tokenIn, tokenOut)
+        const quote = await quoter.callStatic.quoteExactInputSingleV2({ tokenIn, tokenOut, amountIn })
 
         expect(quote).to.eq(9969)
       })
@@ -355,7 +355,7 @@ describe.only('QuoterV3', function () {
         const amountIn = 10000
         const tokenIn = tokens[2].address
         const tokenOut = tokens[0].address
-        const quote = await quoter.callStatic.quoteExactInputSingleV2(amountIn, tokenIn, tokenOut)
+        const quote = await quoter.callStatic.quoteExactInputSingleV2({ tokenIn, tokenOut, amountIn })
 
         expect(quote).to.eq(9969)
       })
@@ -369,7 +369,7 @@ describe.only('QuoterV3', function () {
           const amountIn = 2_000_000
           const tokenIn = tokens[1].address
           const tokenOut = tokens[2].address
-          const quote = await quoter.callStatic.quoteExactInputSingleV2(amountIn, tokenIn, tokenOut)
+          const quote = await quoter.callStatic.quoteExactInputSingleV2({ tokenIn, tokenOut, amountIn })
 
           expect(quote).to.eq(1993999)
         })
