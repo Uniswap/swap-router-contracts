@@ -62,27 +62,27 @@ describe('QuoterV3 integration tests', () => {
   describe('quotes stablecoin only paths correctly', () => {
     /// @dev the amount must be expanded to the decimals of the first token in the path
     it('V3-V2 stablecoin path with 6 decimal in start of path', async () => {
-      const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoterV3.callStatic[
+      const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
         'quoteExactInput(bytes,uint256)'
       ](USDT_V3_500_DAI_V2_USDC, expandToNDecimals(10000, 6))
 
       expect(amountOut).eq(BigNumber.from('9966336832'))
-      expect(sqrtPriceX96AfterList[0].eq(BigNumber.from('0x10c6727487c45717095f'))).to.be.true
+      expect(v3SqrtPriceX96AfterList[0].eq(BigNumber.from('0x10c6727487c45717095f'))).to.be.true
     })
 
     it('V3-V2 stablecoin path with 6 decimal in middle of path', async () => {
-      const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoterV3.callStatic[
+      const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
         'quoteExactInput(bytes,uint256)'
       ](DAI_V3_100_USDC_V2_USDT, expandTo18Decimals(10000))
 
       expect(amountOut).eq(BigNumber.from('9959354898'))
-      expect(sqrtPriceX96AfterList[0].eq(BigNumber.from('0x10c715093f77e3073634'))).to.be.true
+      expect(v3SqrtPriceX96AfterList[0].eq(BigNumber.from('0x10c715093f77e3073634'))).to.be.true
     })
   })
 
   describe('V2-V2 quotes', () => {
     it('quotes V2-V2 correctly', async () => {
-      const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoterV3.callStatic[
+      const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
         'quoteExactInput(bytes,uint256)'
       ](DAI_V2_UNI_V2_WETH, expandTo18Decimals(10000))
 
@@ -100,44 +100,44 @@ describe('QuoterV3 integration tests', () => {
   })
 
   it('quotes V3-V2 erc20s with mixed decimal scales correctly', async () => {
-    const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoterV3.callStatic[
+    const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
       'quoteExactInput(bytes,uint256)'
     ](USDC_V3_3000_UNI_V2_WETH, expandToNDecimals(10000, 6))
 
     expect(amountOut).eq(BigNumber.from('3801923847986895918')) // 3.801923847986895918
-    expect(sqrtPriceX96AfterList[0].eq(BigNumber.from('0x3110863ba621ac3915fd'))).to.be.true
+    expect(v3SqrtPriceX96AfterList[0].eq(BigNumber.from('0x3110863ba621ac3915fd'))).to.be.true
   })
 
   it('quotes V3-V2 correctly', async () => {
-    const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoterV3.callStatic[
+    const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
       'quoteExactInput(bytes,uint256)'
     ](UNI_V3_3000_WETH_V2_DAI, expandTo18Decimals(10000))
 
     expect(amountOut).eq(BigNumber.from('80675538331724434694636'))
-    expect(sqrtPriceX96AfterList[0].eq(BigNumber.from('0x0e83f285cb58c4cca14fb78b'))).to.be.true
+    expect(v3SqrtPriceX96AfterList[0].eq(BigNumber.from('0x0e83f285cb58c4cca14fb78b'))).to.be.true
   })
 
   it('quotes V3-V2-V3 correctly', async () => {
-    const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoterV3.callStatic[
+    const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
       'quoteExactInput(bytes,uint256)'
     ](DAI_V3_3000_UNI_V2_USDT_V3_3000_WETH, expandTo18Decimals(10000))
 
     expect(amountOut).eq(BigNumber.from('886596560223108447'))
-    expect(sqrtPriceX96AfterList[0].eq(BigNumber.from('0xfffd8963efd1fc6a506488495d951d5263988d25'))).to.be.true
-    expect(sqrtPriceX96AfterList[2].eq(BigNumber.from('0x034b624fce51aba62a4722'))).to.be.true
+    expect(v3SqrtPriceX96AfterList[0].eq(BigNumber.from('0xfffd8963efd1fc6a506488495d951d5263988d25'))).to.be.true
+    expect(v3SqrtPriceX96AfterList[2].eq(BigNumber.from('0x034b624fce51aba62a4722'))).to.be.true
   })
 
   it('quotes V2-V3 correctly', async () => {
-    const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoterV3.callStatic[
+    const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
       'quoteExactInput(bytes,uint256)'
     ](UNI_V2_WETH_V3_3000_DAI, expandTo18Decimals(10000))
 
     expect(amountOut).eq(BigNumber.from('81108655328627859394525'))
-    expect(sqrtPriceX96AfterList[1].eq(BigNumber.from('0x0518b75d40eb50192903493d'))).to.be.true
+    expect(v3SqrtPriceX96AfterList[1].eq(BigNumber.from('0x0518b75d40eb50192903493d'))).to.be.true
   })
 
   it('quotes only V3 correctly', async () => {
-    const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoterV3.callStatic[
+    const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
       'quoteExactInput(bytes,uint256)'
     ](UNI_V3_3000_WETH, expandTo18Decimals(10000))
 

@@ -12,16 +12,16 @@ interface IQuoterV3 {
     /// @param path The path of the swap, i.e. each token pair and the pool fee
     /// @param amountIn The amount of the first token to swap
     /// @return amountOut The amount of the last token that would be received
-    /// @return sqrtPriceX96AfterList List of the sqrt price after the swap for each pool in the path
-    /// @return initializedTicksCrossedList List of the initialized ticks that the swap crossed for each pool in the path
-    /// @return gasEstimate The estimate of the gas that the swap consumes
+    /// @return v3SqrtPriceX96AfterList List of the sqrt price after the swap for each v3 pool in the path, 0 for v2 pools
+    /// @return v3InitializedTicksCrossedList List of the initialized ticks that the swap crossed for each v3 pool in the path, 0 for v2 pools
+    /// @return v3SwapGasEstimate The estimate of the gas that the v3 swaps in the path consume
     function quoteExactInput(bytes memory path, uint256 amountIn)
         external
         returns (
             uint256 amountOut,
-            uint160[] memory sqrtPriceX96AfterList,
-            uint32[] memory initializedTicksCrossedList,
-            uint256 gasEstimate
+            uint160[] memory v3SqrtPriceX96AfterList,
+            uint32[] memory v3InitializedTicksCrossedList,
+            uint256 v3SwapGasEstimate
         );
 
     struct QuoteExactInputSingleV3Params {
