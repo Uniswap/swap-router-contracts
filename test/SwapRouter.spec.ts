@@ -4,7 +4,7 @@ import { Fixture } from 'ethereum-waffle'
 import { BigNumber, constants, Contract, ContractTransaction, Wallet } from 'ethers'
 import { solidityPack } from 'ethers/lib/utils'
 import { ethers, waffle } from 'hardhat'
-import { IUniswapV2Pair, IWETH9, MockTimeSwapRouter02, QuoterV3, TestERC20 } from '../typechain'
+import { IUniswapV2Pair, IWETH9, MockTimeSwapRouter02, MixedRouteQuoterV1, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { computePoolAddress } from './shared/computePoolAddress'
 import { ADDRESS_THIS, CONTRACT_BALANCE, FeeAmount, MSG_SENDER, TICK_SPACINGS, V2_FEE } from './shared/constants'
@@ -24,7 +24,7 @@ describe('SwapRouter', function () {
     factory: Contract
     factoryV2: Contract
     router: MockTimeSwapRouter02
-    quoter: QuoterV3
+    quoter: MixedRouteQuoterV1
     nft: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
   }> = async (wallets, provider) => {
@@ -38,8 +38,8 @@ describe('SwapRouter', function () {
       await token.transfer(trader.address, expandTo18Decimals(1_000_000))
     }
 
-    const quoterFactory = await ethers.getContractFactory('QuoterV3')
-    quoter = (await quoterFactory.deploy(factory.address, factoryV2.address, weth9.address)) as QuoterV3
+    const quoterFactory = await ethers.getContractFactory('MixedRouteQuoterV1')
+    quoter = (await quoterFactory.deploy(factory.address, factoryV2.address, weth9.address)) as MixedRouteQuoterV1
 
     return {
       weth9,
@@ -56,7 +56,7 @@ describe('SwapRouter', function () {
   let factoryV2: Contract
   let weth9: IWETH9
   let router: MockTimeSwapRouter02
-  let quoter: QuoterV3
+  let quoter: MixedRouteQuoterV1
   let nft: Contract
   let tokens: [TestERC20, TestERC20, TestERC20]
   let getBalances: (

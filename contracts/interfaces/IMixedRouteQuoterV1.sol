@@ -2,12 +2,12 @@
 pragma solidity >=0.7.5;
 pragma abicoder v2;
 
-/// @title QuoterV3 Interface
+/// @title MixedRouteQuoterV1 Interface
 /// @notice Supports quoting the calculated amounts for exact input swaps. Is specialized for routes containing a mix of V2 and V3 liquidity.
 /// @notice For each pool also tells you the number of initialized ticks crossed and the sqrt price of the pool after the swap.
 /// @dev These functions are not marked view because they rely on calling non-view functions and reverting
 /// to compute the result. They are also not gas efficient and should not be called on-chain.
-interface IQuoterV3 {
+interface IMixedRouteQuoterV1 {
     /// @notice Returns the amount out received for a given exact input swap without executing the swap
     /// @param path The path of the swap, i.e. each token pair and the pool fee
     /// @param amountIn The amount of the first token to swap
@@ -57,6 +57,11 @@ interface IQuoterV3 {
             uint32 initializedTicksCrossed,
             uint256 gasEstimate
         );
+
+    /// @notice Returns the amount out received for a given exact input but for a swap of a single V2 pool
+    /// @param params The params for the quote, encoded as `QuoteExactInputSingleV2Params`
+    /// @return amountOut The amount of `tokenOut` that would be received
+    function quoteExactInputSingleV2(QuoteExactInputSingleV2Params memory params) external returns (uint256 amountOut);
 
     /// @dev ExactOutput swaps are not supported by this new Quoter which is specialized for supporting routes
     ///      crossing both V2 liquidity pairs and V3 pools.

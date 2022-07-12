@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { BigNumber } from 'ethers'
-import { QuoterV3 } from '../typechain'
+import { MixedRouteQuoterV1 } from '../typechain'
 
 import { JsonRpcSigner } from '@ethersproject/providers'
 import hre, { ethers } from 'hardhat'
@@ -45,8 +45,8 @@ const DAI_V3_3000_UNI_V2_USDT_V3_3000_WETH = encodePath(
 // (use two V2 pools)
 const DAI_V3_3000_UNI_V2_USDT_V2_WETH = encodePath([DAI, UNI, USDT, WETH], [FeeAmount.MEDIUM, V2_FEE, V2_FEE])
 
-describe('QuoterV3 integration tests', function () {
-  let quoterV3: QuoterV3
+describe('MixedRouteQuoterV1 integration tests', function () {
+  let quoterV3: MixedRouteQuoterV1
   let alice: JsonRpcSigner
 
   before(async function () {
@@ -66,8 +66,8 @@ describe('QuoterV3 integration tests', function () {
       ],
     })
 
-    const QuoterV3Factory = await ethers.getContractFactory('QuoterV3')
-    quoterV3 = (await QuoterV3Factory.deploy(V3_FACTORY, V2_FACTORY, WETH)) as QuoterV3
+    const MixedRouteQuoterV1Factory = await ethers.getContractFactory('MixedRouteQuoterV1')
+    quoterV3 = (await MixedRouteQuoterV1Factory.deploy(V3_FACTORY, V2_FACTORY, WETH)) as MixedRouteQuoterV1
   })
 
   after(async () => {

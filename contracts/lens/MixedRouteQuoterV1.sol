@@ -13,7 +13,7 @@ import '@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol';
 import '@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol';
 import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
 
-import '../interfaces/IQuoterV3.sol';
+import '../interfaces/IMixedRouteQuoterV1.sol';
 import '../libraries/PoolTicksCounter.sol';
 import '../libraries/UniswapV2Library.sol';
 
@@ -22,7 +22,7 @@ import '../libraries/UniswapV2Library.sol';
 /// @notice Does not support exact output swaps since using the contract balance between exactOut swaps is not supported
 /// @dev These functions are not gas efficient and should _not_ be called on chain. Instead, optimistically execute
 /// the swap and check the amounts in the callback.
-contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState {
+contract MixedRouteQuoterV1 is IMixedRouteQuoterV1, IUniswapV3SwapCallback, PeripheryImmutableState {
     using Path for bytes;
     using SafeCast for uint256;
     using PoolTicksCounter for IUniswapV3Pool;
@@ -173,6 +173,7 @@ contract QuoterV3 is IQuoterV3, IUniswapV3SwapCallback, PeripheryImmutableState 
     function quoteExactInputSingleV2(QuoteExactInputSingleV2Params memory params)
         public
         view
+        override
         returns (uint256 amountOut)
     {
         amountOut = getPairAmountOut(params.amountIn, params.tokenIn, params.tokenOut);

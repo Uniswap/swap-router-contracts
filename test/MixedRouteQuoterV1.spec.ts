@@ -1,7 +1,7 @@
 import { Fixture } from 'ethereum-waffle'
 import { constants, Wallet, Contract, BigNumber } from 'ethers'
 import { ethers, waffle } from 'hardhat'
-import { QuoterV3, TestERC20 } from '../typechain'
+import { MixedRouteQuoterV1, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { FeeAmount, V2_FEE } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
@@ -20,7 +20,7 @@ import { abi as PAIR_V2_ABI } from '@uniswap/v2-core/build/UniswapV2Pair.json'
 
 const V3_MAX_FEE = 999999 // = 1_000_000 - 1 since must be < 1_000_000
 
-describe('QuoterV3', function () {
+describe('MixedRouteQuoterV1', function () {
   this.timeout(40000)
   let wallet: Wallet
   let trader: Wallet
@@ -29,7 +29,7 @@ describe('QuoterV3', function () {
     nft: Contract
     factoryV2: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
-    quoter: QuoterV3
+    quoter: MixedRouteQuoterV1
   }> = async (wallets, provider) => {
     const { weth9, factory, factoryV2, router, tokens, nft } = await completeFixture(wallets, provider)
 
@@ -41,8 +41,8 @@ describe('QuoterV3', function () {
       await token.transfer(trader.address, expandTo18Decimals(1_000_000))
     }
 
-    const quoterFactory = await ethers.getContractFactory('QuoterV3')
-    quoter = (await quoterFactory.deploy(factory.address, factoryV2.address, weth9.address)) as QuoterV3
+    const quoterFactory = await ethers.getContractFactory('MixedRouteQuoterV1')
+    quoter = (await quoterFactory.deploy(factory.address, factoryV2.address, weth9.address)) as MixedRouteQuoterV1
 
     return {
       tokens,
@@ -55,7 +55,7 @@ describe('QuoterV3', function () {
   let nft: Contract
   let factoryV2: Contract
   let tokens: [TestERC20, TestERC20, TestERC20]
-  let quoter: QuoterV3
+  let quoter: MixedRouteQuoterV1
 
   let pair01Address, pair02Address, pair12Address: string
 
