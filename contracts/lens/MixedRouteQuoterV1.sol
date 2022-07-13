@@ -13,6 +13,7 @@ import '@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol';
 import '@uniswap/v3-periphery/contracts/libraries/CallbackValidation.sol';
 import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
 
+import '../base/ImmutableState.sol';
 import '../interfaces/IMixedRouteQuoterV1.sol';
 import '../libraries/PoolTicksCounter.sol';
 import '../libraries/UniswapV2Library.sol';
@@ -26,9 +27,9 @@ contract MixedRouteQuoterV1 is IMixedRouteQuoterV1, IUniswapV3SwapCallback, Peri
     using Path for bytes;
     using SafeCast for uint256;
     using PoolTicksCounter for IUniswapV3Pool;
-    address public immutable v2Factory;
+    address public immutable factoryV2;
     /// @dev Value to bit mask with path fee to determine if V2 or V3 route
-    // max V3 fee: 000011110100001001000000 (24 bits)
+    // max V3 fee:           000011110100001001000000 (24 bits)
     // mask:       1 << 23 = 100000000000000000000000 = decimal value 8388608
     uint24 private constant flagBitmask = 8388608;
 
@@ -37,10 +38,10 @@ contract MixedRouteQuoterV1 is IMixedRouteQuoterV1, IUniswapV3SwapCallback, Peri
 
     constructor(
         address _factory,
-        address _v2Factory,
+        address _factoryV2,
         address _WETH9
     ) PeripheryImmutableState(_factory, _WETH9) {
-        v2Factory = _v2Factory;
+        factoryV2 = _factoryV2;
     }
 
     function getPool(
@@ -57,7 +58,7 @@ contract MixedRouteQuoterV1 is IMixedRouteQuoterV1, IUniswapV3SwapCallback, Peri
         address tokenIn,
         address tokenOut
     ) private view returns (uint256) {
-        (uint256 reserveIn, uint256 reserveOut) = UniswapV2Library.getReserves(v2Factory, tokenIn, tokenOut);
+        (uint256 reserveIn, uint256 reserveOut) = UniswapV2Library.getReserves(factoryV2, tokenIn, tokenOut);
         return UniswapV2Library.getAmountOut(amountIn, reserveIn, reserveOut);
     }
 
@@ -85,7 +86,7 @@ contract MixedRouteQuoterV1 is IMixedRouteQuoterV1, IUniswapV3SwapCallback, Peri
                 mstore(ptr, amountReceived)
                 mstore(add(ptr, 0x20), v3SqrtPriceX96After)
                 mstore(add(ptr, 0x40), tickAfter)
-                revert(ptr, 96)
+                revert(ptr, 0x60)
             }
         } else {
             /// since we don't support exactOutput, revert here
@@ -104,8 +105,8 @@ contract MixedRouteQuoterV1 is IMixedRouteQuoterV1, IUniswapV3SwapCallback, Peri
             int24 tickAfter
         )
     {
-        if (reason.length != 96) {
-            if (reason.length < 68) revert('Unexpected error');
+        if (reason.length != 0x60) {
+            if (reason.length < 0x44) revert('Unexpected error');
             assembly {
                 reason := add(reason, 0x04)
             }
