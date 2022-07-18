@@ -180,7 +180,7 @@ contract MixedRouteQuoterV1 is IMixedRouteQuoterV1, IUniswapV3SwapCallback, Peri
     }
 
     /// @dev Get the quote for an exactIn swap between an array of V2 and/or V3 pools
-    /// @notice To encode a V2 pair within the path, use 8388608 for the fee between the two token addresses
+    /// @notice To encode a V2 pair within the path, use 0x800000 (hex value of 8388608) for the fee between the two token addresses
     function quoteExactInput(bytes memory path, uint256 amountIn)
         public
         override
