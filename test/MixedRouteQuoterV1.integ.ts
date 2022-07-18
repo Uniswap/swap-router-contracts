@@ -121,8 +121,6 @@ describe('MixedRouteQuoterV1 integration tests', function () {
       ](DAI_V2_UNI_V2_WETH, expandTo18Decimals(10000))
 
       expect(amountOut).eq(BigNumber.from('2035189623576328665'))
-      expect(v3SqrtPriceX96AfterList).deep.eq([0, 0])
-      expect(v3InitializedTicksCrossedList).deep.eq([0, 0])
     })
 
     it('quotes V2 (6 decimal stablecoin) -V2 correctly', async () => {
