@@ -90,7 +90,6 @@ contract MixedRouteQuoterV1 is IMixedRouteQuoterV1, IUniswapV3SwapCallback, Peri
             }
         } else {
             /// since we don't support exactOutput, revert here
-            /// @dev confirmed by modified test case to revert with reason correctly
             revert('Exact output quote not supported');
         }
     }

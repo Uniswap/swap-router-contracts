@@ -50,6 +50,8 @@ const DAI_V3_3000_UNI_V2_USDT_V2_WETH = encodePath(
 describe('MixedRouteQuoterV1 integration tests', function () {
   let mixedRouteQuoter: MixedRouteQuoterV1
 
+  this.timeout(100000)
+
   before(async function () {
     if (!process.env.ARCHIVE_RPC_URL) {
       this.skip()
@@ -121,6 +123,8 @@ describe('MixedRouteQuoterV1 integration tests', function () {
       ](DAI_V2_UNI_V2_WETH, expandTo18Decimals(10000))
 
       expect(amountOut).eq(BigNumber.from('2035189623576328665'))
+      expect(v3SqrtPriceX96AfterList.every((el) => el.eq(0))).to.be.true
+      expect(v3InitializedTicksCrossedList.every((el) => el == 0)).to.be.true
     })
 
     it('quotes V2 (6 decimal stablecoin) -V2 correctly', async () => {
