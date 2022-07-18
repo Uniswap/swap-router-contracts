@@ -4,10 +4,17 @@ import { Fixture } from 'ethereum-waffle'
 import { BigNumber, constants, Contract, ContractTransaction, Wallet } from 'ethers'
 import { solidityPack } from 'ethers/lib/utils'
 import { ethers, waffle } from 'hardhat'
-import { IUniswapV2Pair, IWETH9, MockTimeSwapRouter02, TestERC20 } from '../typechain'
+import { IUniswapV2Pair, IWETH9, MockTimeSwapRouter02, MixedRouteQuoterV1, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { computePoolAddress } from './shared/computePoolAddress'
-import { ADDRESS_THIS, CONTRACT_BALANCE, FeeAmount, MSG_SENDER, TICK_SPACINGS } from './shared/constants'
+import {
+  ADDRESS_THIS,
+  CONTRACT_BALANCE,
+  FeeAmount,
+  MSG_SENDER,
+  TICK_SPACINGS,
+  V2_FEE_PLACEHOLDER,
+} from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
@@ -24,6 +31,7 @@ describe('SwapRouter', function () {
     factory: Contract
     factoryV2: Contract
     router: MockTimeSwapRouter02
+    quoter: MixedRouteQuoterV1
     nft: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
   }> = async (wallets, provider) => {
@@ -37,11 +45,15 @@ describe('SwapRouter', function () {
       await token.transfer(trader.address, expandTo18Decimals(1_000_000))
     }
 
+    const quoterFactory = await ethers.getContractFactory('MixedRouteQuoterV1')
+    quoter = (await quoterFactory.deploy(factory.address, factoryV2.address, weth9.address)) as MixedRouteQuoterV1
+
     return {
       weth9,
       factory,
       factoryV2,
       router,
+      quoter,
       tokens,
       nft,
     }
@@ -51,6 +63,7 @@ describe('SwapRouter', function () {
   let factoryV2: Contract
   let weth9: IWETH9
   let router: MockTimeSwapRouter02
+  let quoter: MixedRouteQuoterV1
   let nft: Contract
   let tokens: [TestERC20, TestERC20, TestERC20]
   let getBalances: (
@@ -93,7 +106,7 @@ describe('SwapRouter', function () {
 
   // helper for getting weth and token balances
   beforeEach('load fixture', async () => {
-    ;({ router, weth9, factory, factoryV2, tokens, nft } = await loadFixture(swapRouterFixture))
+    ;({ router, quoter, weth9, factory, factoryV2, tokens, nft } = await loadFixture(swapRouterFixture))
 
     getBalances = async (who: string) => {
       const balances = await Promise.all([
@@ -1534,6 +1547,76 @@ describe('SwapRouter', function () {
         const traderAfter = await getBalances(trader.address)
         expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(6))
         expect(traderAfter.token2).to.be.eq(traderBefore.token1.add(1))
+      })
+    })
+
+    describe('interleaving', () => {
+      // 0 -V3-> 1 -V2-> 2
+      it('exactIn 0 -V3-> 1 -V2-> 2', async () => {
+        const swapV3 = await exactInputV3(
+          tokens.slice(0, 2).map((token) => token.address),
+          10,
+          8,
+          ADDRESS_THIS
+        )
+
+        const swapV2 = await exactInputV2(
+          tokens.slice(1, 3).map((token) => token.address),
+          CONTRACT_BALANCE,
+          7,
+          MSG_SENDER,
+          true
+        )
+
+        const traderBefore = await getBalances(trader.address)
+        await router.connect(trader)['multicall(bytes[])']([...swapV3, ...swapV2])
+        const traderAfter = await getBalances(trader.address)
+
+        expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(10))
+        expect(traderAfter.token2).to.be.eq(traderBefore.token2.add(7))
+
+        const routerAmountOut = traderAfter.token2.sub(traderBefore.token2)
+
+        // expect to equal quoter output
+        const { amountOut: quoterAmountOut } = await quoter.callStatic['quoteExactInput(bytes,uint256)'](
+          encodePath([tokens[0].address, tokens[1].address, tokens[2].address], [FeeAmount.MEDIUM, V2_FEE_PLACEHOLDER]),
+          10
+        )
+
+        expect(quoterAmountOut.eq(routerAmountOut)).to.be.true
+      })
+
+      it('exactIn 0 -V2-> 1 -V3-> 2', async () => {
+        const swapV2 = await exactInputV2(
+          tokens.slice(0, 2).map((token) => token.address),
+          10,
+          9,
+          ADDRESS_THIS
+        )
+
+        const swapV3 = await exactInputV3(
+          tokens.slice(1, 3).map((token) => token.address),
+          CONTRACT_BALANCE,
+          7,
+          MSG_SENDER,
+          true
+        )
+
+        const traderBefore = await getBalances(trader.address)
+        await router.connect(trader)['multicall(bytes[])']([...swapV2, ...swapV3])
+        const traderAfter = await getBalances(trader.address)
+
+        expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(10))
+        expect(traderAfter.token2).to.be.eq(traderBefore.token2.add(7))
+
+        const routerAmountOut = traderAfter.token2.sub(traderBefore.token2)
+
+        // expect to equal quoter output
+        const { amountOut: quoterAmountOut } = await quoter.callStatic['quoteExactInput(bytes,uint256)'](
+          encodePath([tokens[0].address, tokens[1].address, tokens[2].address], [V2_FEE_PLACEHOLDER, FeeAmount.MEDIUM]),
+          10
+        )
+        expect(quoterAmountOut.eq(routerAmountOut)).to.be.true
       })
     })
   })

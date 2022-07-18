@@ -8,6 +8,8 @@ export enum FeeAmount {
   HIGH = 10000,
 }
 
+export const V2_FEE_PLACEHOLDER = 8388608 // 1 << 23
+
 export const TICK_SPACINGS: { [amount in FeeAmount]: number } = {
   [FeeAmount.LOW]: 10,
   [FeeAmount.MEDIUM]: 60,

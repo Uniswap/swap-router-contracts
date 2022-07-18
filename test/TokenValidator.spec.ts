@@ -7,6 +7,8 @@ describe('TokenValidator', function () {
   let tokenValidator: TokenValidator
   let testToken: TestERC20
 
+  this.timeout(100000)
+
   enum Status {
     UNKN = 0,
     FOT = 1,
