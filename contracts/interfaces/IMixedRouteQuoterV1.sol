@@ -60,6 +60,9 @@ interface IMixedRouteQuoterV1 {
 
     /// @notice Returns the amount out received for a given exact input but for a swap of a single V2 pool
     /// @param params The params for the quote, encoded as `QuoteExactInputSingleV2Params`
+    /// tokenIn The token being swapped in
+    /// tokenOut The token being swapped out
+    /// amountIn The desired input amount
     /// @return amountOut The amount of `tokenOut` that would be received
     function quoteExactInputSingleV2(QuoteExactInputSingleV2Params memory params) external returns (uint256 amountOut);
 
