@@ -52,7 +52,7 @@ contract MixedRouteQuoterV1 is IMixedRouteQuoterV1, IUniswapV3SwapCallback, Peri
         return IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
     }
 
-    /// @dev Given an amountIn, fetch the reserves of the V2 pair and call getAmountOut
+    /// @dev Given an amountIn, fetch the reserves of the V2 pair and get the amountOut
     function getPairAmountOut(
         uint256 amountIn,
         address tokenIn,
@@ -181,6 +181,7 @@ contract MixedRouteQuoterV1 is IMixedRouteQuoterV1, IUniswapV3SwapCallback, Peri
     }
 
     /// @dev Get the quote for an exactIn swap between an array of V2 and/or V3 pools
+    /// @notice To encode a V2 pair within the path, use 8388608 for the fee between the two token addresses
     function quoteExactInput(bytes memory path, uint256 amountIn)
         public
         override

@@ -7,7 +7,14 @@ import { ethers, waffle } from 'hardhat'
 import { IUniswapV2Pair, IWETH9, MockTimeSwapRouter02, MixedRouteQuoterV1, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { computePoolAddress } from './shared/computePoolAddress'
-import { ADDRESS_THIS, CONTRACT_BALANCE, FeeAmount, MSG_SENDER, TICK_SPACINGS, V2_FEE } from './shared/constants'
+import {
+  ADDRESS_THIS,
+  CONTRACT_BALANCE,
+  FeeAmount,
+  MSG_SENDER,
+  TICK_SPACINGS,
+  V2_FEE_PLACEHOLDER,
+} from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
@@ -1572,7 +1579,7 @@ describe('SwapRouter', function () {
 
         // expect to equal quoter output
         const { amountOut: quoterAmountOut } = await quoter.callStatic['quoteExactInput(bytes,uint256)'](
-          encodePath([tokens[0].address, tokens[1].address, tokens[2].address], [FeeAmount.MEDIUM, V2_FEE]),
+          encodePath([tokens[0].address, tokens[1].address, tokens[2].address], [FeeAmount.MEDIUM, V2_FEE_PLACEHOLDER]),
           10
         )
 
@@ -1606,7 +1613,7 @@ describe('SwapRouter', function () {
 
         // expect to equal quoter output
         const { amountOut: quoterAmountOut } = await quoter.callStatic['quoteExactInput(bytes,uint256)'](
-          encodePath([tokens[0].address, tokens[1].address, tokens[2].address], [V2_FEE, FeeAmount.MEDIUM]),
+          encodePath([tokens[0].address, tokens[1].address, tokens[2].address], [V2_FEE_PLACEHOLDER, FeeAmount.MEDIUM]),
           10
         )
         expect(quoterAmountOut.eq(routerAmountOut)).to.be.true

@@ -3,7 +3,7 @@ import { constants, Wallet, Contract, BigNumber } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { MixedRouteQuoterV1, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
-import { FeeAmount, V2_FEE } from './shared/constants'
+import { FeeAmount, V2_FEE_PLACEHOLDER } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
@@ -341,7 +341,7 @@ describe('MixedRouteQuoterV1', function () {
     describe('#quoteExactInput V2 only', () => {
       it('0 -> 2', async () => {
         const { amountOut, v3SwapGasEstimate } = await quoter.callStatic['quoteExactInput(bytes,uint256)'](
-          encodePath([tokens[0].address, tokens[2].address], [V2_FEE]),
+          encodePath([tokens[0].address, tokens[2].address], [V2_FEE_PLACEHOLDER]),
           10000
         )
 
@@ -350,7 +350,10 @@ describe('MixedRouteQuoterV1', function () {
 
       it('0 -> 1 -> 2', async () => {
         const { amountOut, v3SwapGasEstimate } = await quoter.callStatic['quoteExactInput(bytes,uint256)'](
-          encodePath([tokens[0].address, tokens[1].address, tokens[2].address], [V2_FEE, V2_FEE]),
+          encodePath(
+            [tokens[0].address, tokens[1].address, tokens[2].address],
+            [V2_FEE_PLACEHOLDER, V2_FEE_PLACEHOLDER]
+          ),
           10000
         )
 

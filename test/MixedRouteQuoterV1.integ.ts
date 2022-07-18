@@ -2,11 +2,10 @@ import { expect } from 'chai'
 import { BigNumber } from 'ethers'
 import { MixedRouteQuoterV1 } from '../typechain'
 
-import { JsonRpcSigner } from '@ethersproject/providers'
 import hre, { ethers } from 'hardhat'
 import { encodePath } from './shared/path'
 import { expandTo18Decimals, expandToNDecimals } from './shared/expandTo18Decimals'
-import { FeeAmount, V2_FEE } from './shared/constants'
+import { FeeAmount, V2_FEE_PLACEHOLDER } from './shared/constants'
 
 const V3_FACTORY = '0x1F98431c8aD98523631AE4a59f267346ea31F984'
 const V2_FACTORY = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
@@ -18,36 +17,38 @@ const UNI = '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984'
 const DAI = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
 
 /// @dev basic V2 routes
-const DAI_V2_UNI_V2_WETH = encodePath([DAI, UNI, WETH], [V2_FEE, V2_FEE])
-const USDC_V2_UNI_V2_WETH = encodePath([USDC, UNI, WETH], [V2_FEE, V2_FEE])
+const DAI_V2_UNI_V2_WETH = encodePath([DAI, UNI, WETH], [V2_FEE_PLACEHOLDER, V2_FEE_PLACEHOLDER])
+const USDC_V2_UNI_V2_WETH = encodePath([USDC, UNI, WETH], [V2_FEE_PLACEHOLDER, V2_FEE_PLACEHOLDER])
 
 /// @dev basic V3 routes
 const USDC_V3_USDT = encodePath([USDC, USDT], [FeeAmount.LOW])
 const UNI_V3_WETH = encodePath([UNI, WETH], [FeeAmount.MEDIUM])
 
 /// @dev stablecoin IL routes
-const USDT_V3_DAI_V2_USDC = encodePath([USDT, DAI, USDC], [FeeAmount.LOW, V2_FEE])
-const DAI_V3_USDC_V2_USDT = encodePath([DAI, USDC, USDT], [100, V2_FEE])
+const USDT_V3_DAI_V2_USDC = encodePath([USDT, DAI, USDC], [FeeAmount.LOW, V2_FEE_PLACEHOLDER])
+const DAI_V3_USDC_V2_USDT = encodePath([DAI, USDC, USDT], [100, V2_FEE_PLACEHOLDER])
 
 /// @dev erc20 IL routes
 // V3 - V2
-const UNI_V3_WETH_V2_DAI = encodePath([UNI, WETH, DAI], [FeeAmount.MEDIUM, V2_FEE])
-const USDC_V3_UNI_V2_WETH = encodePath([USDC, UNI, WETH], [FeeAmount.MEDIUM, V2_FEE])
+const UNI_V3_WETH_V2_DAI = encodePath([UNI, WETH, DAI], [FeeAmount.MEDIUM, V2_FEE_PLACEHOLDER])
+const USDC_V3_UNI_V2_WETH = encodePath([USDC, UNI, WETH], [FeeAmount.MEDIUM, V2_FEE_PLACEHOLDER])
 // V2 - V3
-const UNI_V2_WETH_V3_DAI = encodePath([UNI, WETH, DAI], [V2_FEE, FeeAmount.MEDIUM])
+const UNI_V2_WETH_V3_DAI = encodePath([UNI, WETH, DAI], [V2_FEE_PLACEHOLDER, FeeAmount.MEDIUM])
 
 /// @dev complex IL routes
 // (use two V3 pools)
 const DAI_V3_3000_UNI_V2_USDT_V3_3000_WETH = encodePath(
   [DAI, UNI, USDT, WETH],
-  [FeeAmount.MEDIUM, V2_FEE, FeeAmount.MEDIUM]
+  [FeeAmount.MEDIUM, V2_FEE_PLACEHOLDER, FeeAmount.MEDIUM]
 )
 // (use two V2 pools)
-const DAI_V3_3000_UNI_V2_USDT_V2_WETH = encodePath([DAI, UNI, USDT, WETH], [FeeAmount.MEDIUM, V2_FEE, V2_FEE])
+const DAI_V3_3000_UNI_V2_USDT_V2_WETH = encodePath(
+  [DAI, UNI, USDT, WETH],
+  [FeeAmount.MEDIUM, V2_FEE_PLACEHOLDER, V2_FEE_PLACEHOLDER]
+)
 
 describe('MixedRouteQuoterV1 integration tests', function () {
-  let quoterV3: MixedRouteQuoterV1
-  let alice: JsonRpcSigner
+  let mixedRouteQuoter: MixedRouteQuoterV1
 
   before(async function () {
     if (!process.env.ARCHIVE_RPC_URL) {
@@ -67,7 +68,7 @@ describe('MixedRouteQuoterV1 integration tests', function () {
     })
 
     const MixedRouteQuoterV1Factory = await ethers.getContractFactory('MixedRouteQuoterV1')
-    quoterV3 = (await MixedRouteQuoterV1Factory.deploy(V3_FACTORY, V2_FACTORY, WETH)) as MixedRouteQuoterV1
+    mixedRouteQuoter = (await MixedRouteQuoterV1Factory.deploy(V3_FACTORY, V2_FACTORY, WETH)) as MixedRouteQuoterV1
   })
 
   after(async () => {
@@ -79,7 +80,7 @@ describe('MixedRouteQuoterV1 integration tests', function () {
   })
 
   /**
-   * Test values only valid at block 14390000
+   * Test values only valid starting at block 14390000
    */
   it('sets block number correctly', async () => {
     const blockNumber = BigNumber.from(
@@ -95,7 +96,7 @@ describe('MixedRouteQuoterV1 integration tests', function () {
   describe('quotes stablecoin only paths correctly', () => {
     /// @dev the amount must be expanded to the decimals of the first token in the path
     it('V3-V2 stablecoin path with 6 decimal in start of path', async () => {
-      const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
+      const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await mixedRouteQuoter.callStatic[
         'quoteExactInput(bytes,uint256)'
       ](USDT_V3_DAI_V2_USDC, expandToNDecimals(10000, 6))
 
@@ -104,7 +105,7 @@ describe('MixedRouteQuoterV1 integration tests', function () {
     })
 
     it('V3-V2 stablecoin path with 6 decimal in middle of path', async () => {
-      const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
+      const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await mixedRouteQuoter.callStatic[
         'quoteExactInput(bytes,uint256)'
       ](DAI_V3_USDC_V2_USDT, expandTo18Decimals(10000))
 
@@ -115,15 +116,17 @@ describe('MixedRouteQuoterV1 integration tests', function () {
 
   describe('V2-V2 quotes', () => {
     it('quotes V2-V2 correctly', async () => {
-      const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
+      const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await mixedRouteQuoter.callStatic[
         'quoteExactInput(bytes,uint256)'
       ](DAI_V2_UNI_V2_WETH, expandTo18Decimals(10000))
 
       expect(amountOut).eq(BigNumber.from('2035189623576328665'))
+      expect(v3SqrtPriceX96AfterList).deep.eq([0, 0])
+      expect(v3InitializedTicksCrossedList).deep.eq([0, 0])
     })
 
     it('quotes V2 (6 decimal stablecoin) -V2 correctly', async () => {
-      const { amountOut } = await quoterV3.callStatic['quoteExactInput(bytes,uint256)'](
+      const { amountOut } = await mixedRouteQuoter.callStatic['quoteExactInput(bytes,uint256)'](
         USDC_V2_UNI_V2_WETH,
         expandToNDecimals(10000, 6)
       )
@@ -133,7 +136,7 @@ describe('MixedRouteQuoterV1 integration tests', function () {
   })
 
   it('quotes V3-V2 erc20s with mixed decimal scales correctly', async () => {
-    const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
+    const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await mixedRouteQuoter.callStatic[
       'quoteExactInput(bytes,uint256)'
     ](USDC_V3_UNI_V2_WETH, expandToNDecimals(10000, 6))
 
@@ -142,7 +145,7 @@ describe('MixedRouteQuoterV1 integration tests', function () {
   })
 
   it('quotes V3-V2 correctly', async () => {
-    const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
+    const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await mixedRouteQuoter.callStatic[
       'quoteExactInput(bytes,uint256)'
     ](UNI_V3_WETH_V2_DAI, expandTo18Decimals(10000))
 
@@ -151,7 +154,7 @@ describe('MixedRouteQuoterV1 integration tests', function () {
   })
 
   it('quotes V3-V2-V3 correctly', async () => {
-    const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
+    const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await mixedRouteQuoter.callStatic[
       'quoteExactInput(bytes,uint256)'
     ](DAI_V3_3000_UNI_V2_USDT_V3_3000_WETH, expandTo18Decimals(10000))
 
@@ -161,7 +164,7 @@ describe('MixedRouteQuoterV1 integration tests', function () {
   })
 
   it('quotes V2-V3 correctly', async () => {
-    const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
+    const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await mixedRouteQuoter.callStatic[
       'quoteExactInput(bytes,uint256)'
     ](UNI_V2_WETH_V3_DAI, expandTo18Decimals(10000))
 
@@ -170,7 +173,7 @@ describe('MixedRouteQuoterV1 integration tests', function () {
   })
 
   it('quotes only V3 correctly', async () => {
-    const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await quoterV3.callStatic[
+    const { amountOut, v3SqrtPriceX96AfterList, v3InitializedTicksCrossedList } = await mixedRouteQuoter.callStatic[
       'quoteExactInput(bytes,uint256)'
     ](UNI_V3_WETH, expandTo18Decimals(10000))
 
