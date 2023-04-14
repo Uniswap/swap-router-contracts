@@ -3,6 +3,8 @@ import '@nomiclabs/hardhat-etherscan'
 import '@nomiclabs/hardhat-waffle'
 import 'hardhat-typechain'
 import 'hardhat-watcher'
+import "@matterlabs/hardhat-zksync-deploy"
+import "@matterlabs/hardhat-zksync-solc"
 
 const DEFAULT_COMPILER_SETTINGS = {
   version: '0.7.6',
@@ -19,6 +21,13 @@ const DEFAULT_COMPILER_SETTINGS = {
 }
 
 export default {
+  zksolc: {
+    version: "1.3.8",
+    compilerSource: "binary",
+    settings: {},
+  },
+  defaultNetwork: "zkSyncTestnet",
+
   networks: {
     hardhat: {
       allowUnlimitedContractSize: false,
@@ -49,6 +58,11 @@ export default {
     },
     optimism: {
       url: `https://mainnet.optimism.io`,
+    },
+    zkSyncTestnet: {
+      url: "https://testnet.era.zksync.dev",
+      ethNetwork: `https://goerli.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      zksync: true,
     },
   },
   etherscan: {
