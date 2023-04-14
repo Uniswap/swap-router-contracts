@@ -1,0 +1,38 @@
+{
+  "_format": "hh-zksolc-artifact-1",
+  "contractName": "ImmutableState",
+  "sourceName": "contracts/base/ImmutableState.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "factoryV2",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "positionManager",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {},
+  "factoryDeps": {}
+}

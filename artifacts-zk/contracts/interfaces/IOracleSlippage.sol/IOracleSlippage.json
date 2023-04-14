@@ -1,0 +1,63 @@
+{
+  "_format": "hh-zksolc-artifact-1",
+  "contractName": "IOracleSlippage",
+  "sourceName": "contracts/interfaces/IOracleSlippage.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "bytes[]",
+          "name": "paths",
+          "type": "bytes[]"
+        },
+        {
+          "internalType": "uint128[]",
+          "name": "amounts",
+          "type": "uint128[]"
+        },
+        {
+          "internalType": "uint24",
+          "name": "maximumTickDivergence",
+          "type": "uint24"
+        },
+        {
+          "internalType": "uint32",
+          "name": "secondsAgo",
+          "type": "uint32"
+        }
+      ],
+      "name": "checkOracleSlippage",
+      "outputs": [],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "path",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint24",
+          "name": "maximumTickDivergence",
+          "type": "uint24"
+        },
+        {
+          "internalType": "uint32",
+          "name": "secondsAgo",
+          "type": "uint32"
+        }
+      ],
+      "name": "checkOracleSlippage",
+      "outputs": [],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {},
+  "factoryDeps": {}
+}

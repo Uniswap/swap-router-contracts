@@ -1,0 +1,11 @@
+{
+  "_format": "hh-zksolc-artifact-1",
+  "contractName": "EIP712",
+  "sourceName": "@openzeppelin/contracts/drafts/EIP712.sol",
+  "abi": [],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {},
+  "factoryDeps": {}
+}
