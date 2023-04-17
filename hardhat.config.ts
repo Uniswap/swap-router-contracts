@@ -3,7 +3,6 @@ import '@nomiclabs/hardhat-etherscan'
 import '@nomiclabs/hardhat-waffle'
 import 'hardhat-typechain'
 import 'hardhat-watcher'
-import "@matterlabs/hardhat-zksync-deploy"
 import "@matterlabs/hardhat-zksync-solc"
 
 const DEFAULT_COMPILER_SETTINGS = {
@@ -12,6 +11,7 @@ const DEFAULT_COMPILER_SETTINGS = {
     evmVersion: 'istanbul',
     optimizer: {
       enabled: true,
+      // will be ignored by zksolc
       runs: 1_000_000,
     },
     metadata: {
@@ -21,13 +21,6 @@ const DEFAULT_COMPILER_SETTINGS = {
 }
 
 export default {
-  zksolc: {
-    version: "1.3.8",
-    compilerSource: "binary",
-    settings: {},
-  },
-  defaultNetwork: "zkSyncTestnet",
-
   networks: {
     hardhat: {
       allowUnlimitedContractSize: false,
@@ -72,6 +65,11 @@ export default {
   },
   solidity: {
     compilers: [DEFAULT_COMPILER_SETTINGS],
+  },
+  zksolc: {
+    version: "1.3.8",
+    compilerSource: "binary",
+    settings: {},
   },
   watcher: {
     test: {
