@@ -4,6 +4,7 @@ import '@nomiclabs/hardhat-waffle'
 import 'hardhat-typechain'
 import 'hardhat-watcher'
 import '@matterlabs/hardhat-zksync-solc'
+import '@matterlabs/hardhat-zksync-verify'
 
 const DEFAULT_COMPILER_SETTINGS = {
   version: '0.7.6',
@@ -11,7 +12,6 @@ const DEFAULT_COMPILER_SETTINGS = {
     evmVersion: 'istanbul',
     optimizer: {
       enabled: true,
-      // will be ignored by zksolc
       runs: 1_000_000,
     },
     metadata: {
@@ -56,6 +56,7 @@ export default {
       url: "https://testnet.era.zksync.dev",
       ethNetwork: `https://goerli.infura.io/v3/${process.env.INFURA_API_KEY}`,
       zksync: true,
+      verifyURL: 'https://zksync2-testnet-explorer.zksync.dev/contract_verification'
     },
   },
   etherscan: {
@@ -67,9 +68,13 @@ export default {
     compilers: [DEFAULT_COMPILER_SETTINGS],
   },
   zksolc: {
-    version: "1.3.8",
+    version: "1.3.10",
     compilerSource: "binary",
-    settings: {},
+    settings: {
+      metadata: {
+        bytecodeHash: 'none',
+      },
+    },
   },
   watcher: {
     test: {

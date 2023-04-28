@@ -35,12 +35,13 @@
   "dependencies": {
     "@openzeppelin/contracts": "3.4.1-solc-0.7-2",
     "@uniswap/v2-core": "1.0.1",
-    "@uniswap/v3-core": "1.0.0",
-    "@uniswap/v3-periphery": "1.3.0",
+    "@uniswap/v3-core": "https://github.com/AntonD3/v3-core.git#v1.0.0-zksync-era",
+    "@uniswap/v3-periphery": "https://github.com/AntonD3/v3-periphery.git#v1.3.0-zksync-era",
     "hardhat-watcher": "^2.1.1"
   },
   "devDependencies": {
     "@matterlabs/hardhat-zksync-solc": "^0.3.16",
+    "@matterlabs/hardhat-zksync-verify": "^0.1.5",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-etherscan": "^2.1.8",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
@@ -63,7 +64,8 @@
     "ts-generator": "^0.1.1",
     "ts-node": "^8.5.4",
     "typechain": "^4.0.0",
-    "typescript": "^3.7.3"
+    "typescript": "^3.7.3",
+    "zksync-web3": "^0.14.3"
   },
   "scripts": {
     "compile": "hardhat compile",
