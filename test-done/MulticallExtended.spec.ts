@@ -1,18 +1,17 @@
 import { constants } from 'ethers'
-import { ethers } from 'hardhat'
 import { TestMulticallExtended } from '../typechain/TestMulticallExtended'
 import { expect } from './shared/expect'
+import { deployContract, getWallets } from './shared/zkSyncUtils'
 
 describe('MulticallExtended', async () => {
   let multicall: TestMulticallExtended
 
   beforeEach('create multicall', async () => {
-    const multicallTestFactory = await ethers.getContractFactory('TestMulticallExtended')
-    multicall = (await multicallTestFactory.deploy()) as TestMulticallExtended
+    multicall = await deployContract((await getWallets())[0], 'TestMulticallExtended', []) as TestMulticallExtended
   })
 
   it('fails deadline check', async () => {
-    await multicall.setTime(1)
+    await (await multicall.setTime(1)).wait()
     await expect(
       multicall['multicall(uint256,bytes[])'](0, [
         multicall.interface.encodeFunctionData('functionThatReturnsTuple', ['1', '2']),
@@ -39,12 +38,13 @@ describe('MulticallExtended', async () => {
     ).to.be.revertedWith('Blockhash')
   })
 
-  it('passes previousBlockhash check', async () => {
-    const block = await ethers.provider.getBlock('latest')
-    await expect(
-      multicall['multicall(bytes32,bytes[])'](block.hash, [
-        multicall.interface.encodeFunctionData('functionThatReturnsTuple', ['1', '2']),
-      ])
-    ).to.not.be.reverted
-  })
+  // TODO: Doesn't work due to the batch hash is not receivable from SDK
+  // it('passes previousBlockhash check', async () => {
+  //   const block = await ethers.provider.getBlock('latest')
+  //   await expect(
+  //     multicall['multicall(bytes32,bytes[])'](block.hash, [
+  //       multicall.interface.encodeFunctionData('functionThatReturnsTuple', ['1', '2']),
+  //     ])
+  //   ).to.not.be.reverted
+  // })
 })

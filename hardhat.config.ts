@@ -5,6 +5,7 @@ import 'hardhat-typechain'
 import 'hardhat-watcher'
 import '@matterlabs/hardhat-zksync-solc'
 import '@matterlabs/hardhat-zksync-verify'
+import "@matterlabs/hardhat-zksync-chai-matchers";
 
 const DEFAULT_COMPILER_SETTINGS = {
   version: '0.7.6',
@@ -52,6 +53,11 @@ export default {
     optimism: {
       url: `https://mainnet.optimism.io`,
     },
+    zkSyncLocalhost: {
+      url: "http://localhost:3050",
+      ethNetwork: "http://localhost:8545",
+      zksync: true,
+    },
     zkSyncTestnet: {
       url: "https://testnet.era.zksync.dev",
       ethNetwork: `https://goerli.infura.io/v3/${process.env.INFURA_API_KEY}`,
@@ -82,5 +88,8 @@ export default {
       files: ['./test/**/*'],
       verbose: true,
     },
+  },
+  mocha: {
+    timeout: 100000000
   },
 }

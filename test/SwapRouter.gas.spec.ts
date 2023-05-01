@@ -1,9 +1,9 @@
 import { defaultAbiCoder } from '@ethersproject/abi'
-import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
-import { Fixture } from 'ethereum-waffle'
-import { BigNumber, constants, ContractTransaction, Wallet } from 'ethers'
+import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts-zk/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
+import { BigNumber, constants, ContractTransaction } from 'ethers'
+import { Wallet } from 'zksync-web3'
 import { solidityPack } from 'ethers/lib/utils'
-import { ethers, waffle } from 'hardhat'
+import { ethers } from 'hardhat'
 import { IUniswapV3Pool, IWETH9, MockTimeSwapRouter02, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { ADDRESS_THIS, FeeAmount, MSG_SENDER, TICK_SPACINGS } from './shared/constants'
@@ -13,26 +13,26 @@ import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { getMaxTick, getMinTick } from './shared/ticks'
+import { deployContract, getWallets } from './shared/zkSyncUtils'
 
 describe('SwapRouter gas tests', function () {
-  this.timeout(40000)
   let wallet: Wallet
   let trader: Wallet
 
-  const swapRouterFixture: Fixture<{
+  async function swapRouterFixture(wallets: Wallet[]): Promise<{
     weth9: IWETH9
     router: MockTimeSwapRouter02
     tokens: [TestERC20, TestERC20, TestERC20]
     pools: [IUniswapV3Pool, IUniswapV3Pool, IUniswapV3Pool]
-  }> = async (wallets, provider) => {
-    const { weth9, factory, router, tokens, nft } = await completeFixture(wallets, provider)
+  }> {
+    const { weth9, factory, router, tokens, nft } = await completeFixture(wallets)
 
     // approve & fund wallets
     for (const token of tokens) {
-      await token.approve(router.address, constants.MaxUint256)
-      await token.approve(nft.address, constants.MaxUint256)
-      await token.connect(trader).approve(router.address, constants.MaxUint256)
-      await token.transfer(trader.address, expandTo18Decimals(1_000_000))
+      await (await token.approve(router.address, constants.MaxUint256)).wait()
+      await (await token.approve(nft.address, constants.MaxUint256)).wait()
+      await (await token.connect(trader as any).approve(router.address, constants.MaxUint256)).wait()
+      await (await token.transfer(trader.address, expandTo18Decimals(1_000_000))).wait()
     }
 
     const liquidity = 1000000
@@ -40,12 +40,12 @@ describe('SwapRouter gas tests', function () {
       if (tokenAddressA.toLowerCase() > tokenAddressB.toLowerCase())
         [tokenAddressA, tokenAddressB] = [tokenAddressB, tokenAddressA]
 
-      await nft.createAndInitializePoolIfNecessary(
+      await (await nft.createAndInitializePoolIfNecessary(
         tokenAddressA,
         tokenAddressB,
         FeeAmount.MEDIUM,
         encodePriceSqrt(100005, 100000) // we don't want to cross any ticks
-      )
+      )).wait()
 
       const liquidityParams = {
         token0: tokenAddressA,
@@ -61,12 +61,12 @@ describe('SwapRouter gas tests', function () {
         deadline: 2 ** 32,
       }
 
-      return nft.mint(liquidityParams)
+      return await (await nft.mint(liquidityParams)).wait()
     }
 
     async function createPoolWETH9(tokenAddress: string) {
-      await weth9.deposit({ value: liquidity * 2 })
-      await weth9.approve(nft.address, constants.MaxUint256)
+      await (await weth9.deposit({ value: liquidity * 2 })).wait()
+      await (await weth9.approve(nft.address, constants.MaxUint256)).wait()
       return createPool(weth9.address, tokenAddress)
     }
 
@@ -92,15 +92,13 @@ describe('SwapRouter gas tests', function () {
       router,
       tokens,
       pools,
-    }
+    }    
   }
 
   let weth9: IWETH9
   let router: MockTimeSwapRouter02
   let tokens: [TestERC20, TestERC20, TestERC20]
   let pools: [IUniswapV3Pool, IUniswapV3Pool, IUniswapV3Pool]
-
-  let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   function encodeUnwrapWETH9(amount: number) {
     return solidityPack(
@@ -121,14 +119,11 @@ describe('SwapRouter gas tests', function () {
   }
 
   before('create fixture loader', async () => {
-    const wallets = await (ethers as any).getSigners()
-    ;[wallet, trader] = wallets
-
-    loadFixture = waffle.createFixtureLoader(wallets)
+    ;[wallet, trader] = await getWallets()
   })
 
   beforeEach('load fixture', async () => {
-    ;({ router, weth9, tokens, pools } = await loadFixture(swapRouterFixture))
+    ;({ router, weth9, tokens, pools } = await swapRouterFixture([wallet]))
   })
 
   async function exactInput(
@@ -153,7 +148,7 @@ describe('SwapRouter gas tests', function () {
       data.push(encodeUnwrapWETH9(amountOutMinimum))
     }
 
-    return router.connect(trader)['multicall(uint256,bytes[])'](1, data, { value })
+    return router.connect(trader as any)['multicall(uint256,bytes[])'](1, data, { value })
   }
 
   async function exactInputSingle(
@@ -183,7 +178,7 @@ describe('SwapRouter gas tests', function () {
       data.push(encodeUnwrapWETH9(amountOutMinimum))
     }
 
-    return router.connect(trader)['multicall(uint256,bytes[])'](1, data, { value })
+    return router.connect(trader as any)['multicall(uint256,bytes[])'](1, data, { value })
   }
 
   async function exactOutput(tokens: string[]): Promise<ContractTransaction> {
@@ -211,7 +206,7 @@ describe('SwapRouter gas tests', function () {
       data.push(encodeUnwrapWETH9(amountOut))
     }
 
-    return router.connect(trader)['multicall(uint256,bytes[])'](1, data, { value })
+    return router.connect(trader as any)['multicall(uint256,bytes[])'](1, data, { value })
   }
 
   async function exactOutputSingle(
@@ -250,12 +245,12 @@ describe('SwapRouter gas tests', function () {
 
   // TODO should really throw this in the fixture
   beforeEach('intialize feeGrowthGlobals', async () => {
-    await exactInput([tokens[0].address, tokens[1].address], 1, 0)
-    await exactInput([tokens[1].address, tokens[0].address], 1, 0)
-    await exactInput([tokens[1].address, tokens[2].address], 1, 0)
-    await exactInput([tokens[2].address, tokens[1].address], 1, 0)
-    await exactInput([tokens[0].address, weth9.address], 1, 0)
-    await exactInput([weth9.address, tokens[0].address], 1, 0)
+    await (await exactInput([tokens[0].address, tokens[1].address], 1, 0)).wait()
+    await (await exactInput([tokens[1].address, tokens[0].address], 1, 0)).wait()
+    await (await exactInput([tokens[1].address, tokens[2].address], 1, 0)).wait()
+    await (await exactInput([tokens[2].address, tokens[1].address], 1, 0)).wait()
+    await (await exactInput([tokens[0].address, weth9.address], 1, 0)).wait()
+    await (await exactInput([weth9.address, tokens[0].address], 1, 0)).wait()
   })
 
   beforeEach('ensure feeGrowthGlobals are >0', async () => {
@@ -291,11 +286,10 @@ describe('SwapRouter gas tests', function () {
     })
 
     it('0 -> 1 minimal', async () => {
-      const calleeFactory = await ethers.getContractFactory('TestUniswapV3Callee')
-      const callee = await calleeFactory.deploy()
+      const callee = await deployContract(wallet, 'TestUniswapV3Callee')
 
-      await tokens[0].connect(trader).approve(callee.address, constants.MaxUint256)
-      await snapshotGasCost(callee.connect(trader).swapExact0For1(pools[0].address, 2, trader.address, '4295128740'))
+      await (await tokens[0].connect(trader as any).approve(callee.address, constants.MaxUint256)).wait()
+      await snapshotGasCost(callee.connect(trader as any).swapExact0For1(pools[0].address, 2, trader.address, '4295128740'))
     })
 
     it('0 -> 1 -> 2', async () => {
@@ -326,8 +320,8 @@ describe('SwapRouter gas tests', function () {
     })
 
     it('2 trades (via router)', async () => {
-      await weth9.connect(trader).deposit({ value: 3 })
-      await weth9.connect(trader).approve(router.address, constants.MaxUint256)
+      await (await weth9.connect(trader).deposit({ value: 3 })).wait()
+      await (await weth9.connect(trader).approve(router.address, constants.MaxUint256)).wait()
       const swap0 = {
         path: encodePath([weth9.address, tokens[0].address], [FeeAmount.MEDIUM]),
         recipient: ADDRESS_THIS,
@@ -352,8 +346,8 @@ describe('SwapRouter gas tests', function () {
     })
 
     it('2 trades (directly to sender)', async () => {
-      await weth9.connect(trader).deposit({ value: 3 })
-      await weth9.connect(trader).approve(router.address, constants.MaxUint256)
+      await (await weth9.connect(trader).deposit({ value: 3 })).wait()
+      await (await weth9.connect(trader).approve(router.address, constants.MaxUint256)).wait()
       const swap0 = {
         path: encodePath([weth9.address, tokens[0].address], [FeeAmount.MEDIUM]),
         recipient: MSG_SENDER,
@@ -377,8 +371,8 @@ describe('SwapRouter gas tests', function () {
     })
 
     it('3 trades (directly to sender)', async () => {
-      await weth9.connect(trader).deposit({ value: 3 })
-      await weth9.connect(trader).approve(router.address, constants.MaxUint256)
+      await (await weth9.connect(trader).deposit({ value: 3 })).wait()
+      await (await weth9.connect(trader).approve(router.address, constants.MaxUint256)).wait()
       const swap0 = {
         path: encodePath([weth9.address, tokens[0].address], [FeeAmount.MEDIUM]),
         recipient: MSG_SENDER,

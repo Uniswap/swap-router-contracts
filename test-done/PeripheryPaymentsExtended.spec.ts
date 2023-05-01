@@ -1,37 +1,35 @@
-import { Fixture } from 'ethereum-waffle'
-import { constants, Contract, ContractTransaction, Wallet } from 'ethers'
-import { waffle, ethers } from 'hardhat'
+import { Wallet } from 'zksync-web3'
+import { ethers } from 'hardhat'
 import { IWETH9, MockTimeSwapRouter02 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { expect } from './shared/expect'
+import { getWallets } from './shared/zkSyncUtils'
 
 describe('PeripheryPaymentsExtended', function () {
   let wallet: Wallet
 
-  const routerFixture: Fixture<{
+  async function routerFixture(wallets: Wallet[]): Promise<{
     weth9: IWETH9
     router: MockTimeSwapRouter02
-  }> = async (wallets, provider) => {
-    const { weth9, router } = await completeFixture(wallets, provider)
+  }> {
+    const { weth9, router } = await completeFixture(wallets)
 
     return {
       weth9,
       router,
-    }
+    } 
   }
 
   let router: MockTimeSwapRouter02
   let weth9: IWETH9
 
-  let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
-    ;[wallet] = await (ethers as any).getSigners()
-    loadFixture = waffle.createFixtureLoader([wallet])
+    ;[wallet] = await getWallets()
   })
 
   beforeEach('load fixture', async () => {
-    ;({ weth9, router } = await loadFixture(routerFixture))
+    ;({ weth9, router } = await routerFixture([wallet]))
   })
 
   describe('wrapETH', () => {
@@ -39,7 +37,7 @@ describe('PeripheryPaymentsExtended', function () {
       const value = ethers.utils.parseEther('1')
 
       const weth9BalancePrev = await weth9.balanceOf(router.address)
-      await router.wrapETH(value, { value })
+      await (await router.wrapETH(value, { value })).wait()
       const weth9BalanceCurrent = await weth9.balanceOf(router.address)
 
       expect(weth9BalanceCurrent.sub(weth9BalancePrev)).to.equal(value)

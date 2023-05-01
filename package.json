@@ -12,10 +12,7 @@
     "v2",
     "v3"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Uniswap/swap-router-contracts"
-  },
+  "repository": "https://github.com/Uniswap/swap-router-contracts",
   "files": [
     "contracts/base",
     "contracts/interfaces",
@@ -34,25 +31,33 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "3.4.1-solc-0.7-2",
-    "@uniswap/v2-core": "1.0.1",
+    "@uniswap/v2-core": "https://github.com/AntonD3/v2-core.git#v1.0.1-zksync-era",
     "@uniswap/v3-core": "https://github.com/AntonD3/v3-core.git#v1.0.0-zksync-era",
     "@uniswap/v3-periphery": "https://github.com/AntonD3/v3-periphery.git#v1.3.0-zksync-era",
     "hardhat-watcher": "^2.1.1"
   },
   "devDependencies": {
+    "@ethersproject/abi": "^5.7.0",
+    "@ethersproject/providers": "^5.7.2",
+    "@matterlabs/hardhat-zksync-chai-matchers": "^0.1.2",
+    "@matterlabs/hardhat-zksync-deploy": "^0.6.3",
     "@matterlabs/hardhat-zksync-solc": "^0.3.16",
     "@matterlabs/hardhat-zksync-verify": "^0.1.5",
-    "@nomiclabs/hardhat-ethers": "^2.0.2",
-    "@nomiclabs/hardhat-etherscan": "^2.1.8",
+    "@nomicfoundation/hardhat-chai-matchers": "^1.0.6",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-etherscan": "^3.1.7",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@typechain/ethers-v5": "^4.0.0",
     "@types/chai": "^4.2.6",
     "@types/mocha": "^5.2.7",
-    "chai": "^4.2.0",
+    "chai": "^4.3.7",
     "decimal.js": "^10.2.1",
     "ethereum-waffle": "^3.0.2",
-    "ethers": "^5.0.8",
-    "hardhat": "^2.6.8",
+    "ethers": "^5.7.0",
+    "hardhat": "^2.14.0",
+    "hardhat-gas-reporter": "^1.0.9",
     "hardhat-typechain": "^0.3.5",
     "is-svg": "^4.3.1",
     "mocha": "^6.2.2",
@@ -61,6 +66,7 @@
     "prettier-plugin-solidity": "^1.0.0-beta.10",
     "solhint": "^3.2.1",
     "solhint-plugin-prettier": "^0.0.5",
+    "solidity-coverage": "^0.8.2",
     "ts-generator": "^0.1.1",
     "ts-node": "^8.5.4",
     "typechain": "^4.0.0",
@@ -69,6 +75,7 @@
   },
   "scripts": {
     "compile": "hardhat compile",
-    "test": "hardhat test"
+    "test": "hardhat test --network zkSyncLocalhost",
+    "local-setup": "./scripts/start-local-setup.sh"
   }
 }

@@ -1,6 +1,7 @@
 import { constants, ContractFactory } from 'ethers'
-import { ethers, waffle } from 'hardhat'
+import { ethers } from 'hardhat'
 import { MockObservations, OracleSlippageTest } from '../typechain'
+import { deployContract, getWallets } from './shared/zkSyncUtils'
 import { FeeAmount } from './shared/constants'
 import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
@@ -12,30 +13,14 @@ const tokens = [
 ]
 
 describe('OracleSlippage', function () {
-  this.timeout(40000)
-
-  let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
-
   let oracle: OracleSlippageTest
-  let mockObservationsFactory: ContractFactory
 
-  const oracleTestFixture = async () => {
-    const oracleFactory = await ethers.getContractFactory('OracleSlippageTest')
-    const oracle = await oracleFactory.deploy(constants.AddressZero, constants.AddressZero)
-
-    return oracle as OracleSlippageTest
+  async function oracleTestFixture() {
+    return (await deployContract((await getWallets())[0], 'OracleSlippageTest', [constants.AddressZero, constants.AddressZero])) as OracleSlippageTest
   }
 
-  before('create fixture loader', async () => {
-    loadFixture = waffle.createFixtureLoader(await (ethers as any).getSigners())
-  })
-
   beforeEach('deploy fixture', async () => {
-    oracle = await loadFixture(oracleTestFixture)
-  })
-
-  before('create mockObservationsFactory', async () => {
-    mockObservationsFactory = await ethers.getContractFactory('MockObservations')
+    oracle = await oracleTestFixture()
   })
 
   async function createMockPool(
@@ -46,9 +31,9 @@ describe('OracleSlippage', function () {
     ticks: number[],
     mockLowObservationCardinality = false
   ): Promise<MockObservations> {
-    const mockPool = await mockObservationsFactory.deploy(blockTimestamps, ticks, mockLowObservationCardinality)
-    await oracle.registerPool(mockPool.address, tokenA, tokenB, fee)
-    await oracle.setTime(blockTimestamps[blockTimestamps.length - 1])
+    const mockPool = await deployContract((await getWallets())[0], 'MockObservations', [blockTimestamps, ticks, mockLowObservationCardinality])
+    await (await oracle.registerPool(mockPool.address, tokenA, tokenB, fee)).wait()
+    await (await oracle.setTime(blockTimestamps[blockTimestamps.length - 1])).wait()
     return mockPool as MockObservations
   }
 
@@ -74,7 +59,7 @@ describe('OracleSlippage', function () {
 
     it('works when time has passed since the last block', async () => {
       const mockPool = await createMockPool(tokens[0], tokens[1], FeeAmount.LOW, [0, 1, 2], [0, 11, 12])
-      await oracle.setTime(3)
+      await (await oracle.setTime(3)).wait()
       const { blockStartingTick, currentTick } = await oracle.testGetBlockStartingAndCurrentTick(mockPool.address)
       expect(blockStartingTick).to.eq(12)
       expect(currentTick).to.eq(12)

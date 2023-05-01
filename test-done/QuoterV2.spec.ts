@@ -1,5 +1,5 @@
-import { Fixture } from 'ethereum-waffle'
-import { constants, Wallet, Contract } from 'ethers'
+import { constants, Contract } from 'ethers'
+import { Wallet } from 'zksync-web3'
 import { ethers, waffle } from 'hardhat'
 import { QuoterV2, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
@@ -10,29 +10,28 @@ import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
 import { createPool, createPoolWithMultiplePositions, createPoolWithZeroTickInitialized } from './shared/quoter'
 import snapshotGasCost from './shared/snapshotGasCost'
+import { deployContract, getWallets } from './shared/zkSyncUtils'
 
 describe('QuoterV2', function () {
-  this.timeout(40000)
   let wallet: Wallet
   let trader: Wallet
 
-  const swapRouterFixture: Fixture<{
+  async function swapRouterFixture(wallets: Wallet[]): Promise<{
     nft: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
     quoter: QuoterV2
-  }> = async (wallets, provider) => {
-    const { weth9, factory, router, tokens, nft } = await completeFixture(wallets, provider)
+  }> {
+    const { weth9, factory, router, tokens, nft } = await completeFixture(wallets)
 
     // approve & fund wallets
     for (const token of tokens) {
-      await token.approve(router.address, constants.MaxUint256)
-      await token.approve(nft.address, constants.MaxUint256)
-      await token.connect(trader).approve(router.address, constants.MaxUint256)
-      await token.transfer(trader.address, expandTo18Decimals(1_000_000))
+      await (await token.approve(router.address, constants.MaxUint256)).wait()
+      await (await token.approve(nft.address, constants.MaxUint256)).wait()
+      await (await token.connect(trader as any).approve(router.address, constants.MaxUint256)).wait()
+      await (await token.transfer(trader.address, expandTo18Decimals(1_000_000))).wait()
     }
 
-    const quoterFactory = await ethers.getContractFactory('QuoterV2')
-    quoter = (await quoterFactory.deploy(factory.address, weth9.address)) as QuoterV2
+    quoter = (await deployContract(wallets[0], 'QuoterV2', [factory.address, weth9.address])) as QuoterV2
 
     return {
       tokens,
@@ -45,18 +44,15 @@ describe('QuoterV2', function () {
   let tokens: [TestERC20, TestERC20, TestERC20]
   let quoter: QuoterV2
 
-  let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
-
   before('create fixture loader', async () => {
-    const wallets = await (ethers as any).getSigners()
-    ;[wallet, trader] = wallets
-    loadFixture = waffle.createFixtureLoader(wallets)
+    ;[wallet, trader] = await getWallets()
   })
 
-  // helper for getting weth and token balances
-  beforeEach('load fixture', async () => {
-    ;({ tokens, nft, quoter } = await loadFixture(swapRouterFixture))
-  })
+    // helper for getting weth and token balances
+    beforeEach('load fixture', async () => {
+      ;({ tokens, nft, quoter } = await swapRouterFixture([wallet]))
+    })
+
 
   describe('quotes', () => {
     beforeEach(async () => {

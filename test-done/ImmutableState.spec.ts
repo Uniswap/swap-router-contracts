@@ -1,23 +1,25 @@
 import { Contract } from 'ethers'
-import { waffle, ethers } from 'hardhat'
+import { ethers } from 'hardhat'
+import { Wallet } from 'zksync-web3'
 
-import { Fixture } from 'ethereum-waffle'
+
+import { deployContract } from './shared/zkSyncUtils'
 import { ImmutableStateTest } from '../typechain'
 import { expect } from './shared/expect'
 import completeFixture from './shared/completeFixture'
 import { v2FactoryFixture } from './shared/externalFixtures'
+import { getWallets } from './shared/zkSyncUtils'
 
 describe('ImmutableState', () => {
-  const fixture: Fixture<{
+  async function fixture(wallets: Wallet[]): Promise<{
     factoryV2: Contract
     nft: Contract
     state: ImmutableStateTest
-  }> = async (wallets, provider) => {
-    const { factory: factoryV2 } = await v2FactoryFixture(wallets, provider)
-    const { nft } = await completeFixture(wallets, provider)
+  }> {
+    const { factory: factoryV2 } = await v2FactoryFixture(wallets)
+    const { nft } = await completeFixture(wallets)
 
-    const stateFactory = await ethers.getContractFactory('ImmutableStateTest')
-    const state = (await stateFactory.deploy(factoryV2.address, nft.address)) as ImmutableStateTest
+    const state = await deployContract(wallets[0], 'ImmutableStateTest', [factoryV2.address, nft.address]) as ImmutableStateTest
 
     return {
       nft,
@@ -30,14 +32,8 @@ describe('ImmutableState', () => {
   let nft: Contract
   let state: ImmutableStateTest
 
-  let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
-
-  before('create fixture loader', async () => {
-    loadFixture = waffle.createFixtureLoader(await (ethers as any).getSigners())
-  })
-
   beforeEach('load fixture', async () => {
-    ;({ factoryV2, nft, state } = await loadFixture(fixture))
+    ;({ factoryV2, nft, state } = await fixture(getWallets()))
   })
 
   it('bytecode size', async () => {
