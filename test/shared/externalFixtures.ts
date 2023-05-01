@@ -71,12 +71,12 @@ export async function v3RouterFixture([wallet]: Wallet[]): Promise<{
     [factory.address, weth9.address, constants.AddressZero]
   )
 
-  const router = await deployContract(wallet, 'MockTimeSwapRouter02', [
+  const router = (await deployContract(wallet, 'MockTimeSwapRouter02', [
     factoryV2.address,
     factory.address,
     nft.address,
     weth9.address
-  ]) as MockTimeSwapRouter02
+  ])) as MockTimeSwapRouter02
 
   return { weth9, factoryV2, factory, nft, router }
 }

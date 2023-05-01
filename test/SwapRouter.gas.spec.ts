@@ -302,11 +302,12 @@ describe('SwapRouter gas tests', function () {
     })
 
     it('WETH9 -> 0', async () => {
+      const tx = await (await exactInput(
+        [weth9.address, tokens[0].address],
+        weth9.address.toLowerCase() < tokens[0].address.toLowerCase() ? 2 : 3
+      )).wait();
       await snapshotGasCost(
-        exactInput(
-          [weth9.address, tokens[0].address],
-          weth9.address.toLowerCase() < tokens[0].address.toLowerCase() ? 2 : 3
-        )
+        tx.gasUsed
       )
     })
 
