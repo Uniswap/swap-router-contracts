@@ -1532,7 +1532,7 @@ describe('SwapRouter', function () {
         const traderAfter = await getBalances(trader.address)
         expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(6))
         expect(traderAfter.token2).to.be.eq(traderBefore.token1.add(1))
-     })
+      })
     })
   })
 })

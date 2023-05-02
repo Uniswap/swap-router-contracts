@@ -29,7 +29,6 @@ async function completeFixture([wallet]: Wallet[]): Promise<{
     tokens,
     nft,
   }
-
 }
 
 export default completeFixture

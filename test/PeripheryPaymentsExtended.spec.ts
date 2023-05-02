@@ -17,7 +17,7 @@ describe('PeripheryPaymentsExtended', function () {
     return {
       weth9,
       router,
-    } 
+    }
   }
 
   let router: MockTimeSwapRouter02

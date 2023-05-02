@@ -92,7 +92,7 @@ describe('SwapRouter gas tests', function () {
       router,
       tokens,
       pools,
-    }    
+    }
   }
 
   let weth9: IWETH9
