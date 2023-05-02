@@ -1,7 +1,5 @@
 import { Contract } from 'ethers'
-import { ethers } from 'hardhat'
 import { Wallet } from 'zksync-web3'
-
 
 import { deployContract } from './shared/zkSyncUtils'
 import { ImmutableStateTest } from '../typechain'

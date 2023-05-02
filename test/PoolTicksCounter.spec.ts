@@ -1,4 +1,4 @@
-// TODO: 
+// TODO: Doesn't work, since zkSync Era local node doesn't support mock deployment
 // import { ethers, artifacts } from 'hardhat'
 
 // import { expect } from './shared/expect'

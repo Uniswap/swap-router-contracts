@@ -1,6 +1,5 @@
 import { constants, Contract } from 'ethers'
 import { Wallet } from 'zksync-web3'
-import { ethers, waffle } from 'hardhat'
 import { QuoterV2, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { FeeAmount, MaxUint128 } from './shared/constants'

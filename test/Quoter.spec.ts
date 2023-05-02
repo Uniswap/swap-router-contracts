@@ -1,7 +1,5 @@
-import { Fixture } from 'ethereum-waffle'
 import { constants, Contract } from 'ethers'
 import { Wallet } from 'zksync-web3'
-import { ethers, waffle } from 'hardhat'
 import { Quoter, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'

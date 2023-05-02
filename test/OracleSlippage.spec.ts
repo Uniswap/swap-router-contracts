@@ -1,5 +1,4 @@
-import { constants, ContractFactory } from 'ethers'
-import { ethers } from 'hardhat'
+import { constants } from 'ethers'
 import { MockObservations, OracleSlippageTest } from '../typechain'
 import { deployContract, getWallets } from './shared/zkSyncUtils'
 import { FeeAmount } from './shared/constants'

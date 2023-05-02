@@ -6,7 +6,6 @@ import { IWETH9, MockTimeSwapRouter02 } from '../../typechain'
 
 import { deployContractWithArtifact, deployContract } from './zkSyncUtils'
 import * as WETH9 from '../contracts/WETH9.json'
-import * as hre from 'hardhat'
 import * as zk from 'zksync-web3'
 import { constants, ethers } from 'ethers'
 import { Wallet, Contract } from 'zksync-web3'
@@ -29,11 +28,11 @@ export async function v2FactoryFixture([wallet]: Wallet[]): Promise< { factory: 
   )
 
   let factoryDeps: string[] = extractFactoryDeps(FACTORY_V2_ARTIFACT as any as ZkSyncArtifact, [PAIR_V2_ARTIFACT as any as ZkSyncArtifact])
-  const factory = await contractFactory.deploy(...[constants.AddressZero], {
+  const factory = await (await contractFactory.deploy(...[constants.AddressZero], {
     customData: {
       factoryDeps,
     },
-  })
+  })).deployed()
 
   return { factory }
 }
@@ -47,11 +46,11 @@ async function v3CoreFactoryFixture([wallet]: Wallet[]): Promise<Contract> {
 
   let factoryDeps: string[] = extractFactoryDeps(FACTORY_ARTIFACT as any as ZkSyncArtifact, [POOL_ARTIFACT as any as ZkSyncArtifact])
 
-  return await contractFactory.deploy(...[], {
+  return await (await contractFactory.deploy(...[], {
     customData: {
       factoryDeps,
     },
-  })
+  })).deployed()
 }
 
 export async function v3RouterFixture([wallet]: Wallet[]): Promise<{
