@@ -1,70 +1,31 @@
-import '@nomiclabs/hardhat-ethers'
-import '@nomiclabs/hardhat-etherscan'
-import '@nomiclabs/hardhat-waffle'
-import 'hardhat-typechain'
-import 'hardhat-watcher'
-import 'dotenv/config'
-
-const DEFAULT_COMPILER_SETTINGS = {
-  version: '0.7.6',
-  settings: {
-    evmVersion: 'istanbul',
-    optimizer: {
-      enabled: true,
-      runs: 1_000_000,
-    },
-    metadata: {
-      bytecodeHash: 'none',
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
+require("dotenv").config();
+import "hardhat-contract-sizer";
+const config: HardhatUserConfig = {
+  solidity: {
+    version: "0.7.6",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 1000,
+      },
     },
   },
-}
-
-export default {
   networks: {
     hardhat: {
-      allowUnlimitedContractSize: false,
+      allowUnlimitedContractSize: true,
+      chainId: Number(process.env.CHAIN_ID),
     },
-    mainnet: {
-      url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
-    },
-    ropsten: {
-      url: `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`,
-    },
-    rinkeby: {
-      url: `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
-    },
-    goerli: {
-      url: `https://goerli.infura.io/v3/${process.env.INFURA_API_KEY}`,
-    },
-    kovan: {
-      url: `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`,
-    },
-    arbitrumRinkeby: {
-      url: `https://rinkeby.arbitrum.io/rpc`,
-    },
-    arbitrum: {
-      url: `https://arb1.arbitrum.io/rpc`,
-    },
-    optimismKovan: {
-      url: `https://kovan.optimism.io`,
-    },
-    optimism: {
-      url: `https://mainnet.optimism.io`,
+    deploy: {
+      url: process.env.RPC_ENDPOINT,
+      gasPrice: 10000000000,
+      gas: 10000000,
+      chainId: Number(process.env.CHAIN_ID),
+      accounts: [process.env.PKEY as string],
+      allowUnlimitedContractSize: true,
     },
   },
-  etherscan: {
-    // Your API key for Etherscan
-    // Obtain one at https://etherscan.io/
-    apiKey: process.env.ETHERSCAN_API_KEY,
-  },
-  solidity: {
-    compilers: [DEFAULT_COMPILER_SETTINGS],
-  },
-  watcher: {
-    test: {
-      tasks: [{ command: 'test', params: { testFiles: ['{path}'] } }],
-      files: ['./test/**/*'],
-      verbose: true,
-    },
-  },
-}
+};
+
+export default config;
