@@ -241,6 +241,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TokenValidator__factory>;
     getContractFactory(
+      name: "Multicall2",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Multicall2__factory>;
+    getContractFactory(
       name: "SwapRouter02",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.SwapRouter02__factory>;
@@ -570,6 +574,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.TokenValidator>;
+    getContractAt(
+      name: "Multicall2",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Multicall2>;
     getContractAt(
       name: "SwapRouter02",
       address: string,

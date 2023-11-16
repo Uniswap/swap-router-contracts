@@ -122,6 +122,8 @@ export type { QuoterV2 } from "./contracts/lens/QuoterV2";
 export { QuoterV2__factory } from "./factories/contracts/lens/QuoterV2__factory";
 export type { TokenValidator } from "./contracts/lens/TokenValidator";
 export { TokenValidator__factory } from "./factories/contracts/lens/TokenValidator__factory";
+export type { Multicall2 } from "./contracts/Multicall2";
+export { Multicall2__factory } from "./factories/contracts/Multicall2__factory";
 export type { SwapRouter02 } from "./contracts/SwapRouter02";
 export { SwapRouter02__factory } from "./factories/contracts/SwapRouter02__factory";
 export type { ImmutableStateTest } from "./contracts/test/ImmutableStateTest";

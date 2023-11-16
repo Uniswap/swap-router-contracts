@@ -9,6 +9,7 @@ import type * as lens from "./lens";
 export type { lens };
 import type * as test from "./test";
 export type { test };
+export type { Multicall2 } from "./Multicall2";
 export type { SwapRouter02 } from "./SwapRouter02";
 export type { V2SwapRouter } from "./V2SwapRouter";
 export type { V3SwapRouter } from "./V3SwapRouter";
