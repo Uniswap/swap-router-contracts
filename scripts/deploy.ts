@@ -10,24 +10,25 @@ async function main() {
 
   console.log('xxx signer address', signer.address)
 
-  const factory02 = '0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6'
-  const factory03 = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
-  const positionManager = `0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512`
+  const weth = '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270'
+
+  const factory02 = '0x843bed96dB8b6F9f01e824aC2c8C3eB832b09Ce8'
+  const factory03 = '0x6F210f6079a2ef18c278B4d796B8Fd366b9fe08c'
+  const positionManager = `0xBd770416a3345F91E4B34576cb804a576fa48EB1`
   const SwapRouter02 = await ethers.getContractFactory('SwapRouter02')
-  const swapRouter02 = await SwapRouter02.deploy(
-    factory02,
-    factory03,
-    positionManager,
-    `0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512`
-  )
+  const swapRouter02 = await SwapRouter02.deploy(factory02, factory03, positionManager, weth)
+  
+  console.log('xxxx swapRouter02', swapRouter02.target)
 
   const Multicall2 = await ethers.getContractFactory('Multicall2')
   const muntical2 = await Multicall2.deploy()
-  var fs = require('fs')
-  fs.writeFileSync(
-    'address.json',
-    JSON.stringify({ swapRouter02: swapRouter02.target, mutical2: muntical2.target }, null, 4)
-  )
+  console.log('xxx muticall2', muntical2.target)
+
+    var fs = require('fs')
+    fs.writeFileSync(
+      'address.json',
+      JSON.stringify({ swapRouter02: swapRouter02.target, mutical2: muntical2.target }, null, 4)
+    )
 }
 
 main().catch((error) => {
