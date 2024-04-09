@@ -4,6 +4,3 @@ out = 'out'
 bytecode_hash = "none"
 libs = ["lib"]
 optimizer_runs = 1000000
-
-[etherscan]
-etherscan_api_key = {key = "JF2T2N2MHGV7XUXPDDYEWEEMZEJGP7QWUF", chain = 8453, url = "https://api.basescan.org/api/" }
