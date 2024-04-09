@@ -6,4 +6,5 @@ typechain/
 .env
 .vscode
 
+broadcast/
 out/
