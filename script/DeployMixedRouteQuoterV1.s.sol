@@ -6,13 +6,13 @@ import "forge-std/Script.sol";
 import {MixedRouteQuoterV1} from "contracts/lens/MixedRouteQuoterV1.sol";
 
 contract DeployMixedRouteQuoterV1 is Script {
-    address constant V3_FACTORY = 0x33128a8fC17869897dcE68Ed026d694621f6FDfD;
-    address constant V2_FACTORY = 0x8909Dc15e40173Ff4699343b6eB8132c65e18eC6;
-    address constant WETH9 = 0x4200000000000000000000000000000000000006;
-
     function setUp() public {}
 
     function run() public returns (MixedRouteQuoterV1 mixedRouteQuoterV1) {
+        address V3_FACTORY = vm.envAddress("FOUNDRY_MIXEDROUTE_QUOTER_DEPLOY_V3_FACTORY");
+        address V2_FACTORY = vm.envAddress("FOUNDRY_MIXEDROUTE_QUOTER_DEPLOY_V2_FACTORY");
+        address WETH9 = vm.envAddress("FOUNDRY_MIXEDROUTE_QUOTER_DEPLOY_WETH9");
+
         vm.startBroadcast();
 
         mixedRouteQuoterV1 = new MixedRouteQuoterV1{salt: 0x00}(V3_FACTORY, V2_FACTORY, WETH9);
