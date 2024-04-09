@@ -1,0 +1,13 @@
+@ensdomains/=node_modules/@ensdomains/
+@openzeppelin/=node_modules/@openzeppelin/
+@solidity-parser/=node_modules/solhint/node_modules/@solidity-parser/
+@uniswap/=node_modules/@uniswap/
+@uniswap/swap-router-contracts/=contracts/
+base64-sol/=node_modules/base64-sol/
+hardhat/=node_modules/hardhat/
+base/=contracts/base/
+interfaces/=contracts/interfaces/
+lens/=contracts/lens/
+libraries/=contracts/libraries/
+test/=contracts/test/
+forge-std/=lib/forge-std/src/
