@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`QuoterV2 quotes #quoteExactInput 0 -> 2 -> 1 1`] = `277146`;
+exports[`QuoterV2 quotes #quoteExactInput 0 -> 2 -> 1 1`] = `279646`;
 
 exports[`QuoterV2 quotes #quoteExactInput 0 -> 2 cross 0 tick, starting tick initialized 1`] = `123797`;
 
@@ -26,7 +26,7 @@ exports[`QuoterV2 quotes #quoteExactInputSingle 0 -> 2 1`] = `182303`;
 
 exports[`QuoterV2 quotes #quoteExactInputSingle 2 -> 0 1`] = `175105`;
 
-exports[`QuoterV2 quotes #quoteExactOutput 0 -> 2 -> 1 1`] = `276746`;
+exports[`QuoterV2 quotes #quoteExactOutput 0 -> 2 -> 1 1`] = `279246`;
 
 exports[`QuoterV2 quotes #quoteExactOutput 0 -> 2 cross 0 tick starting tick initialized 1`] = `123352`;
 

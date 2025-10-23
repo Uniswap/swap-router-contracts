@@ -13,8 +13,9 @@ import './ImmutableState.sol';
 /// for any token, and then make calls into the position manager
 abstract contract ApproveAndCall is IApproveAndCall, ImmutableState {
     function tryApprove(address token, uint256 amount) private returns (bool) {
-        (bool success, bytes memory data) =
-            token.call(abi.encodeWithSelector(IERC20.approve.selector, positionManager, amount));
+        (bool success, bytes memory data) = token.call(
+            abi.encodeWithSelector(IERC20.approve.selector, positionManager, amount)
+        );
         return success && (data.length == 0 || abi.decode(data, (bool)));
     }
 
@@ -102,12 +103,9 @@ abstract contract ApproveAndCall is IApproveAndCall, ImmutableState {
     }
 
     /// @inheritdoc IApproveAndCall
-    function increaseLiquidity(IncreaseLiquidityParams calldata params)
-        external
-        payable
-        override
-        returns (bytes memory result)
-    {
+    function increaseLiquidity(
+        IncreaseLiquidityParams calldata params
+    ) external payable override returns (bytes memory result) {
         return
             callPositionManager(
                 abi.encodeWithSelector(

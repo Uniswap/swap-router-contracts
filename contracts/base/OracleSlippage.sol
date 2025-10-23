@@ -15,11 +15,9 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState, Bl
     using Path for bytes;
 
     /// @dev Returns the tick as of the beginning of the current block, and as of right now, for the given pool.
-    function getBlockStartingAndCurrentTick(IUniswapV3Pool pool)
-        internal
-        view
-        returns (int24 blockStartingTick, int24 currentTick)
-    {
+    function getBlockStartingAndCurrentTick(
+        IUniswapV3Pool pool
+    ) internal view returns (int24 blockStartingTick, int24 currentTick) {
         uint16 observationIndex;
         uint16 observationCardinality;
         (, currentTick, observationIndex, observationCardinality, , , ) = pool.slot0();
@@ -35,8 +33,9 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState, Bl
             blockStartingTick = currentTick;
         } else {
             uint256 prevIndex = (uint256(observationIndex) + observationCardinality - 1) % observationCardinality;
-            (uint32 prevObservationTimestamp, int56 prevTickCumulative, , bool prevInitialized) =
-                pool.observations(prevIndex);
+            (uint32 prevObservationTimestamp, int56 prevTickCumulative, , bool prevInitialized) = pool.observations(
+                prevIndex
+            );
 
             require(prevInitialized, 'ONI');
 
@@ -57,11 +56,10 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState, Bl
     /// @dev Returns the synthetic time-weighted average tick as of secondsAgo, as well as the current tick,
     /// for the given path. Returned synthetic ticks always represent tokenOut/tokenIn prices,
     /// meaning lower ticks are worse.
-    function getSyntheticTicks(bytes memory path, uint32 secondsAgo)
-        internal
-        view
-        returns (int256 syntheticAverageTick, int256 syntheticCurrentTick)
-    {
+    function getSyntheticTicks(
+        bytes memory path,
+        uint32 secondsAgo
+    ) internal view returns (int256 syntheticAverageTick, int256 syntheticCurrentTick) {
         bool lowerTicksAreWorse;
 
         uint256 numPools = path.numPools();
@@ -130,10 +128,12 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState, Bl
     ) internal view returns (int256 averageSyntheticAverageTick, int256 averageSyntheticCurrentTick) {
         require(paths.length == amounts.length);
 
-        OracleLibrary.WeightedTickData[] memory weightedSyntheticAverageTicks =
-            new OracleLibrary.WeightedTickData[](paths.length);
-        OracleLibrary.WeightedTickData[] memory weightedSyntheticCurrentTicks =
-            new OracleLibrary.WeightedTickData[](paths.length);
+        OracleLibrary.WeightedTickData[] memory weightedSyntheticAverageTicks = new OracleLibrary.WeightedTickData[](
+            paths.length
+        );
+        OracleLibrary.WeightedTickData[] memory weightedSyntheticCurrentTicks = new OracleLibrary.WeightedTickData[](
+            paths.length
+        );
 
         for (uint256 i = 0; i < paths.length; i++) {
             (int256 syntheticAverageTick, int256 syntheticCurrentTick) = getSyntheticTicks(paths[i], secondsAgo);
@@ -164,8 +164,11 @@ abstract contract OracleSlippage is IOracleSlippage, PeripheryImmutableState, Bl
         uint24 maximumTickDivergence,
         uint32 secondsAgo
     ) external view override {
-        (int256 averageSyntheticAverageTick, int256 averageSyntheticCurrentTick) =
-            getSyntheticTicks(paths, amounts, secondsAgo);
+        (int256 averageSyntheticAverageTick, int256 averageSyntheticCurrentTick) = getSyntheticTicks(
+            paths,
+            amounts,
+            secondsAgo
+        );
         require(averageSyntheticAverageTick - averageSyntheticCurrentTick < maximumTickDivergence, 'TD');
     }
 }

@@ -46,7 +46,6 @@ contract MyContract {
     // router.exactInput(...);
   }
 }
-
 ```
 
 ## Tests

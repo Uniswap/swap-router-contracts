@@ -66,9 +66,7 @@ describe('SwapRouter', function () {
   let quoter: MixedRouteQuoterV1
   let nft: Contract
   let tokens: [TestERC20, TestERC20, TestERC20]
-  let getBalances: (
-    who: string
-  ) => Promise<{
+  let getBalances: (who: string) => Promise<{
     weth9: BigNumber
     token0: BigNumber
     token1: BigNumber
@@ -964,7 +962,7 @@ describe('SwapRouter', function () {
 
     async function createPoolWETH9(token: TestERC20) {
       await weth9.deposit({ value: liquidity })
-      return createV2Pool((weth9 as unknown) as TestERC20, token)
+      return createV2Pool(weth9 as unknown as TestERC20, token)
     }
 
     beforeEach('create 0-1 and 1-2 pools', async () => {
