@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`MixedRouteQuoterV1 quotes #quoteExactInput V3 only 0 -> 2 -> 1 1`] = `281505`;
+exports[`MixedRouteQuoterV1 quotes #quoteExactInput V3 only 0 -> 2 -> 1 1`] = `284005`;
 
 exports[`MixedRouteQuoterV1 quotes #quoteExactInput V3 only 0 -> 2 cross 0 tick, starting tick initialized 1`] = `123786`;
 

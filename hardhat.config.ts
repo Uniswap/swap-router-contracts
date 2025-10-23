@@ -1,7 +1,7 @@
 import '@nomiclabs/hardhat-ethers'
 import '@nomiclabs/hardhat-etherscan'
 import '@nomiclabs/hardhat-waffle'
-import 'hardhat-typechain'
+import '@typechain/hardhat'
 import 'hardhat-watcher'
 import 'dotenv/config'
 
@@ -59,6 +59,10 @@ export default {
   },
   solidity: {
     compilers: [DEFAULT_COMPILER_SETTINGS],
+  },
+  typechain: {
+    outDir: 'typechain',
+    target: 'ethers-v5',
   },
   watcher: {
     test: {
