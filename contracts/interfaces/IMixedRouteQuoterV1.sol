@@ -15,7 +15,10 @@ interface IMixedRouteQuoterV1 {
     /// @return v3SqrtPriceX96AfterList List of the sqrt price after the swap for each v3 pool in the path, 0 for v2 pools
     /// @return v3InitializedTicksCrossedList List of the initialized ticks that the swap crossed for each v3 pool in the path, 0 for v2 pools
     /// @return v3SwapGasEstimate The estimate of the gas that the v3 swaps in the path consume
-    function quoteExactInput(bytes memory path, uint256 amountIn)
+    function quoteExactInput(
+        bytes memory path,
+        uint256 amountIn
+    )
         external
         returns (
             uint256 amountOut,
@@ -49,14 +52,11 @@ interface IMixedRouteQuoterV1 {
     /// @return sqrtPriceX96After The sqrt price of the pool after the swap
     /// @return initializedTicksCrossed The number of initialized ticks that the swap crossed
     /// @return gasEstimate The estimate of the gas that the swap consumes
-    function quoteExactInputSingleV3(QuoteExactInputSingleV3Params memory params)
+    function quoteExactInputSingleV3(
+        QuoteExactInputSingleV3Params memory params
+    )
         external
-        returns (
-            uint256 amountOut,
-            uint160 sqrtPriceX96After,
-            uint32 initializedTicksCrossed,
-            uint256 gasEstimate
-        );
+        returns (uint256 amountOut, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed, uint256 gasEstimate);
 
     /// @notice Returns the amount out received for a given exact input but for a swap of a single V2 pool
     /// @param params The params for the quote, encoded as `QuoteExactInputSingleV2Params`

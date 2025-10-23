@@ -15,11 +15,7 @@ library UniswapV2Library {
     }
 
     // calculates the CREATE2 address for a pair without making any external calls
-    function pairFor(
-        address factory,
-        address tokenA,
-        address tokenB
-    ) internal pure returns (address pair) {
+    function pairFor(address factory, address tokenA, address tokenB) internal pure returns (address pair) {
         (address token0, address token1) = sortTokens(tokenA, tokenB);
         pair = address(
             uint256(

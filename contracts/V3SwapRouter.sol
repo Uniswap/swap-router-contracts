@@ -29,11 +29,7 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFeeExtende
     uint256 private amountInCached = DEFAULT_AMOUNT_IN_CACHED;
 
     /// @dev Returns the pool for the given token pair and fee. The pool contract may or may not exist.
-    function getPool(
-        address tokenA,
-        address tokenB,
-        uint24 fee
-    ) private view returns (IUniswapV3Pool) {
+    function getPool(address tokenA, address tokenB, uint24 fee) private view returns (IUniswapV3Pool) {
         return IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
     }
 
@@ -43,20 +39,15 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFeeExtende
     }
 
     /// @inheritdoc IUniswapV3SwapCallback
-    function uniswapV3SwapCallback(
-        int256 amount0Delta,
-        int256 amount1Delta,
-        bytes calldata _data
-    ) external override {
+    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata _data) external override {
         require(amount0Delta > 0 || amount1Delta > 0); // swaps entirely within 0-liquidity regions are not supported
         SwapCallbackData memory data = abi.decode(_data, (SwapCallbackData));
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
         CallbackValidation.verifyCallback(factory, tokenIn, tokenOut, fee);
 
-        (bool isExactInput, uint256 amountToPay) =
-            amount0Delta > 0
-                ? (tokenIn < tokenOut, uint256(amount0Delta))
-                : (tokenOut < tokenIn, uint256(amount1Delta));
+        (bool isExactInput, uint256 amountToPay) = amount0Delta > 0
+            ? (tokenIn < tokenOut, uint256(amount0Delta))
+            : (tokenOut < tokenIn, uint256(amount1Delta));
 
         if (isExactInput) {
             pay(tokenIn, data.payer, msg.sender, amountToPay);
@@ -88,27 +79,23 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFeeExtende
 
         bool zeroForOne = tokenIn < tokenOut;
 
-        (int256 amount0, int256 amount1) =
-            getPool(tokenIn, tokenOut, fee).swap(
-                recipient,
-                zeroForOne,
-                amountIn.toInt256(),
-                sqrtPriceLimitX96 == 0
-                    ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
-                    : sqrtPriceLimitX96,
-                abi.encode(data)
-            );
+        (int256 amount0, int256 amount1) = getPool(tokenIn, tokenOut, fee).swap(
+            recipient,
+            zeroForOne,
+            amountIn.toInt256(),
+            sqrtPriceLimitX96 == 0
+                ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
+                : sqrtPriceLimitX96,
+            abi.encode(data)
+        );
 
         return uint256(-(zeroForOne ? amount1 : amount0));
     }
 
     /// @inheritdoc IV3SwapRouter
-    function exactInputSingle(ExactInputSingleParams memory params)
-        external
-        payable
-        override
-        returns (uint256 amountOut)
-    {
+    function exactInputSingle(
+        ExactInputSingleParams memory params
+    ) external payable override returns (uint256 amountOut) {
         // use amountIn == Constants.CONTRACT_BALANCE as a flag to swap the entire balance of the contract
         bool hasAlreadyPaid;
         if (params.amountIn == Constants.CONTRACT_BALANCE) {
@@ -182,16 +169,15 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFeeExtende
 
         bool zeroForOne = tokenIn < tokenOut;
 
-        (int256 amount0Delta, int256 amount1Delta) =
-            getPool(tokenIn, tokenOut, fee).swap(
-                recipient,
-                zeroForOne,
-                -amountOut.toInt256(),
-                sqrtPriceLimitX96 == 0
-                    ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
-                    : sqrtPriceLimitX96,
-                abi.encode(data)
-            );
+        (int256 amount0Delta, int256 amount1Delta) = getPool(tokenIn, tokenOut, fee).swap(
+            recipient,
+            zeroForOne,
+            -amountOut.toInt256(),
+            sqrtPriceLimitX96 == 0
+                ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
+                : sqrtPriceLimitX96,
+            abi.encode(data)
+        );
 
         uint256 amountOutReceived;
         (amountIn, amountOutReceived) = zeroForOne
@@ -203,12 +189,9 @@ abstract contract V3SwapRouter is IV3SwapRouter, PeripheryPaymentsWithFeeExtende
     }
 
     /// @inheritdoc IV3SwapRouter
-    function exactOutputSingle(ExactOutputSingleParams calldata params)
-        external
-        payable
-        override
-        returns (uint256 amountIn)
-    {
+    function exactOutputSingle(
+        ExactOutputSingleParams calldata params
+    ) external payable override returns (uint256 amountIn) {
         // avoid an SLOAD by using the swap return data
         amountIn = exactOutputInternal(
             params.amountOut,

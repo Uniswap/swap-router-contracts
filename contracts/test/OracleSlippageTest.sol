@@ -18,12 +18,7 @@ contract OracleSlippageTest is OracleSlippage {
         return time;
     }
 
-    function registerPool(
-        IUniswapV3Pool pool,
-        address tokenIn,
-        address tokenOut,
-        uint24 fee
-    ) external {
+    function registerPool(IUniswapV3Pool pool, address tokenIn, address tokenOut, uint24 fee) external {
         pools[tokenIn][tokenOut][fee] = pool;
         pools[tokenOut][tokenIn][fee] = pool;
     }
@@ -36,19 +31,16 @@ contract OracleSlippageTest is OracleSlippage {
         pool = pools[tokenA][tokenB][fee];
     }
 
-    function testGetBlockStartingAndCurrentTick(IUniswapV3Pool pool)
-        external
-        view
-        returns (int24 blockStartingTick, int24 currentTick)
-    {
+    function testGetBlockStartingAndCurrentTick(
+        IUniswapV3Pool pool
+    ) external view returns (int24 blockStartingTick, int24 currentTick) {
         return getBlockStartingAndCurrentTick(pool);
     }
 
-    function testGetSyntheticTicks(bytes memory path, uint32 secondsAgo)
-        external
-        view
-        returns (int256 syntheticAverageTick, int256 syntheticCurrentTick)
-    {
+    function testGetSyntheticTicks(
+        bytes memory path,
+        uint32 secondsAgo
+    ) external view returns (int256 syntheticAverageTick, int256 syntheticCurrentTick) {
         return getSyntheticTicks(path, secondsAgo);
     }
 
