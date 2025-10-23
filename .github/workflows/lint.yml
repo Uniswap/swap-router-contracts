@@ -20,7 +20,7 @@ jobs:
       - name: Set up node
         uses: actions/setup-node@f1f314fca9dfce2769ece7d933488f076716723e # v1.4.6
         with:
-          node-version: 12.x
+          node-version: 18.x
           registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
